@@ -13,6 +13,5 @@ export const sql = databaseUrl ? neon(databaseUrl) : (() => {
 // Note: This function is deprecated. Use sql template literals instead.
 // Example: await sql`SELECT * FROM users WHERE id = ${userId}`
 export async function query(text: string, params?: unknown[]) {
-  // @ts-expect-error - Legacy function for backwards compatibility
   return await sql(text, params);
 }

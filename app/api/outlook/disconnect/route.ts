@@ -14,6 +14,10 @@ export async function POST() {
 
     const payload = verifyToken(token);
 
+    if (!payload) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Clear Outlook tokens from database
     await sql`
       UPDATE users

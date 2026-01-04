@@ -82,34 +82,33 @@ export default function CalendarDatePicker({
 
       {callyLoaded && (
         <div className="dropdown-content z-50 bg-base-100 border border-base-300 shadow-lg rounded-box mt-2">
-          {/* @ts-ignore - calendar-date is a web component */}
+          {/* @ts-expect-error - calendar-date is a web component */}
           <calendar-date
             ref={calendarRef}
             class="cally"
             value={value}
           >
-            {/* @ts-ignore - slot is valid for web components */}
             <svg
               aria-label="Previous"
               className="fill-current size-4"
-              slot="previous"
+              {...({ slot: 'previous' } as any)}
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
             >
               <path fill="currentColor" d="M15.75 19.5 8.25 12l7.5-7.5"></path>
             </svg>
-            {/* @ts-ignore - slot is valid for web components */}
             <svg
               aria-label="Next"
               className="fill-current size-4"
-              slot="next"
+              {...({ slot: 'next' } as any)}
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
             >
               <path fill="currentColor" d="m8.25 4.5 7.5 7.5-7.5 7.5"></path>
             </svg>
-            {/* @ts-ignore - calendar-month is a web component */}
+            {/* @ts-expect-error - calendar-month is a web component */}
             <calendar-month></calendar-month>
+          {/* @ts-expect-error - calendar-date is a web component */}
           </calendar-date>
         </div>
       )}

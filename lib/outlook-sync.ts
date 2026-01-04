@@ -96,7 +96,7 @@ export async function syncTaskToOutlook(task: {
   userId: number;
   taskDescription?: string;
   taskType: string;
-  taskDate: string;
+  taskDate: string | Date;
   projectName?: string;
   projectNumber?: string;
   projectCommonName?: string;
@@ -206,7 +206,7 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
   projectId?: number;
   taskDescription?: string;
   taskType: string;
-  taskDate: string;
+  taskDate: string | Date;
   projectName?: string;
   projectNumber?: string;
   projectCommonName?: string;

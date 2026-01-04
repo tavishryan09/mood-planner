@@ -2,7 +2,7 @@
 
 import Sidebar from '@/components/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 interface User {
@@ -14,7 +14,7 @@ interface User {
   billingRate: number;
 }
 
-export default function Settings() {
+function SettingsContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
@@ -489,5 +489,13 @@ export default function Settings() {
         </dialog>
       )}
     </Sidebar>
+  );
+}
+
+export default function Settings() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <SettingsContent />
+    </Suspense>
   );
 }

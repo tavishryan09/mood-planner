@@ -13,6 +13,11 @@ export async function GET(request: Request) {
     }
 
     const payload = verifyToken(token);
+
+    if (!payload) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'csv';
 

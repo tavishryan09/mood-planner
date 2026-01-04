@@ -14,6 +14,11 @@ async function getCurrentUser() {
 
   try {
     const payload = verifyToken(token);
+
+    if (!payload) {
+      return null;
+    }
+
     const users = await sql`
       SELECT id, name, email, role, sidebar_open as "sidebarOpen"
       FROM users

@@ -2,23 +2,9 @@ const CACHE_NAME = 'new-mood-v1';
 const STATIC_CACHE = 'new-mood-static-v1';
 const DYNAMIC_CACHE = 'new-mood-dynamic-v1';
 
-const STATIC_ASSETS = [
-  '/',
-  '/clients',
-  '/projects',
-  '/planning',
-  '/accounting',
-];
-
-// Install event - cache static assets
+// Install event - skip precaching to avoid auth issues
 self.addEventListener('install', (event) => {
   console.log('Service Worker: Installing...');
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => {
-      console.log('Service Worker: Caching static assets');
-      return cache.addAll(STATIC_ASSETS);
-    })
-  );
   self.skipWaiting();
 });
 

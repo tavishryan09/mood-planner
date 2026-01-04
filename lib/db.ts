@@ -1,11 +1,8 @@
 import { neon } from '@neondatabase/serverless';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is not set');
-}
-
 // Create a database connection
-export const sql = neon(process.env.DATABASE_URL);
+// The neon() function will throw an error at runtime if DATABASE_URL is not set
+export const sql = neon(process.env.DATABASE_URL!);
 
 // Example query function
 // Note: This function is deprecated. Use sql template literals instead.

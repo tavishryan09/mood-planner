@@ -1,11 +1,14 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
 const SALT_ROUNDS = 10;
 
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not set');
+function getJWTSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  return secret;
 }
 
 export interface JWTPayload {
@@ -35,7 +38,7 @@ export async function verifyPassword(
  * Generate a JWT token
  */
 export function generateToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, getJWTSecret(), {
     expiresIn: '7d', // 7 days
   });
 }
@@ -45,7 +48,7 @@ export function generateToken(payload: JWTPayload): string {
  */
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    const decoded = jwt.verify(token, getJWTSecret()) as JWTPayload;
     return decoded;
   } catch (error) {
     return null;

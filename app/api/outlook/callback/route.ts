@@ -1,0 +1,71 @@
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/db';
+import { getUserInfo } from '@/lib/microsoft-graph';
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const code = searchParams.get('code');
+    const state = searchParams.get('state'); // userId
+    const error = searchParams.get('error');
+
+    if (error) {
+      console.error('OAuth error:', error);
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_error=${error}`);
+    }
+
+    if (!code || !state) {
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_error=missing_params`);
+    }
+
+    const userId = parseInt(state);
+
+    // Exchange code for tokens
+    const tokenResponse = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: process.env.MICROSOFT_CLIENT_ID!,
+        client_secret: process.env.MICROSOFT_CLIENT_SECRET!,
+        code,
+        redirect_uri: process.env.MICROSOFT_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL}/api/outlook/callback`,
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const errorData = await tokenResponse.text();
+      console.error('Token exchange failed:', errorData);
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_error=token_exchange_failed`);
+    }
+
+    const tokens = await tokenResponse.json();
+    const { access_token, refresh_token, expires_in } = tokens;
+
+    // Get user's email
+    const userInfo = await getUserInfo(access_token);
+    const email = userInfo.mail || userInfo.userPrincipalName;
+
+    // Calculate expiration time
+    const expiresAt = new Date(Date.now() + expires_in * 1000);
+
+    // Store tokens in database
+    await sql`
+      UPDATE users
+      SET
+        outlook_access_token = ${access_token},
+        outlook_refresh_token = ${refresh_token},
+        outlook_token_expires_at = ${expiresAt.toISOString()},
+        outlook_connected = true,
+        outlook_email = ${email}
+      WHERE id = ${userId}
+    `;
+
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_connected=true`);
+  } catch (error) {
+    console.error('Error in Outlook callback:', error);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_error=callback_failed`);
+  }
+}

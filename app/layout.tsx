@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   },
   applicationName: "New Mood",
   themeColor: "#6419e6",
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
 };
 
 export const viewport = {

@@ -8,10 +8,11 @@ export const runtime = 'nodejs';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow access to login page and auth API routes
+  // Allow access to login page, auth API routes, and health check
   if (
     pathname.startsWith('/login') ||
-    pathname.startsWith('/api/auth')
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/health')
   ) {
     return NextResponse.next();
   }

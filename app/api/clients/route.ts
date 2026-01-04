@@ -22,7 +22,7 @@ export async function GET() {
 
     // Fetch projects for each client
     const clientsWithProjects = await Promise.all(
-      clients.map(async (client) => {
+      clients.map(async (client: any) => {
         const projects = await sql`
           SELECT
             id,

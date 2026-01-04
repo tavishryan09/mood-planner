@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     `;
 
     // Transform data for export
-    const exportData = projects.map(p => ({
+    const exportData = projects.map((p: any) => ({
       'Project Number': p.projectNumber || '',
       'Project Name': p.projectName,
       'Common Name': p.commonName || '',
@@ -60,7 +60,7 @@ export async function GET(request: Request) {
       const headers = Object.keys(exportData[0] || {});
       const csvRows = [
         headers.join(','),
-        ...exportData.map(row =>
+        ...exportData.map((row: any) =>
           headers.map(header => {
             const value = row[header as keyof typeof row];
             // Escape commas and quotes

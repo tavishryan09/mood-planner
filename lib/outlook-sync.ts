@@ -256,7 +256,7 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
     const categories = getOutlookCategory(milestone.taskType);
 
     // Create or update event for each user
-    const syncPromises = connectedUsers.map(async (user) => {
+    const syncPromises = connectedUsers.map(async (user: any) => {
       try {
         const accessToken = await getValidAccessToken(user.id);
 

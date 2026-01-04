@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     title: "New Mood",
   },
   applicationName: "New Mood",
-  themeColor: "#6419e6",
+  themeColor: "#0a0e27",
   icons: {
     icon: "/icon-192.png",
     apple: "/icon-192.png",

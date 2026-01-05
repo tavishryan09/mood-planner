@@ -172,17 +172,6 @@ export default function Sidebar({ children, title = "New Mood", action }: Sideba
         </li>
       </ul>
 
-      {/* Toggle button */}
-      <ul className="menu w-full">
-        <li>
-          <label htmlFor="my-drawer-4" aria-label="toggle sidebar" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Toggle Menu">
-            {/* Sidebar toggle icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"></path><path d="M9 4v16"></path><path d="M14 10l2 2l-2 2"></path></svg>
-            <span className="is-drawer-close:hidden">Toggle Menu</span>
-          </label>
-        </li>
-      </ul>
-
       {/* Bottom section with user avatar dropdown */}
       {user && (
         <div className="w-full p-2">
@@ -207,23 +196,35 @@ export default function Sidebar({ children, title = "New Mood", action }: Sideba
                 </label>
               </li>
               <li>
-                <label className="cursor-pointer flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
-                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
-                  </svg>
-                  <span>Toggle Theme</span>
-                  <input
-                    type="checkbox"
-                    className="toggle toggle-sm"
-                    checked={isLightTheme}
-                    onChange={(e) => {
-                      const newTheme = e.target.checked ? 'light' : 'abyss';
-                      setIsLightTheme(e.target.checked);
-                      document.documentElement.setAttribute('data-theme', newTheme);
-                      localStorage.setItem('theme', newTheme);
-                    }}
-                  />
-                </label>
+                <button
+                  onClick={() => {
+                    const newTheme = isLightTheme ? 'abyss' : 'light';
+                    setIsLightTheme(!isLightTheme);
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                  }}
+                >
+                  {isLightTheme ? (
+                    // Sun icon for light theme
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
+                      <circle cx="12" cy="12" r="4"></circle>
+                      <path d="M12 2v2"></path>
+                      <path d="M12 20v2"></path>
+                      <path d="m4.93 4.93 1.41 1.41"></path>
+                      <path d="m17.66 17.66 1.41 1.41"></path>
+                      <path d="M2 12h2"></path>
+                      <path d="M20 12h2"></path>
+                      <path d="m6.34 17.66-1.41 1.41"></path>
+                      <path d="m19.07 4.93-1.41 1.41"></path>
+                    </svg>
+                  ) : (
+                    // Moon icon for dark theme
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
+                      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                    </svg>
+                  )}
+                  Toggle Theme
+                </button>
               </li>
               <li>
                 <Link href="/settings">

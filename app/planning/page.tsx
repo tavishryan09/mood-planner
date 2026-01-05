@@ -1809,9 +1809,12 @@ export default function Planning() {
 
   return (
     <Sidebar title="Planning" hideNavbar={true}>
-      <div className="p-4">
+      <div
+        className={isMobile ? "" : "p-4"}
+        style={isMobile ? { paddingBottom: 'calc(var(--spacing) * 10)' } : undefined}
+      >
         <div className="card bg-base-100">
-          <div className="card-body p-0 lg:p-8">
+          <div className={`card-body ${isMobile ? 'p-0' : 'p-4'} lg:p-8`}>
             <div className="flex justify-between items-center w-full mb-4">
               <div className="flex items-center gap-2">
                 <h2 className="card-title">{currentQuarter} Calendar</h2>
@@ -1889,7 +1892,7 @@ export default function Planning() {
                 className="mt-4 overflow-auto border border-base-300 rounded-lg"
                 style={{
                   maxHeight: isMobile
-                    ? 'calc(100vh - 170px)'
+                    ? 'calc(100dvh - 170px)'
                     : showInstructions
                     ? 'calc(100vh - 200px)'
                     : 'calc(100vh - 150px)'

@@ -11,10 +11,9 @@ interface SidebarProps {
   title?: string;
   action?: ReactNode;
   onToggleTheme?: () => void;
-  onOpenUserSettings?: () => void;
 }
 
-export default function Sidebar({ children, title = "New Mood", action, onToggleTheme, onOpenUserSettings }: SidebarProps) {
+export default function Sidebar({ children, title = "New Mood", action, onToggleTheme }: SidebarProps) {
   const { user, logout, updateSidebarPreference, loading } = useAuth();
   const pathname = usePathname();
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -198,17 +197,6 @@ export default function Sidebar({ children, title = "New Mood", action, onToggle
                       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
                     </svg>
                     Toggle Theme
-                  </button>
-                </li>
-              )}
-              {onOpenUserSettings && (
-                <li>
-                  <button onClick={onOpenUserSettings}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                    Team Members
                   </button>
                 </li>
               )}

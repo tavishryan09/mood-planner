@@ -108,6 +108,49 @@ export async function PUT(
 
     const updatedMilestone = result[0];
 
+    // Sync changes back to source tables (projects or project_milestones)
+    if (updatedMilestone.projectId && updatedMilestone.taskType) {
+      try {
+        if (updatedMilestone.taskType === 'Deadline') {
+          // Update the project's deadline field
+          await sql`
+            UPDATE projects
+            SET deadline = ${updatedMilestone.taskDate}
+            WHERE id = ${updatedMilestone.projectId}
+          `;
+        } else if (updatedMilestone.taskType === 'Internal Deadline') {
+          // Update the project's internal_deadline field
+          await sql`
+            UPDATE projects
+            SET internal_deadline = ${updatedMilestone.taskDate}
+            WHERE id = ${updatedMilestone.projectId}
+          `;
+        } else if (updatedMilestone.taskType === 'Milestone') {
+          // Find and update the corresponding project milestone
+          // Match by project_id and the task description (milestone name)
+          const milestones = await sql`
+            SELECT id, milestone_name as "milestoneName"
+            FROM project_milestones
+            WHERE project_id = ${updatedMilestone.projectId}
+            LIMIT 1
+          `;
+
+          if (milestones.length > 0) {
+            await sql`
+              UPDATE project_milestones
+              SET
+                due_date = ${updatedMilestone.taskDate},
+                milestone_name = ${updatedMilestone.taskDescription}
+              WHERE id = ${milestones[0].id}
+            `;
+          }
+        }
+      } catch (syncError) {
+        console.error('Error syncing to source table:', syncError);
+        // Don't fail the request if sync fails
+      }
+    }
+
     // Sync updated milestone to all team members (updates existing events)
     try {
       // Get project details if needed
@@ -162,9 +205,15 @@ export async function DELETE(
 
     const { id } = await context.params;
 
-    // First get the milestone to get outlook_event_id
+    // First get the milestone to get outlook_event_id and other details
     const milestone = await sql`
-      SELECT id, outlook_event_id as "outlookEventId"
+      SELECT
+        id,
+        outlook_event_id as "outlookEventId",
+        project_id as "projectId",
+        task_type as "taskType",
+        task_description as "taskDescription",
+        task_date as "taskDate"
       FROM milestone_tasks
       WHERE id = ${id}
     `;
@@ -177,6 +226,38 @@ export async function DELETE(
     }
 
     const milestoneToDelete = milestone[0];
+
+    // Sync deletion to source tables (projects or project_milestones)
+    if (milestoneToDelete.projectId && milestoneToDelete.taskType) {
+      try {
+        if (milestoneToDelete.taskType === 'Deadline') {
+          // Clear the project's deadline field
+          await sql`
+            UPDATE projects
+            SET deadline = NULL
+            WHERE id = ${milestoneToDelete.projectId}
+          `;
+        } else if (milestoneToDelete.taskType === 'Internal Deadline') {
+          // Clear the project's internal_deadline field
+          await sql`
+            UPDATE projects
+            SET internal_deadline = NULL
+            WHERE id = ${milestoneToDelete.projectId}
+          `;
+        } else if (milestoneToDelete.taskType === 'Milestone') {
+          // Delete the corresponding project milestone
+          await sql`
+            DELETE FROM project_milestones
+            WHERE project_id = ${milestoneToDelete.projectId}
+              AND milestone_name = ${milestoneToDelete.taskDescription}
+              AND due_date = ${milestoneToDelete.taskDate}
+          `;
+        }
+      } catch (syncError) {
+        console.error('Error syncing deletion to source table:', syncError);
+        // Don't fail the request if sync fails
+      }
+    }
 
     // Delete from database
     await sql`

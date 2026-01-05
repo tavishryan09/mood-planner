@@ -49,7 +49,7 @@ export async function GET(request: Request) {
     let tasks;
 
     if (startDate && endDate) {
-      // Get tasks for date range
+      // Get tasks for date range from milestone_tasks table
       tasks = await sql`
         SELECT
           mt.id,
@@ -160,6 +160,47 @@ export async function POST(request: Request) {
     `;
 
     const createdMilestone = result[0];
+
+    // Sync to source tables (projects or project_milestones)
+    if (createdMilestone.projectId && createdMilestone.taskType) {
+      try {
+        if (createdMilestone.taskType === 'Deadline') {
+          // Update the project's deadline field
+          await sql`
+            UPDATE projects
+            SET deadline = ${createdMilestone.taskDate}
+            WHERE id = ${createdMilestone.projectId}
+          `;
+        } else if (createdMilestone.taskType === 'Internal Deadline') {
+          // Update the project's internal_deadline field
+          await sql`
+            UPDATE projects
+            SET internal_deadline = ${createdMilestone.taskDate}
+            WHERE id = ${createdMilestone.projectId}
+          `;
+        } else if (createdMilestone.taskType === 'Milestone') {
+          // Create a new project milestone
+          await sql`
+            INSERT INTO project_milestones (
+              project_id,
+              milestone_name,
+              due_date,
+              status
+            )
+            VALUES (
+              ${createdMilestone.projectId},
+              ${createdMilestone.taskDescription},
+              ${createdMilestone.taskDate},
+              'pending'
+            )
+            ON CONFLICT DO NOTHING
+          `;
+        }
+      } catch (syncError) {
+        console.error('Error syncing to source table:', syncError);
+        // Don't fail the request if sync fails
+      }
+    }
 
     // Automatically sync to all team members' Outlook calendars
     try {

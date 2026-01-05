@@ -1,6 +1,50 @@
 import { sql } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const result = await sql`
+      SELECT
+        p.id,
+        p.project_number as "projectNumber",
+        p.project_name as "projectName",
+        p.client_id as "clientId",
+        c.business_name as "clientName",
+        p.common_name as "commonName",
+        p.project_value as "projectValue",
+        p.billing_rate as "billingRate",
+        p.use_team_rates as "useTeamRates",
+        p.deadline,
+        p.internal_deadline as "internalDeadline",
+        p.created_at as "createdAt",
+        p.updated_at as "updatedAt"
+      FROM projects p
+      LEFT JOIN clients c ON p.client_id = c.id
+      WHERE p.id = ${id}
+    `;
+
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(result[0]);
+  } catch (error) {
+    console.error('Error fetching project:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch project' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -8,7 +52,14 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { projectNumber, projectName, clientId, commonName, projectValue, billingRate, useTeamRates } = body;
+    const { projectNumber, projectName, clientId, commonName, projectValue, billingRate, useTeamRates, deadline, internalDeadline } = body;
+
+    // Get the old deadline values before updating
+    const oldProject = await sql`
+      SELECT deadline, internal_deadline as "internalDeadline"
+      FROM projects
+      WHERE id = ${id}
+    `;
 
     const result = await sql`
       UPDATE projects
@@ -19,7 +70,9 @@ export async function PUT(
         common_name = ${commonName || null},
         project_value = ${projectValue || null},
         billing_rate = ${billingRate || null},
-        use_team_rates = ${useTeamRates || false}
+        use_team_rates = ${useTeamRates || false},
+        deadline = ${deadline || null},
+        internal_deadline = ${internalDeadline || null}
       WHERE id = ${id}
       RETURNING
         id,
@@ -30,6 +83,8 @@ export async function PUT(
         project_value as "projectValue",
         billing_rate as "billingRate",
         use_team_rates as "useTeamRates",
+        deadline,
+        internal_deadline as "internalDeadline",
         created_at as "createdAt",
         updated_at as "updatedAt"
     `;
@@ -41,7 +96,89 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(result[0]);
+    const updatedProject = result[0];
+
+    // Sync deadline changes to milestone_tasks table
+    if (oldProject.length > 0) {
+      const oldDeadline = oldProject[0].deadline;
+      const oldInternalDeadline = oldProject[0].internalDeadline;
+
+      // Handle deadline changes
+      if (oldDeadline !== deadline) {
+        // Remove old deadline from milestone_tasks if it existed
+        if (oldDeadline) {
+          await sql`
+            DELETE FROM milestone_tasks
+            WHERE project_id = ${id}
+              AND task_type = 'Deadline'
+              AND task_date = ${oldDeadline}
+          `;
+        }
+        // Add new deadline to milestone_tasks if it exists
+        if (deadline) {
+          await sql`
+            INSERT INTO milestone_tasks (
+              project_id,
+              task_description,
+              task_type,
+              task_date,
+              row_index
+            )
+            VALUES (
+              ${id},
+              ${projectName},
+              'Deadline',
+              ${deadline},
+              0
+            )
+            ON CONFLICT (task_date, row_index) DO UPDATE
+            SET
+              project_id = ${id},
+              task_description = ${projectName},
+              task_type = 'Deadline'
+          `;
+        }
+      }
+
+      // Handle internal deadline changes
+      if (oldInternalDeadline !== internalDeadline) {
+        // Remove old internal deadline from milestone_tasks if it existed
+        if (oldInternalDeadline) {
+          await sql`
+            DELETE FROM milestone_tasks
+            WHERE project_id = ${id}
+              AND task_type = 'Internal Deadline'
+              AND task_date = ${oldInternalDeadline}
+          `;
+        }
+        // Add new internal deadline to milestone_tasks if it exists
+        if (internalDeadline) {
+          await sql`
+            INSERT INTO milestone_tasks (
+              project_id,
+              task_description,
+              task_type,
+              task_date,
+              row_index
+            )
+            VALUES (
+              ${id},
+              ${projectName},
+              'Internal Deadline',
+              ${internalDeadline},
+              1
+            )
+            ON CONFLICT (task_date, row_index) DO UPDATE
+            SET
+              project_id = ${id},
+              task_description = ${projectName},
+              task_type = 'Internal Deadline'
+          `;
+        }
+      }
+    }
+
+    return NextResponse.json(updatedProject);
   } catch (error) {
     console.error('Error updating project:', error);
     return NextResponse.json(

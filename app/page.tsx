@@ -443,7 +443,11 @@ export default function Home() {
   };
 
   return (
-    <Sidebar title="Dashboard">
+    <Sidebar
+      title="Dashboard"
+      onToggleTheme={toggleTheme}
+      onOpenUserSettings={openUserSettings}
+    >
       <div className="p-4">
         <div className="card bg-base-100">
           <div className="card-body">
@@ -662,26 +666,6 @@ export default function Home() {
                         {isToday() ? "Today's" : formatShortDate(selectedDate.toISOString())} Tasks by Team Member
                       </h2>
                       <div className="flex items-center gap-2">
-                        <button
-                          className="btn btn-sm btn-circle btn-ghost"
-                          onClick={toggleTheme}
-                          aria-label="Toggle theme"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
-                            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
-                          </svg>
-                        </button>
-                        <button
-                          className="btn btn-sm btn-circle btn-ghost"
-                          onClick={openUserSettings}
-                          aria-label="Team member visibility settings"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                          </svg>
-                        </button>
-                        <div className="divider divider-horizontal mx-0"></div>
                         <button
                           className="btn btn-sm btn-circle btn-ghost"
                           onClick={() => navigateDay('prev')}

@@ -1941,14 +1941,14 @@ export default function Planning() {
                                   ? 'bg-error'
                                   : milestone.taskType === 'Internal Deadline'
                                   ? 'bg-warning'
-                                  : 'bg-accent';
+                                  : 'bg-neutral';
 
                               const textColor =
                                 milestone.taskType === 'Deadline'
                                   ? 'text-error-content'
                                   : milestone.taskType === 'Internal Deadline'
                                   ? 'text-warning-content'
-                                  : 'text-accent-content';
+                                  : 'text-neutral-content';
 
                               return (
                                 <div
@@ -2087,11 +2087,13 @@ export default function Planning() {
                                     task.taskType === 'Project Task'
                                       ? 'bg-primary text-primary-content'
                                       : task.taskType === 'Out of Office'
-                                      ? 'bg-warning text-warning-content'
+                                      ? 'bg-secondary text-secondary-content'
                                       : task.taskType === 'PTO'
                                       ? 'bg-info text-info-content'
                                       : task.taskType === 'Internal'
-                                      ? 'bg-secondary text-secondary-content'
+                                      ? 'bg-success text-success-content'
+                                       : task.taskType === 'Unavailable'
+                                      ? 'bg-accent text-accent-content'
                                       : 'bg-error text-error-content'
                                   } ${draggedTask?.id === task.id ? 'opacity-50' : ''} ${isResizing ? 'ring-2 ring-base-content/30' : ''} ${selectedTask?.id === task.id ? 'ring-4 ring-accent' : ''} ${isCutTask && copiedTask?.id === task.id ? 'opacity-50 ring-2 ring-dashed ring-accent' : ''}`}
                                   style={{

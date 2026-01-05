@@ -1,6 +1,102 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: abyss --default, light;
+  themes: mooddark --default, moodlight;
+}
+
+@plugin "daisyui/theme" {
+  name: "moodlight";
+  default: false;
+  prefersdark: false;
+  color-scheme: light;
+
+  /* Base colors - Light backgrounds */
+  --color-base-100: #f9f9f9;
+  --color-base-200: #e8e9ea;
+  --color-base-300: #141b2b;
+  --color-base-content: oklch(25% 0.02 247);
+
+  /* Primary brand color */
+  --color-primary: #e2497c;
+  --color-primary-content: #e8e9ea;
+
+  /* Secondary color */
+  --color-secondary: #10131b;
+  --color-secondary-content: #e2497c;
+
+  /* Accent color */
+  --color-accent: #9edd40;
+  --color-accent-content: #0d534e;
+
+  /* Neutral color */
+  --color-neutral: #5c626b;
+  --color-neutral-content: #e8e9ea;
+
+  /* Semantic colors */
+  --color-info: #0d2f51;
+  --color-info-content: #e8e9ea;
+
+  --color-success: #0d534e;
+  --color-success-content: #9edd40;
+
+  --color-warning: #fdcf2b;
+  --color-warning-content: #0d2f51;
+
+  --color-error: #f04e4f;
+  --color-error-content: #e8e9ea;
+
+  /* Design tokens */
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --border: 1px;
+}
+
+@plugin "daisyui/theme" {
+  name: "mooddark";
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+
+  /* Base colors - Dark backgrounds (based on abyss theme) */
+  --color-base-100: oklch(30% 0.08 209);
+  --color-base-200: oklch(20% 0.08 209);
+  --color-base-300: oklch(20% 0.08 209);
+  --color-base-content: oklch(92% 0.017 237.07);
+
+  /* Primary brand color */
+  --color-primary: oklch(92% 0.2653 125);
+  --color-primary-content: oklch(50% 0.265 125);
+
+  /* Secondary color */
+  --color-secondary: #e53e7e;
+  --color-secondary-content: oklch(96% 0.001 286.375);
+
+  /* Accent color */
+  --color-accent: oklch(70% 0 0);
+  --color-accent-content: oklch(96% 0.001 286.375);
+
+  /* Neutral color */
+  --color-neutral: oklch(30% 0.08 209);
+  --color-neutral-content: oklch(96% 0.001 286.375);
+
+  /* Semantic colors */
+  --color-info: #0f4068;
+  --color-info-content: oklch(96% 0.001 286.375);
+
+  --color-success: #0d534e;
+  --color-success-content: oklch(92% 0.2653 125);
+
+  --color-warning: oklch(84.8% 0.1962 84.62);
+  --color-warning-content: oklch(37.5% 0.196 84.620);
+
+  --color-error: oklch(65% 0.1985 24.22);
+  --color-error-content: oklch(19.5% 0.199 24.220);
+
+  /* Design tokens */
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.5rem;
+  --border: 1px;
 }
 
 @theme inline {

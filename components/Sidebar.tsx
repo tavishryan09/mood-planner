@@ -28,8 +28,8 @@ export default function Sidebar({ children, title = "New Mood", action }: Sideba
 
   // Initialize theme from localStorage
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'abyss';
-    setIsLightTheme(savedTheme === 'light');
+    const savedTheme = localStorage.getItem('theme') || 'mooddark';
+    setIsLightTheme(savedTheme === 'moodlight');
   }, []);
 
   // Debounced close sidebar on mobile when route changes
@@ -198,7 +198,7 @@ export default function Sidebar({ children, title = "New Mood", action }: Sideba
               <li>
                 <button
                   onClick={() => {
-                    const newTheme = isLightTheme ? 'abyss' : 'light';
+                    const newTheme = isLightTheme ? 'mooddark' : 'moodlight';
                     setIsLightTheme(!isLightTheme);
                     document.documentElement.setAttribute('data-theme', newTheme);
                     localStorage.setItem('theme', newTheme);

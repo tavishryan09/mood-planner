@@ -44,7 +44,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const theme = localStorage.getItem('theme') || 'abyss';
+                const theme = localStorage.getItem('theme') || 'mooddark';
                 document.documentElement.setAttribute('data-theme', theme);
               } catch (e) {}
             `,

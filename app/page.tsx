@@ -612,7 +612,7 @@ export default function Home() {
                                   ? 'bg-error text-error-content'
                                   : milestone.taskType === 'Internal Deadline'
                                   ? 'bg-warning text-warning-content'
-                                  : 'bg-accent text-accent-content'
+                                  : 'bg-neutral text-neutral-content'
                               }`}
                             >
                               <div className="flex justify-between items-start mb-1">

@@ -142,7 +142,7 @@ export default function Sidebar({ children, title = "New Mood", action }: Sideba
           <div className="dropdown dropdown-top w-full">
             <div tabIndex={0} role="button" className="btn btn-ghost w-full justify-start gap-3 is-drawer-close:btn-square is-drawer-close:justify-center">
               <div className="avatar placeholder">
-                <div className="bg-primary text-primary-content mask mask-squircle w-8">
+                <div className="bg-primary text-primary-content mask mask-squircle w-8 flex items-center justify-center">
                   <span className="text-sm">{user.name.charAt(0).toUpperCase()}</span>
                 </div>
               </div>

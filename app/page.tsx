@@ -124,10 +124,10 @@ export default function Home() {
 
       try {
         // Prepare all fetch promises
-        const today = new Date().toISOString().split('T')[0];
+        const today = formatDateLocal(new Date());
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + 90);
-        const endDateStr = endDate.toISOString().split('T')[0];
+        const endDateStr = formatDateLocal(endDate);
 
         const projectsUrl = showProjectsWithNoTasks
           ? '/api/my-projects?includeNoTasks=true'

@@ -2,6 +2,7 @@ import { sql } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
+import { formatDateLocal } from '@/lib/date-utils';
 
 // Helper to get current user from token
 async function getCurrentUser() {
@@ -44,7 +45,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '10');
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatDateLocal(new Date());
 
     // Get upcoming tasks for the current user
     const tasks = await sql`

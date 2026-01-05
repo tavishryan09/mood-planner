@@ -2,6 +2,7 @@ import { sql } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
+import { formatDateLocal } from '@/lib/date-utils';
 
 // Helper to get current user from token
 async function getCurrentUser() {
@@ -44,7 +45,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const includeNoTasks = searchParams.get('includeNoTasks') === 'true';
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatDateLocal(new Date());
 
     let projects;
 

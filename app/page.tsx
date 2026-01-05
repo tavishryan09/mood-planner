@@ -85,20 +85,6 @@ export default function Home() {
   const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
   const [showProjectsWithNoTasks, setShowProjectsWithNoTasks] = useState(false);
 
-  // Theme management
-  useEffect(() => {
-    // Load theme from localStorage on mount
-    const savedTheme = localStorage.getItem('theme') || 'abyss';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'abyss';
-    const newTheme = currentTheme === 'abyss' ? 'light' : 'abyss';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-  };
-
   useEffect(() => {
     const fetchTasksForDate = async () => {
       setLoading(true);
@@ -445,7 +431,6 @@ export default function Home() {
   return (
     <Sidebar
       title="Dashboard"
-      onToggleTheme={toggleTheme}
     >
       <div className="p-4">
         <div className="card bg-base-100">

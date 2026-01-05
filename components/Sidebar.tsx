@@ -204,12 +204,12 @@ export default function Sidebar({ children, title = "New Mood", action }: Sideba
                   <span>Toggle Theme</span>
                   <input
                     type="checkbox"
-                    value="light"
-                    className="theme-controller toggle toggle-sm"
+                    className="toggle toggle-sm"
                     checked={isLightTheme}
                     onChange={(e) => {
                       const newTheme = e.target.checked ? 'light' : 'abyss';
                       setIsLightTheme(e.target.checked);
+                      document.documentElement.setAttribute('data-theme', newTheme);
                       localStorage.setItem('theme', newTheme);
                     }}
                   />

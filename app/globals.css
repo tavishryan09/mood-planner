@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: abyss light --default;
+  themes: abyss --default, light;
 }
 
 @theme inline {

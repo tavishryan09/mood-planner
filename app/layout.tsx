@@ -19,7 +19,6 @@ export const metadata: Metadata = {
     title: "New Mood",
   },
   applicationName: "New Mood",
-  themeColor: "#1a2332",
   icons: {
     icon: "/icon-192.png",
     apple: "/icon-192.png",
@@ -30,6 +29,7 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#1a2332",
 };
 
 export default function RootLayout({

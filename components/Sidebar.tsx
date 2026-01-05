@@ -5,14 +5,16 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
+import MobileDock from './MobileDock';
 
 interface SidebarProps {
   children: ReactNode;
   title?: string;
   action?: ReactNode;
+  hideNavbar?: boolean;
 }
 
-export default function Sidebar({ children, title = "New Mood", action }: SidebarProps) {
+export default function Sidebar({ children, title = "New Mood", action, hideNavbar = false }: SidebarProps) {
   const { user, logout, updateSidebarPreference, loading } = useAuth();
   const pathname = usePathname();
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -65,19 +67,21 @@ export default function Sidebar({ children, title = "New Mood", action }: Sideba
           checked={false}
           readOnly
         />
-        <div className="drawer-content">
-          <nav className="navbar w-full bg-base-300">
-            <div className="flex-none lg:hidden">
-              <label htmlFor="my-drawer-4" className="btn btn-square btn-ghost">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-6 h-6 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-              </label>
-            </div>
-            <div className="flex-1 px-4">{title}</div>
-            {action && <div className="flex-none px-4">{action}</div>}
-          </nav>
+        <div className="drawer-content pb-20 lg:pb-0">
+          {!hideNavbar && (
+            <nav className="navbar w-full bg-base-300">
+              <div className="flex-none lg:hidden">
+                <label htmlFor="my-drawer-4" className="btn btn-square btn-ghost">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-6 h-6 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </label>
+              </div>
+              <div className="flex-1 px-4">{title}</div>
+              {action && <div className="flex-none px-4">{action}</div>}
+            </nav>
+          )}
           {children}
         </div>
-        <div className="drawer-side is-drawer-close:overflow-visible z-50">
+        <div className="drawer-side is-drawer-close:overflow-visible z-50 hidden lg:block">
           <label htmlFor="my-drawer-4" aria-label="close sidebar" className="drawer-overlay"></label>
           <div className="flex min-h-full flex-col items-start bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64">
             <div className="skeleton h-16 w-full"></div>
@@ -96,22 +100,24 @@ export default function Sidebar({ children, title = "New Mood", action }: Sideba
     checked={isOpen}
     onChange={toggleSidebar}
   />
-  <div className="drawer-content">
+  <div className="drawer-content pb-20 lg:pb-0">
     {/* Navbar */}
-    <nav className="navbar w-full bg-base-300">
-      <div className="flex-none lg:hidden">
-        <label htmlFor="my-drawer-4" className="btn btn-square btn-ghost">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-6 h-6 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-        </label>
-      </div>
-      <div className="flex-1 px-4">{title}</div>
-      {action && <div className="flex-none px-4">{action}</div>}
-    </nav>
+    {!hideNavbar && (
+      <nav className="navbar w-full bg-base-300">
+        <div className="flex-none lg:hidden">
+          <label htmlFor="my-drawer-4" className="btn btn-square btn-ghost">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-6 h-6 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </label>
+        </div>
+        <div className="flex-1 px-4">{title}</div>
+        {action && <div className="flex-none px-4">{action}</div>}
+      </nav>
+    )}
     {/* Page content here */}
     {children}
   </div>
 
-  <div className="drawer-side is-drawer-close:overflow-visible z-50">
+  <div className="drawer-side is-drawer-close:overflow-visible z-50 hidden lg:block">
     <label htmlFor="my-drawer-4" aria-label="close sidebar" className="drawer-overlay"></label>
     <div className="flex min-h-full flex-col items-start bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64">
       {/* Logo section */}
@@ -244,6 +250,7 @@ export default function Sidebar({ children, title = "New Mood", action }: Sideba
       )}
     </div>
   </div>
+  <MobileDock />
 </div>
   );
 }

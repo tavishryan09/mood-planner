@@ -91,6 +91,8 @@ export default function Planning() {
   const [newInternalTaskTypeName, setNewInternalTaskTypeName] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [outlookConnected, setOutlookConnected] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [taskFormData, setTaskFormData] = useState({
     projectId: '',
     taskDescription: '',
@@ -110,6 +112,51 @@ export default function Planning() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScroll = useRef(false);
   const pendingScrollTarget = useRef<Date | null>(null);
+
+  const fetchPlanningPreferences = async () => {
+    try {
+      const response = await fetch('/api/planning-preferences');
+      if (response.ok) {
+        const preferences = await response.json();
+        setShowInstructions(preferences.showInstructions);
+      }
+    } catch (error) {
+      console.error('Error fetching planning preferences:', error);
+    }
+  };
+
+  const updateShowInstructions = async (value: boolean) => {
+    try {
+      setShowInstructions(value);
+      const response = await fetch('/api/planning-preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showInstructions: value })
+      });
+      if (!response.ok) {
+        console.error('Failed to update show instructions preference');
+        // Revert on error
+        setShowInstructions(!value);
+      }
+    } catch (error) {
+      console.error('Error updating show instructions preference:', error);
+      // Revert on error
+      setShowInstructions(!value);
+    }
+  };
+
+  // Track window size for responsive calendar height
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    // Set initial value
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     // Load quarters with tasks on mount
@@ -192,6 +239,7 @@ export default function Planning() {
       fetchTasks();
       fetchMilestoneTasks();
       checkOutlookStatus();
+      fetchPlanningPreferences();
     }
   }, [currentUser]);
 
@@ -1760,14 +1808,14 @@ export default function Planning() {
   });
 
   return (
-    <Sidebar title="Planning">
+    <Sidebar title="Planning" hideNavbar={true}>
       <div className="p-4">
         <div className="card bg-base-100">
-          <div className="card-body">
+          <div className="card-body p-0 lg:p-8">
             <div className="flex justify-between items-center w-full mb-4">
               <div className="flex items-center gap-2">
                 <h2 className="card-title">{currentQuarter} Calendar</h2>
-                <span className="text-xs opacity-60">({futureTasks.length} tasks)</span>
+                <span className="text-xs opacity-60 hidden lg:inline">({futureTasks.length} tasks)</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -1779,7 +1827,7 @@ export default function Planning() {
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                     <circle cx="12" cy="12" r="3"></circle>
                   </svg>
-                  Team Members
+                  Settings
                 </button>
                 <div className="divider divider-horizontal mx-0"></div>
                 {outlookConnected && (
@@ -1837,7 +1885,17 @@ export default function Planning() {
                 </div>
               </div>
             ) : (
-              <div className="mt-4 overflow-auto border border-base-300 rounded-lg" style={{ maxHeight: 'calc(100vh - 200px)' }} ref={scrollContainerRef}>
+              <div
+                className="mt-4 overflow-auto border border-base-300 rounded-lg"
+                style={{
+                  maxHeight: isMobile
+                    ? 'calc(100vh - 170px)'
+                    : showInstructions
+                    ? 'calc(100vh - 200px)'
+                    : 'calc(100vh - 150px)'
+                }}
+                ref={scrollContainerRef}
+              >
                 <table className="table table-zebra">
                   <thead className="bg-base-100 sticky top-0 z-30">
                     <tr>
@@ -2161,13 +2219,15 @@ export default function Planning() {
               </div>
             )}
 
-            <div className="mt-4 text-sm opacity-60">
-              <p>
-                <strong>Double-click</strong> empty cells to create tasks or milestones. <strong>Click</strong> a task to select it, then <strong>Cmd+C</strong> to copy.
-                Click an empty cell and <strong>Cmd+V</strong> to paste. Press <strong>Delete/Backspace</strong> to remove selected task or milestone.
-                Drag tasks/milestones to move them. Drag task edges to resize vertically. Double-click tasks/milestones to edit.
-              </p>
-            </div>
+            {showInstructions && (
+              <div className="mt-4 text-sm opacity-60">
+                <p>
+                  <strong>Double-click</strong> empty cells to create tasks or milestones. <strong>Click</strong> a task to select it, then <strong>Cmd+C</strong> to copy.
+                  Click an empty cell and <strong>Cmd+V</strong> to paste. Press <strong>Delete/Backspace</strong> to remove selected task or milestone.
+                  Drag tasks/milestones to move them. Drag task edges to resize vertically. Double-click tasks/milestones to edit.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -2186,6 +2246,22 @@ export default function Planning() {
             <p className="text-sm opacity-70 mb-4">
               Drag team members to reorder them. Toggle visibility to show/hide team members in the planning table.
             </p>
+
+            {/* Show Instructions Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg border border-base-300 bg-base-100 mb-4">
+              <div>
+                <div className="font-medium">Show Instructions</div>
+                <div className="text-xs opacity-60">Display help text below the calendar</div>
+              </div>
+              <label className="cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={showInstructions}
+                  onChange={(e) => updateShowInstructions(e.target.checked)}
+                />
+              </label>
+            </div>
 
             <div className="space-y-2">
               {tempUsers.map((user) => (

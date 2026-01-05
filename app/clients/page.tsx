@@ -317,27 +317,16 @@ export default function Clients() {
   return (
     <Sidebar
       title="Clients"
-      action={
-        <button
-          onClick={handleAddNew}
-          className="btn btn-primary"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-5">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Add Client
-        </button>
-      }
+      hideNavbar={true}
     >
       <div className="p-4">
         <div className="card bg-base-100">
-          <div className="card-body">
+          <div className="card-body p-0 lg:p-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="card-title">Client List</h2>
               <div className="flex gap-2">
                 <button
-                  className="btn btn-ghost btn-sm gap-2"
+                  className="btn btn-ghost btn-sm gap-2 hidden lg:flex"
                   onClick={handleExportCSV}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4">
@@ -348,7 +337,7 @@ export default function Clients() {
                   Export CSV
                 </button>
                 <button
-                  className="btn btn-ghost btn-sm gap-2"
+                  className="btn btn-ghost btn-sm gap-2 hidden lg:flex"
                   onClick={() => setShowImportModal(true)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4">
@@ -357,6 +346,16 @@ export default function Clients() {
                     <line x1="12" y1="3" x2="12" y2="15"></line>
                   </svg>
                   Import
+                </button>
+                <button
+                  onClick={handleAddNew}
+                  className="btn btn-primary btn-sm gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add Client
                 </button>
               </div>
             </div>

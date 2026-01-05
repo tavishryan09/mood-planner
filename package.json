@@ -30,7 +30,8 @@
     "add-expense-status": "tsx scripts/add-expense-status.ts",
     "add-outlook-integration": "tsx scripts/add-outlook-integration.ts",
     "add-widget-visibility": "tsx scripts/add-widget-visibility.ts",
-    "add-outlook-event-id": "tsx scripts/add-outlook-event-id.ts"
+    "add-outlook-event-id": "tsx scripts/add-outlook-event-id.ts",
+    "add-planning-preferences": "tsx scripts/add-planning-preferences.ts"
   },
   "dependencies": {
     "@azure/msal-node": "^3.8.4",

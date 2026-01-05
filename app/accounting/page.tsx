@@ -263,41 +263,46 @@ export default function Billing() {
   return (
     <Sidebar
       title="Accounting"
-      action={
-        <div className="flex gap-2">
-          <button
-            className="btn btn-primary"
-            onClick={() => setShowExpenseModal(true)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Create Expense
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={() => setShowInvoiceModal(true)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Create Invoice
-          </button>
-        </div>
-      }
+      hideNavbar={true}
     >
       <div className="p-4">
-        <div className="grid grid-cols-1 gap-4">
-          <div className="card bg-base-100 border border-base-300">
-            <div className="card-body">
-              <h2 className="card-title">Recent Invoices</h2>
-              <p className="text-sm text-base-content/70">No invoices yet</p>
+        <div className="card bg-base-100">
+          <div className="card-body p-0 lg:p-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="card-title">Accounting</h2>
+              <div className="flex gap-2">
+                <button
+                  className="btn btn-primary btn-sm gap-2"
+                  onClick={() => setShowExpenseModal(true)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create Expense
+                </button>
+                <button
+                  className="btn btn-primary btn-sm gap-2"
+                  onClick={() => setShowInvoiceModal(true)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create Invoice
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="card bg-base-100 border border-base-300">
-            <div className="card-body">
-              <h2 className="card-title">Recent Expenses</h2>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="card bg-base-100 border border-base-300">
+                <div className="card-body">
+                  <h2 className="card-title">Recent Invoices</h2>
+                  <p className="text-sm text-base-content/70">No invoices yet</p>
+                </div>
+              </div>
+
+              <div className="card bg-base-100 border border-base-300">
+                <div className="card-body">
+                  <h2 className="card-title">Recent Expenses</h2>
               {loading ? (
                 <div className="space-y-2">
                   <div className="skeleton h-12"></div>
@@ -401,6 +406,8 @@ export default function Billing() {
                   </table>
                 </div>
               )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

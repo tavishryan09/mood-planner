@@ -431,10 +431,11 @@ export default function Home() {
   return (
     <Sidebar
       title="Dashboard"
+      hideNavbar={true}
     >
       <div className="p-4">
         <div className="card bg-base-100">
-          <div className="card-body">
+          <div className="card-body p-0 lg:p-8">
             <div className="flex justify-between items-center w-full mb-4">
               <div>
                 <h2 className="text-2xl opacity-70">{formatDate(new Date())}</h2>
@@ -460,7 +461,7 @@ export default function Home() {
             >
               {widget.id === 'projects' && (
                 <div className="card bg-base-100 shadow-xl border border-base-300 h-80">
-                  <div className="card-body flex flex-col h-full overflow-hidden">
+                  <div className="card-body p-0 lg:p-8 flex flex-col h-full overflow-hidden">
                     <div className="flex justify-between items-center flex-shrink-0 mb-2">
                       <h2 className="card-title">My Current Projects</h2>
                       <label className="label cursor-pointer gap-2 p-0">
@@ -524,7 +525,7 @@ export default function Home() {
 
               {widget.id === 'tasks' && (
                 <div className="card bg-base-100 shadow-xl border border-base-300 h-80">
-                  <div className="card-body flex flex-col h-full overflow-hidden">
+                  <div className="card-body p-0 lg:p-8 flex flex-col h-full overflow-hidden">
                     <h2 className="card-title flex-shrink-0">My Upcoming Tasks</h2>
                     {tasksLoading ? (
                       <div className="space-y-2">
@@ -591,7 +592,7 @@ export default function Home() {
 
               {widget.id === 'milestones' && (
                 <div className="card bg-base-100 shadow-xl border border-base-300 h-80">
-                  <div className="card-body flex flex-col h-full overflow-hidden">
+                  <div className="card-body p-0 lg:p-8 flex flex-col h-full overflow-hidden">
                     <h2 className="card-title flex-shrink-0">Upcoming Deadlines/Milestones</h2>
                     {milestonesLoading ? (
                       <div className="space-y-2">
@@ -644,7 +645,7 @@ export default function Home() {
 
               {widget.id === 'team-tasks' && (
                 <div className="card bg-base-100 shadow-xl border border-base-300">
-                  <div className="card-body flex flex-col">
+                  <div className="card-body p-0 lg:p-8 flex flex-col">
                     <div className="flex justify-between items-center flex-shrink-0 mb-4">
                       <h2 className="card-title">
                         {isToday() ? "Today's" : formatShortDate(selectedDate.toISOString())} Tasks by Team Member

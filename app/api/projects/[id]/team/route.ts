@@ -48,16 +48,34 @@ export async function GET(
     const projectId = parseInt(id);
 
     // Get team members for this project
-    const teamMembers = await sql`
-      SELECT
-        u.id,
-        u.name,
-        u.email
-      FROM project_team_members ptm
-      JOIN users u ON ptm.user_id = u.id
-      WHERE ptm.project_id = ${projectId}
-      ORDER BY u.name
-    `;
+    // Hide admin users from non-admin users
+    let teamMembers;
+    if (currentUser.role === 'Admin') {
+      // Admins can see all team members including other admins
+      teamMembers = await sql`
+        SELECT
+          u.id,
+          u.name,
+          u.email
+        FROM project_team_members ptm
+        JOIN users u ON ptm.user_id = u.id
+        WHERE ptm.project_id = ${projectId}
+        ORDER BY u.name
+      `;
+    } else {
+      // Non-admins can only see non-admin and non-accountant team members
+      teamMembers = await sql`
+        SELECT
+          u.id,
+          u.name,
+          u.email
+        FROM project_team_members ptm
+        JOIN users u ON ptm.user_id = u.id
+        WHERE ptm.project_id = ${projectId}
+          AND u.role NOT IN ('Admin', 'Accountant')
+        ORDER BY u.name
+      `;
+    }
 
     return NextResponse.json(teamMembers);
   } catch (error) {

@@ -9,7 +9,7 @@ interface User {
   id: number;
   name: string;
   email: string;
-  role: 'Admin' | 'Manager' | 'Designer';
+  role: 'Admin' | 'Manager' | 'Designer' | 'Accountant';
   createdAt: string;
   billingRate: number;
 }
@@ -28,7 +28,7 @@ function SettingsContent() {
     name: '',
     email: '',
     password: '',
-    role: 'Designer' as 'Admin' | 'Manager' | 'Designer',
+    role: 'Designer' as 'Admin' | 'Manager' | 'Designer' | 'Accountant',
     billingRate: 0
   });
 
@@ -365,6 +365,7 @@ function SettingsContent() {
                             <span className={`badge ${
                               u.role === 'Admin' ? 'badge-error' :
                               u.role === 'Manager' ? 'badge-warning' :
+                              u.role === 'Accountant' ? 'badge-success' :
                               'badge-info'
                             }`}>
                               {u.role}
@@ -446,28 +447,32 @@ function SettingsContent() {
               <select
                 className="select select-bordered w-full"
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'Admin' | 'Manager' | 'Designer' })}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'Admin' | 'Manager' | 'Designer' | 'Accountant' })}
               >
                 <option value="Designer">Designer</option>
                 <option value="Manager">Manager</option>
+                <option value="Accountant">Accountant</option>
                 <option value="Admin">Admin</option>
               </select>
             </div>
 
-            <div className="form-control w-full mb-5">
-              <label className="label">
-                <span className="label-text">Billing Rate ($/hr)</span>
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className="input input-bordered w-full"
-                value={formData.billingRate}
-                onChange={(e) => setFormData({ ...formData, billingRate: parseFloat(e.target.value) || 0 })}
-                placeholder="0.00"
-              />
-            </div>
+            {/* Only show billing rate for Designer and Manager roles */}
+            {(formData.role === 'Designer' || formData.role === 'Manager') && (
+              <div className="form-control w-full mb-5">
+                <label className="label">
+                  <span className="label-text">Billing Rate ($/hr)</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="input input-bordered w-full"
+                  value={formData.billingRate}
+                  onChange={(e) => setFormData({ ...formData, billingRate: parseFloat(e.target.value) || 0 })}
+                  placeholder="0.00"
+                />
+              </div>
+            )}
 
             <div className="modal-action">
               {editingUser && (

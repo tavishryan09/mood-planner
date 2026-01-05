@@ -132,50 +132,63 @@ export default function Sidebar({ children, title = "New Mood", action, hideNavb
 
       {/* Sidebar content here */}
       <ul className="menu w-full flex-1">
-        {/* List item */}
-        <li>
-          <Link href="/" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Dashboard">
-            {/* Home icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-            <span className="is-drawer-close:hidden">Dashboard</span>
-          </Link>
-        </li>
+        {/* Show only Accounting for Accountant role */}
+        {user?.role === 'Accountant' ? (
+          <li>
+            <Link href="/accounting" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Accounting">
+              {/* Accounting icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
+              <span className="is-drawer-close:hidden">Accounting</span>
+            </Link>
+          </li>
+        ) : (
+          <>
+            {/* Dashboard */}
+            <li>
+              <Link href="/" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Dashboard">
+                {/* Home icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                <span className="is-drawer-close:hidden">Dashboard</span>
+              </Link>
+            </li>
 
-        {/* Clients */}
-        <li>
-          <Link href="/clients" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Clients">
-            {/* Clients icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            <span className="is-drawer-close:hidden">Clients</span>
-          </Link>
-        </li>
+            {/* Clients */}
+            <li>
+              <Link href="/clients" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Clients">
+                {/* Clients icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span className="is-drawer-close:hidden">Clients</span>
+              </Link>
+            </li>
 
-        {/* Projects */}
-        <li>
-          <Link href="/projects" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Projects">
-            {/* Projects icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-            <span className="is-drawer-close:hidden">Projects</span>
-          </Link>
-        </li>
+            {/* Projects */}
+            <li>
+              <Link href="/projects" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Projects">
+                {/* Projects icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                <span className="is-drawer-close:hidden">Projects</span>
+              </Link>
+            </li>
 
-        {/* Planning */}
-        <li>
-          <Link href="/planning" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Planning">
-            {/* Planning icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
-            <span className="is-drawer-close:hidden">Planning</span>
-          </Link>
-        </li>
+            {/* Planning */}
+            <li>
+              <Link href="/planning" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Planning">
+                {/* Planning icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
+                <span className="is-drawer-close:hidden">Planning</span>
+              </Link>
+            </li>
 
-        {/* Accounting */}
-        <li>
-          <Link href="/accounting" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Accounting">
-            {/* Accounting icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
-            <span className="is-drawer-close:hidden">Accounting</span>
-          </Link>
-        </li>
+            {/* Accounting */}
+            <li>
+              <Link href="/accounting" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Accounting">
+                {/* Accounting icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="my-1.5 inline-block size-4"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
+                <span className="is-drawer-close:hidden">Accounting</span>
+              </Link>
+            </li>
+          </>
+        )}
       </ul>
 
       {/* Bottom section with user avatar dropdown */}

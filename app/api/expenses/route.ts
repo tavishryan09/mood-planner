@@ -48,53 +48,109 @@ export async function GET(request: Request) {
 
     let expenses;
 
+    // Accountants can see all expenses, others can only see their own
+    const isAccountant = currentUser.role === 'Accountant';
+
     if (projectId) {
       // Get expenses for a specific project
-      expenses = await sql`
-        SELECT
-          e.id,
-          e.expense_date as "expenseDate",
-          e.category,
-          e.description,
-          e.amount,
-          e.notes,
-          e.status,
-          e.project_id as "projectId",
-          p.project_name as "projectName",
-          p.project_number as "projectNumber",
-          e.receipt_image as "receiptImage",
-          e.receipt_filename as "receiptFilename",
-          e.created_at as "createdAt"
-        FROM expenses e
-        LEFT JOIN projects p ON e.project_id = p.id
-        WHERE e.user_id = ${currentUser.id}
-          AND e.project_id = ${projectId}
-        ORDER BY e.expense_date DESC, e.created_at DESC
-        LIMIT ${limit}
-      `;
+      if (isAccountant) {
+        expenses = await sql`
+          SELECT
+            e.id,
+            e.user_id as "userId",
+            u.name as "userName",
+            e.expense_date as "expenseDate",
+            e.category,
+            e.description,
+            e.amount,
+            e.notes,
+            e.status,
+            e.project_id as "projectId",
+            p.project_name as "projectName",
+            p.project_number as "projectNumber",
+            e.receipt_image as "receiptImage",
+            e.receipt_filename as "receiptFilename",
+            e.created_at as "createdAt"
+          FROM expenses e
+          LEFT JOIN projects p ON e.project_id = p.id
+          LEFT JOIN users u ON e.user_id = u.id
+          WHERE e.project_id = ${projectId}
+          ORDER BY e.expense_date DESC, e.created_at DESC
+          LIMIT ${limit}
+        `;
+      } else {
+        expenses = await sql`
+          SELECT
+            e.id,
+            e.expense_date as "expenseDate",
+            e.category,
+            e.description,
+            e.amount,
+            e.notes,
+            e.status,
+            e.project_id as "projectId",
+            p.project_name as "projectName",
+            p.project_number as "projectNumber",
+            e.receipt_image as "receiptImage",
+            e.receipt_filename as "receiptFilename",
+            e.created_at as "createdAt"
+          FROM expenses e
+          LEFT JOIN projects p ON e.project_id = p.id
+          WHERE e.user_id = ${currentUser.id}
+            AND e.project_id = ${projectId}
+          ORDER BY e.expense_date DESC, e.created_at DESC
+          LIMIT ${limit}
+        `;
+      }
     } else {
-      // Get all expenses for the user
-      expenses = await sql`
-        SELECT
-          e.id,
-          e.expense_date as "expenseDate",
-          e.category,
-          e.description,
-          e.amount,
-          e.notes,
-          e.status,
-          e.project_id as "projectId",
-          p.project_name as "projectName",
-          p.project_number as "projectNumber",
-          e.receipt_image as "receiptImage",
-          e.receipt_filename as "receiptFilename",
-          e.created_at as "createdAt"
-        FROM expenses e
-        LEFT JOIN projects p ON e.project_id = p.id
-        WHERE e.user_id = ${currentUser.id}
-        ORDER BY e.expense_date DESC, e.created_at DESC
-        LIMIT ${limit}
-      `;
+      // Get all expenses
+      if (isAccountant) {
+        expenses = await sql`
+          SELECT
+            e.id,
+            e.user_id as "userId",
+            u.name as "userName",
+            e.expense_date as "expenseDate",
+            e.category,
+            e.description,
+            e.amount,
+            e.notes,
+            e.status,
+            e.project_id as "projectId",
+            p.project_name as "projectName",
+            p.project_number as "projectNumber",
+            e.receipt_image as "receiptImage",
+            e.receipt_filename as "receiptFilename",
+            e.created_at as "createdAt"
+          FROM expenses e
+          LEFT JOIN projects p ON e.project_id = p.id
+          LEFT JOIN users u ON e.user_id = u.id
+          ORDER BY e.expense_date DESC, e.created_at DESC
+          LIMIT ${limit}
+        `;
+      } else {
+        expenses = await sql`
+          SELECT
+            e.id,
+            e.expense_date as "expenseDate",
+            e.category,
+            e.description,
+            e.amount,
+            e.notes,
+            e.status,
+            e.project_id as "projectId",
+            p.project_name as "projectName",
+            p.project_number as "projectNumber",
+            e.receipt_image as "receiptImage",
+            e.receipt_filename as "receiptFilename",
+            e.created_at as "createdAt"
+          FROM expenses e
+          LEFT JOIN projects p ON e.project_id = p.id
+          WHERE e.user_id = ${currentUser.id}
+          ORDER BY e.expense_date DESC, e.created_at DESC
+          LIMIT ${limit}
+        `;
+      }
     }
 
     return NextResponse.json(expenses);

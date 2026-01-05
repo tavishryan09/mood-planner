@@ -14,7 +14,7 @@ function getJWTSecret(): string {
 export interface JWTPayload {
   userId: number;
   email: string;
-  role: 'Admin' | 'Manager' | 'Designer';
+  role: 'Admin' | 'Manager' | 'Designer' | 'Accountant';
 }
 
 /**

@@ -74,11 +74,23 @@ export async function PUT(
       );
     }
 
-    // Verify the expense belongs to the current user
-    const existingExpense = await sql`
-      SELECT id FROM expenses
-      WHERE id = ${expenseId} AND user_id = ${currentUser.id}
-    `;
+    // Verify the expense exists and belongs to the current user (or user is Accountant)
+    const isAccountant = currentUser.role === 'Accountant';
+    let existingExpense;
+
+    if (isAccountant) {
+      // Accountants can edit any expense
+      existingExpense = await sql`
+        SELECT id FROM expenses
+        WHERE id = ${expenseId}
+      `;
+    } else {
+      // Regular users can only edit their own expenses
+      existingExpense = await sql`
+        SELECT id FROM expenses
+        WHERE id = ${expenseId} AND user_id = ${currentUser.id}
+      `;
+    }
 
     if (existingExpense.length === 0) {
       return NextResponse.json(
@@ -159,12 +171,25 @@ export async function DELETE(
       );
     }
 
-    // Verify the expense belongs to the current user and delete it
-    const result = await sql`
-      DELETE FROM expenses
-      WHERE id = ${expenseId} AND user_id = ${currentUser.id}
-      RETURNING id
-    `;
+    // Verify the expense exists and delete it (Accountants can delete any expense)
+    const isAccountant = currentUser.role === 'Accountant';
+    let result;
+
+    if (isAccountant) {
+      // Accountants can delete any expense
+      result = await sql`
+        DELETE FROM expenses
+        WHERE id = ${expenseId}
+        RETURNING id
+      `;
+    } else {
+      // Regular users can only delete their own expenses
+      result = await sql`
+        DELETE FROM expenses
+        WHERE id = ${expenseId} AND user_id = ${currentUser.id}
+        RETURNING id
+      `;
+    }
 
     if (result.length === 0) {
       return NextResponse.json(

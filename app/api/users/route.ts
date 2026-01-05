@@ -35,24 +35,43 @@ export async function GET() {
   try {
     const currentUser = await getCurrentUser();
 
-    if (!currentUser || currentUser.role !== 'Admin') {
+    if (!currentUser) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }
       );
     }
 
-    const users = await sql`
-      SELECT
-        id,
-        name,
-        email,
-        role,
-        created_at as "createdAt",
-        billing_rate as "billingRate"
-      FROM users
-      ORDER BY created_at DESC
-    `;
+    let users;
+
+    if (currentUser.role === 'Admin') {
+      // Admins can see all users
+      users = await sql`
+        SELECT
+          id,
+          name,
+          email,
+          role,
+          created_at as "createdAt",
+          billing_rate as "billingRate"
+        FROM users
+        ORDER BY created_at DESC
+      `;
+    } else {
+      // Non-admins can only see non-admin and non-accountant users
+      users = await sql`
+        SELECT
+          id,
+          name,
+          email,
+          role,
+          created_at as "createdAt",
+          billing_rate as "billingRate"
+        FROM users
+        WHERE role NOT IN ('Admin', 'Accountant')
+        ORDER BY created_at DESC
+      `;
+    }
 
     return NextResponse.json(users);
   } catch (error) {
@@ -85,7 +104,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!['Admin', 'Manager', 'Designer'].includes(role)) {
+    if (!['Admin', 'Manager', 'Designer', 'Accountant'].includes(role)) {
       return NextResponse.json(
         { error: 'Invalid role' },
         { status: 400 }

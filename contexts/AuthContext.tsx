@@ -7,7 +7,7 @@ interface User {
   id: number;
   name: string;
   email: string;
-  role: 'Admin' | 'Manager' | 'Designer';
+  role: 'Admin' | 'Manager' | 'Designer' | 'Accountant';
   sidebarOpen?: boolean;
 }
 
@@ -67,14 +67,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+
+      if (!response.ok) {
+        throw new Error('Logout request failed');
+      }
+
       setUser(null);
       router.push('/login');
       router.refresh();
     } catch (error) {
       console.error('Logout failed:', error);
+      // Even if the request fails, clear local state and redirect
+      setUser(null);
+      router.push('/login');
+      router.refresh();
     }
   };
 

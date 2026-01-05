@@ -42,21 +42,45 @@ export async function GET(request: Request) {
     }
 
     // Get all users with their planning display settings for the current user
-    const usersWithSettings = await sql`
-      SELECT
-        u.id,
-        u.name,
-        u.email,
-        u.role,
-        u.billing_rate as "billingRate",
-        COALESCE(puds.visible, true) as visible,
-        COALESCE(puds.display_order, 999) as "order"
-      FROM users u
-      LEFT JOIN planning_user_display_settings puds
-        ON u.id = puds.target_user_id
-        AND puds.user_id = ${currentUser.id}
-      ORDER BY COALESCE(puds.display_order, 999), u.id
-    `;
+    // Hide admin users from non-admin users
+    let usersWithSettings;
+
+    if (currentUser.role === 'Admin') {
+      // Admins can see all users
+      usersWithSettings = await sql`
+        SELECT
+          u.id,
+          u.name,
+          u.email,
+          u.role,
+          u.billing_rate as "billingRate",
+          COALESCE(puds.visible, true) as visible,
+          COALESCE(puds.display_order, 999) as "order"
+        FROM users u
+        LEFT JOIN planning_user_display_settings puds
+          ON u.id = puds.target_user_id
+          AND puds.user_id = ${currentUser.id}
+        ORDER BY COALESCE(puds.display_order, 999), u.id
+      `;
+    } else {
+      // Non-admins can only see non-admin and non-accountant users
+      usersWithSettings = await sql`
+        SELECT
+          u.id,
+          u.name,
+          u.email,
+          u.role,
+          u.billing_rate as "billingRate",
+          COALESCE(puds.visible, true) as visible,
+          COALESCE(puds.display_order, 999) as "order"
+        FROM users u
+        LEFT JOIN planning_user_display_settings puds
+          ON u.id = puds.target_user_id
+          AND puds.user_id = ${currentUser.id}
+        WHERE u.role NOT IN ('Admin', 'Accountant')
+        ORDER BY COALESCE(puds.display_order, 999), u.id
+      `;
+    }
 
     return NextResponse.json(usersWithSettings);
   } catch (error) {

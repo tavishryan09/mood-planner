@@ -38,6 +38,23 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
+  // Accountant role restriction - only allow access to accounting page and related API routes
+  if (payload.role === 'Accountant') {
+    const isAccountingPage = pathname === '/accounting' || pathname.startsWith('/accounting/');
+    const isAccountingApi = pathname.startsWith('/api/expenses') ||
+                           pathname.startsWith('/api/projects') ||
+                           pathname.startsWith('/api/my-projects') ||
+                           pathname.startsWith('/api/clients') ||
+                           pathname.startsWith('/api/categories') ||
+                           pathname.startsWith('/api/user-preferences');
+
+    if (!isAccountingPage && !isAccountingApi) {
+      // Redirect Accountants to accounting page if they try to access other routes
+      const accountingUrl = new URL('/accounting', request.url);
+      return NextResponse.redirect(accountingUrl);
+    }
+  }
+
   // Allow access to protected routes
   return NextResponse.next();
 }

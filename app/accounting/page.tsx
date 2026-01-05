@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import CalendarDatePicker from '@/components/CalendarDatePicker';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Project {
   id: number;
@@ -14,6 +15,8 @@ interface Project {
 
 interface Expense {
   id: number;
+  userId?: number;
+  userName?: string;
   expenseDate: string;
   category: string;
   description: string;
@@ -29,6 +32,9 @@ interface Expense {
 }
 
 export default function Billing() {
+  const { user } = useAuth();
+  const isAccountant = user?.role === 'Accountant';
+
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -316,6 +322,7 @@ export default function Billing() {
                     <thead>
                       <tr>
                         <th>Date</th>
+                        {isAccountant && <th>User</th>}
                         <th>Description</th>
                         <th>Category</th>
                         <th>Project</th>
@@ -329,6 +336,11 @@ export default function Billing() {
                       {expenses.map((expense) => (
                         <tr key={expense.id} className="hover">
                           <td>{formatDate(expense.expenseDate)}</td>
+                          {isAccountant && (
+                            <td>
+                              <div className="text-sm font-medium">{expense.userName || 'Unknown'}</div>
+                            </td>
+                          )}
                           <td>
                             <div className="font-medium">{expense.description}</div>
                             {expense.notes && (

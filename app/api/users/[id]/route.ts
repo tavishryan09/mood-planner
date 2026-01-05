@@ -56,7 +56,7 @@ export async function PUT(
       );
     }
 
-    if (!['Admin', 'Manager', 'Designer'].includes(role)) {
+    if (!['Admin', 'Manager', 'Designer', 'Accountant'].includes(role)) {
       return NextResponse.json(
         { error: 'Invalid role' },
         { status: 400 }

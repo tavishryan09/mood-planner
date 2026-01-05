@@ -2,6 +2,7 @@
 
 import Sidebar from '@/components/Sidebar';
 import { useEffect, useState } from 'react';
+import { formatDateLocal } from '@/lib/date-utils';
 
 interface PlanningTask {
   id: number;
@@ -88,7 +89,8 @@ export default function Home() {
     const fetchTasksForDate = async () => {
       setLoading(true);
       try {
-        const dateStr = selectedDate.toISOString().split('T')[0];
+        // Format date in local timezone to avoid UTC conversion issues
+        const dateStr = formatDateLocal(selectedDate);
 
         // Fetch tasks for selected date
         const tasksRes = await fetch(`/api/planning-tasks?startDate=${dateStr}&endDate=${dateStr}`);
@@ -113,61 +115,47 @@ export default function Home() {
     fetchTasksForDate();
   }, [selectedDate]);
 
+  // Batch all initial API calls in parallel
   useEffect(() => {
-    const fetchMyProjects = async () => {
+    const fetchAllDashboardData = async () => {
       setProjectsLoading(true);
-      try {
-        const url = showProjectsWithNoTasks
-          ? '/api/my-projects?includeNoTasks=true'
-          : '/api/my-projects';
-        const response = await fetch(url);
-        if (response.ok) {
-          const projects = await response.json();
-          setMyProjects(projects);
-        }
-      } catch (error) {
-        console.error('Error fetching my projects:', error);
-      } finally {
-        setProjectsLoading(false);
-      }
-    };
-
-    fetchMyProjects();
-  }, [showProjectsWithNoTasks]);
-
-  useEffect(() => {
-    const fetchUpcomingTasks = async () => {
       setTasksLoading(true);
-      try {
-        const response = await fetch('/api/my-upcoming-tasks?limit=10');
-        if (response.ok) {
-          const tasks = await response.json();
-          setUpcomingTasks(tasks);
-        }
-      } catch (error) {
-        console.error('Error fetching upcoming tasks:', error);
-      } finally {
-        setTasksLoading(false);
-      }
-    };
-
-    fetchUpcomingTasks();
-  }, []);
-
-  useEffect(() => {
-    const fetchUpcomingMilestones = async () => {
       setMilestonesLoading(true);
+
       try {
-        // Fetch milestones from today onwards
+        // Prepare all fetch promises
         const today = new Date().toISOString().split('T')[0];
         const endDate = new Date();
-        endDate.setDate(endDate.getDate() + 90); // Next 90 days
+        endDate.setDate(endDate.getDate() + 90);
         const endDateStr = endDate.toISOString().split('T')[0];
 
-        const response = await fetch(`/api/milestone-tasks?startDate=${today}&endDate=${endDateStr}`);
-        if (response.ok) {
-          const milestones = await response.json();
-          // Sort by date and limit to 10
+        const projectsUrl = showProjectsWithNoTasks
+          ? '/api/my-projects?includeNoTasks=true'
+          : '/api/my-projects';
+
+        // Execute all fetches in parallel
+        const [projectsRes, tasksRes, milestonesRes, widgetSettingsRes] = await Promise.all([
+          fetch(projectsUrl),
+          fetch('/api/my-upcoming-tasks?limit=10'),
+          fetch(`/api/milestone-tasks?startDate=${today}&endDate=${endDateStr}`),
+          fetch('/api/dashboard-widget-settings')
+        ]);
+
+        // Process projects
+        if (projectsRes.ok) {
+          const projects = await projectsRes.json();
+          setMyProjects(projects);
+        }
+
+        // Process tasks
+        if (tasksRes.ok) {
+          const tasks = await tasksRes.json();
+          setUpcomingTasks(tasks);
+        }
+
+        // Process milestones
+        if (milestonesRes.ok) {
+          const milestones = await milestonesRes.json();
           const sortedMilestones = milestones
             .sort((a: MilestoneTask, b: MilestoneTask) =>
               new Date(a.taskDate).getTime() - new Date(b.taskDate).getTime()
@@ -175,22 +163,10 @@ export default function Home() {
             .slice(0, 10);
           setUpcomingMilestones(sortedMilestones);
         }
-      } catch (error) {
-        console.error('Error fetching upcoming milestones:', error);
-      } finally {
-        setMilestonesLoading(false);
-      }
-    };
 
-    fetchUpcomingMilestones();
-  }, []);
-
-  useEffect(() => {
-    const fetchWidgetSettings = async () => {
-      try {
-        const response = await fetch('/api/dashboard-widget-settings');
-        if (response.ok) {
-          const data = await response.json();
+        // Process widget settings
+        if (widgetSettingsRes.ok) {
+          const data = await widgetSettingsRes.json();
           if (data.widgets && data.widgets.length > 0) {
             setWidgets(data.widgets);
           }
@@ -199,12 +175,16 @@ export default function Home() {
           }
         }
       } catch (error) {
-        console.error('Error fetching widget settings:', error);
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setProjectsLoading(false);
+        setTasksLoading(false);
+        setMilestonesLoading(false);
       }
     };
 
-    fetchWidgetSettings();
-  }, []);
+    fetchAllDashboardData();
+  }, [showProjectsWithNoTasks]);
 
 
   const getTasksByUser = (userId: number) => {

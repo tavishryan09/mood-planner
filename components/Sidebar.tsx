@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
@@ -15,6 +15,7 @@ interface SidebarProps {
 export default function Sidebar({ children, title = "New Mood", action }: SidebarProps) {
   const { user, logout, updateSidebarPreference, loading } = useAuth();
   const pathname = usePathname();
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use user's preference directly, no local state
   const isOpen = user?.sidebarOpen || false;
@@ -24,18 +25,57 @@ export default function Sidebar({ children, title = "New Mood", action }: Sideba
     updateSidebarPreference(newState);
   };
 
-  // Close sidebar on mobile when route changes
+  // Debounced close sidebar on mobile when route changes
   useEffect(() => {
     if (isOpen && window.innerWidth < 1024) {
-      updateSidebarPreference(false);
+      // Clear any pending updates
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+
+      // Debounce the preference update by 300ms
+      updateTimeoutRef.current = setTimeout(() => {
+        updateSidebarPreference(false);
+      }, 300);
     }
+
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
   }, [pathname]);
 
-  // Don't render the drawer until user is loaded to prevent animation
+  // Render children immediately even while loading auth
+  // Show placeholder avatar until user loads
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="drawer lg:drawer-open">
+        <input
+          id="my-drawer-4"
+          type="checkbox"
+          className="drawer-toggle"
+          checked={false}
+          readOnly
+        />
+        <div className="drawer-content">
+          <nav className="navbar w-full bg-base-300">
+            <div className="flex-none lg:hidden">
+              <label htmlFor="my-drawer-4" className="btn btn-square btn-ghost">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-6 h-6 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+              </label>
+            </div>
+            <div className="flex-1 px-4">{title}</div>
+            {action && <div className="flex-none px-4">{action}</div>}
+          </nav>
+          {children}
+        </div>
+        <div className="drawer-side is-drawer-close:overflow-visible z-50">
+          <label htmlFor="my-drawer-4" aria-label="close sidebar" className="drawer-overlay"></label>
+          <div className="flex min-h-full flex-col items-start bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64">
+            <div className="skeleton h-16 w-full"></div>
+          </div>
+        </div>
       </div>
     );
   }

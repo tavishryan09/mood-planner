@@ -3,9 +3,7 @@ import type { NextRequest } from 'next/server';
 import { getCookieName } from './lib/session';
 import { verifyToken } from './lib/auth';
 
-export const runtime = 'nodejs';
-
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow access to login page, auth API routes, and health check

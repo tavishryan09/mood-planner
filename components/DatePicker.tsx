@@ -160,7 +160,7 @@ export default function DatePicker({ value, onChange, label, required, className
         </button>
 
         {showCalendar && (
-          <div className="absolute z-50 mt-2 p-4 bg-base-100 border border-base-300 rounded-lg shadow-lg w-80">
+          <div className="absolute z-[100] mt-2 p-4 bg-base-100 border border-base-300 rounded-lg shadow-xl w-80 left-0">
             {/* Month navigation */}
             <div className="flex items-center justify-between mb-4">
               <button

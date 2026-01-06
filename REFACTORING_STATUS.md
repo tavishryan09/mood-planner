@@ -1,8 +1,8 @@
 # Refactoring Status & Quick Reference
 
 **Last Updated**: 2026-01-06
-**Status**: Phase 1 Complete - Infrastructure Ready
-**Next Phase**: Modal Extraction
+**Status**: Phase 2 In Progress - Modal Extraction
+**Next Phase**: Extract remaining UserSettingsModal
 
 ---
 
@@ -10,7 +10,36 @@
 
 ### Phase 1: Infrastructure & Quick Wins (COMPLETE)
 
-#### 1. Lazy Loading Setup
+### Phase 2: Modal Extraction (IN PROGRESS)
+
+#### 1. TaskModal Component Extracted ✅
+**File Created**: `components/planning/TaskModal.tsx` (396 lines)
+
+Extracted complete TaskModal including:
+- Task type selection (Project Task, Internal, PTO, Out of Office, Unavailable)
+- Internal task type management with add new modal
+- Project selection
+- Task description
+- Repeat task functionality (daily/weekly/monthly with date ranges)
+- All form validation and state management
+
+**Impact**: Reduced planning page by 300+ lines, improved maintainability
+
+#### 2. MilestoneModal Component Extracted ✅
+**File Created**: `components/planning/MilestoneModal.tsx` (144 lines)
+
+Extracted complete MilestoneModal including:
+- Milestone type selection (Deadline, Internal Deadline, Milestone)
+- Project selection
+- Description field
+- Save/Delete handlers
+
+**Impact**: Reduced planning page by additional 90+ lines
+
+#### Current Planning Page Size: 2,409 lines (down from 2,798)
+**Total Reduction**: 389 lines extracted to reusable components
+
+#### 3. Lazy Loading Setup
 **File Modified**: `app/planning/page.tsx`
 
 Added dynamic imports for future modal components:
@@ -67,7 +96,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 
 | File | Lines | Target | Status |
 |------|-------|--------|--------|
-| app/planning/page.tsx | 2,798 | 400 | 🔴 Needs refactoring |
+| app/planning/page.tsx | 2,409 (was 2,798) | 400 | 🟡 In progress (-389 lines) |
 | app/projects/page.tsx | 1,726 | 400 | 🔴 Needs refactoring |
 | app/projects/[slug]/page.tsx | 1,570 | 350 | 🔴 Needs refactoring |
 | app/page.tsx | 906 | 300 | 🟡 Needs refactoring |
@@ -79,10 +108,12 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 **Created**:
 - ✅ Shared Icons (15 components)
 - ✅ Loading States (6 components)
+- ✅ TaskModal (396 lines) - Planning page modal
+- ✅ MilestoneModal (144 lines) - Planning page modal
 
 **To Extract** (Priority Order):
-1. Planning TaskModal (~450 lines)
-2. Planning MilestoneModal (~250 lines)
+1. ✅ ~~Planning TaskModal (~450 lines)~~ **DONE**
+2. ✅ ~~Planning MilestoneModal (~250 lines)~~ **DONE**
 3. Planning UserSettingsModal (~200 lines)
 4. Planning Calendar Grid (~600 lines)
 5. Projects Table Components (~400 lines)

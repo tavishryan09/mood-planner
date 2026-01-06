@@ -1,7 +1,25 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd project management features with bidirectional sync\n\n- Implement two-way sync between milestone_tasks and source tables \\(projects, project_milestones\\)\n- Add API routes for categories, project milestones, and project tasks\n- Create project detail dashboard page with task management\n- Add database schemas for project tasks, milestones, and categories\n- Add utility scripts for database migrations and syncing\n- Add view button to projects table for quick dashboard access\n- Update project API to handle deadline syncing with milestone_tasks\n- Install Vercel CLI for deployment\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(npx vercel --prod)",
+      "Bash(npm run build:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(psql:*)",
+      "Bash(npx tsx:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd Accountant user role with full expense management access\n\n- Add Accountant role to database schema and TypeScript types\n- Restrict Accountants to accounting page only via middleware\n- Hide Accountants from non-Admin users in all user lists\n- Grant Accountants full access to view/edit/delete all user expenses\n- Display user names on expenses for Accountants\n- Make billing rates optional for Accountants and Admins\n- Update sidebar to show only accounting menu for Accountants\n- Add migration script for database role constraint update\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix Next.js metadata themeColor deprecation warnings\n\n- Move themeColor from metadata export to viewport export\n- Resolves build warnings across all pages\n- Compliant with Next.js 16.1.1 viewport API\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nMigrate from deprecated middleware to proxy pattern\n\n- Rename middleware.ts to proxy.ts\n- Change function export to default export named ''proxy''\n- Remove runtime config as proxy always runs on Node.js\n- Update service worker to properly handle non-GET requests\n- Fix logout functionality with better error handling\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(sips:*)",
+      "Bash(git commit:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(ls:*)"
     ]
   }
 }

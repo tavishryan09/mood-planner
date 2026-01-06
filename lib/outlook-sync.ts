@@ -224,12 +224,13 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
     }
 
     // Get all users who have Outlook connected OR who already have an event
+    // Exclude admin users from milestone sync
     const userIdsWithEvents = Object.keys(existingEventIdMap).map(Number);
     const connectedUsers = await sql`
       SELECT id, outlook_connected
       FROM users
-      WHERE outlook_connected = true
-        OR id = ANY(${userIdsWithEvents})
+      WHERE (outlook_connected = true OR id = ANY(${userIdsWithEvents}))
+        AND role != 'Admin'
     `;
 
     if (connectedUsers.length === 0) {

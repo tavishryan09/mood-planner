@@ -4,11 +4,8 @@ import Sidebar from '@/components/Sidebar';
 import CalendarDatePicker from '@/components/CalendarDatePicker';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-
-// TODO: Add lazy loading for modals once components are extracted
-// import dynamic from 'next/dynamic';
-// const TaskModal = dynamic(() => import('@/components/planning/TaskModal'));
-// const MilestoneModal = dynamic(() => import('@/components/planning/MilestoneModal'));
+import TaskModal from '@/components/planning/TaskModal';
+import MilestoneModal from '@/components/planning/MilestoneModal';
 
 interface User {
   id: number;
@@ -92,8 +89,6 @@ export default function Planning() {
   const [isCutTask, setIsCutTask] = useState(false); // Track if copied task was cut
   const [isLoading, setIsLoading] = useState(true);
   const [internalTaskTypes, setInternalTaskTypes] = useState<InternalTaskType[]>([]);
-  const [showNewInternalTaskTypeModal, setShowNewInternalTaskTypeModal] = useState(false);
-  const [newInternalTaskTypeName, setNewInternalTaskTypeName] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [outlookConnected, setOutlookConnected] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
@@ -2385,419 +2380,30 @@ export default function Planning() {
       )}
 
       {/* Task Modal */}
-      {showTaskModal && (
-        <dialog className="modal modal-open">
-          <div className="modal-box overflow-visible">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => setShowTaskModal(false)}
-            >
-              ✕
-            </button>
-            <h3 className="font-bold text-lg mb-4">
-              {editingTask ? 'Edit Planning Task' : 'New Planning Task'}
-            </h3>
-
-            <div className="space-y-4">
-              {/* Task Type */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Task Type</span>
-                </label>
-                <select
-                  className="select select-bordered w-full"
-                  value={taskFormData.taskType}
-                  onChange={(e) =>
-                    setTaskFormData({
-                      ...taskFormData,
-                      taskType: e.target.value as 'Project Task' | 'Out of Office' | 'Unavailable' | 'PTO' | 'Internal',
-                      projectId: (e.target.value !== 'Project Task' && e.target.value !== 'Out of Office') ? '' : taskFormData.projectId,
-                      internalTaskTypeId: e.target.value !== 'Internal' ? '' : taskFormData.internalTaskTypeId
-                    })
-                  }
-                >
-                  <option value="Project Task">Project Task</option>
-                  <option value="Out of Office">Out of Office</option>
-                  <option value="Unavailable">Unavailable</option>
-                  <option value="PTO">PTO</option>
-                  <option value="Internal">Internal</option>
-                </select>
-              </div>
-
-              {/* Internal Task Type (for Internal tasks) */}
-              {taskFormData.taskType === 'Internal' && (
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Internal Task Type</span>
-                  </label>
-                  <div className="flex gap-2">
-                    <select
-                      className="select select-bordered flex-1"
-                      value={taskFormData.internalTaskTypeId}
-                      onChange={(e) =>
-                        setTaskFormData({ ...taskFormData, internalTaskTypeId: e.target.value })
-                      }
-                      required
-                    >
-                      <option value="">Select internal task type</option>
-                      {internalTaskTypes.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="btn btn-square btn-outline"
-                      onClick={() => setShowNewInternalTaskTypeModal(true)}
-                      title="Add new internal task type"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Project (for Project Task and Out of Office) */}
-              {(taskFormData.taskType === 'Project Task' || taskFormData.taskType === 'Out of Office') && (
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Project{taskFormData.taskType === 'Out of Office' ? ' (optional)' : ''}</span>
-                  </label>
-                  <select
-                    className="select select-bordered w-full"
-                    value={taskFormData.projectId}
-                    onChange={(e) =>
-                      setTaskFormData({ ...taskFormData, projectId: e.target.value })
-                    }
-                    required={taskFormData.taskType === 'Project Task'}
-                  >
-                    <option value="">Select a project</option>
-                    {projects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.commonName || project.projectName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Task Description */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Description (optional)</span>
-                </label>
-                <textarea
-                  className="textarea textarea-bordered w-full"
-                  rows={3}
-                  value={taskFormData.taskDescription}
-                  onChange={(e) =>
-                    setTaskFormData({ ...taskFormData, taskDescription: e.target.value })
-                  }
-                  placeholder="Enter task description..."
-                />
-              </div>
-
-              {/* Repeat Options */}
-              <div className="form-control">
-                <label className="label cursor-pointer justify-start gap-2">
-                  <input
-                    type="checkbox"
-                    className="checkbox"
-                    checked={taskFormData.repeatEnabled}
-                    onChange={(e) =>
-                      setTaskFormData({ ...taskFormData, repeatEnabled: e.target.checked })
-                    }
-                  />
-                  <span className="label-text">Repeat this task{editingTask ? ' (creates new tasks based on this one)' : ''}</span>
-                </label>
-              </div>
-
-              {taskFormData.repeatEnabled && (
-                <>
-                  {/* Repeat Type */}
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">Repeat Frequency</span>
-                        </label>
-                        <select
-                          className="select select-bordered w-full"
-                          value={taskFormData.repeatType}
-                          onChange={(e) =>
-                            setTaskFormData({
-                              ...taskFormData,
-                              repeatType: e.target.value as 'daily' | 'weekly' | 'monthly',
-                              repeatWeekDays: e.target.value === 'weekly' ? taskFormData.repeatWeekDays : [],
-                              repeatMonthDates: e.target.value === 'monthly' ? taskFormData.repeatMonthDates : []
-                            })
-                          }
-                        >
-                          <option value="daily">Daily</option>
-                          <option value="weekly">Weekly</option>
-                          <option value="monthly">Monthly</option>
-                        </select>
-                      </div>
-
-                      {/* Weekly: Select Days */}
-                      {taskFormData.repeatType === 'weekly' && (
-                        <div className="form-control">
-                          <label className="label">
-                            <span className="label-text">Repeat on days</span>
-                          </label>
-                          <div className="flex flex-wrap gap-2">
-                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                              <label key={index} className="label cursor-pointer gap-2 flex-none">
-                                <input
-                                  type="checkbox"
-                                  className="checkbox checkbox-sm"
-                                  checked={taskFormData.repeatWeekDays.includes(index)}
-                                  onChange={(e) => {
-                                    const newDays = e.target.checked
-                                      ? [...taskFormData.repeatWeekDays, index].sort()
-                                      : taskFormData.repeatWeekDays.filter(d => d !== index);
-                                    setTaskFormData({ ...taskFormData, repeatWeekDays: newDays });
-                                  }}
-                                />
-                                <span className="label-text text-sm">{day}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Monthly: Select Dates */}
-                      {taskFormData.repeatType === 'monthly' && (
-                        <div className="form-control">
-                          <label className="label">
-                            <span className="label-text">Repeat on dates (day of month)</span>
-                          </label>
-                          <div className="grid grid-cols-7 gap-1">
-                            {Array.from({ length: 31 }, (_, i) => i + 1).map((date) => (
-                              <label key={date} className="label cursor-pointer justify-center p-1 flex-col gap-0">
-                                <input
-                                  type="checkbox"
-                                  className="checkbox checkbox-xs"
-                                  checked={taskFormData.repeatMonthDates.includes(date)}
-                                  onChange={(e) => {
-                                    const newDates = e.target.checked
-                                      ? [...taskFormData.repeatMonthDates, date].sort((a, b) => a - b)
-                                      : taskFormData.repeatMonthDates.filter(d => d !== date);
-                                    setTaskFormData({ ...taskFormData, repeatMonthDates: newDates });
-                                  }}
-                                />
-                                <span className="label-text text-xs">{date}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Repeat End Date */}
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">Repeat until (optional)</span>
-                        </label>
-                        <CalendarDatePicker
-                          value={taskFormData.repeatEndDate}
-                          onChange={(date) =>
-                            setTaskFormData({ ...taskFormData, repeatEndDate: date })
-                          }
-                          id="repeat-end-date"
-                          placeholder="Select end date"
-                        />
-                      </div>
-                </>
-              )}
-            </div>
-
-            <div className="modal-action">
-              {editingTask && (
-                <button className="btn btn-error mr-auto" onClick={handleTaskDelete}>
-                  Delete
-                </button>
-              )}
-              <button className="btn" onClick={() => setShowTaskModal(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleTaskSave}>
-                Save
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setShowTaskModal(false)}>close</button>
-          </form>
-        </dialog>
-      )}
-
-      {/* Add New Internal Task Type Modal */}
-      {showNewInternalTaskTypeModal && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">Add New Internal Task Type</h3>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Task Type Name</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered"
-                value={newInternalTaskTypeName}
-                onChange={(e) => setNewInternalTaskTypeName(e.target.value)}
-                placeholder="e.g., Research, Development"
-                autoFocus
-              />
-            </div>
-            <div className="modal-action">
-              <button
-                className="btn"
-                onClick={() => {
-                  setShowNewInternalTaskTypeModal(false);
-                  setNewInternalTaskTypeName('');
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={async () => {
-                  if (!newInternalTaskTypeName.trim()) {
-                    alert('Please enter a task type name');
-                    return;
-                  }
-
-                  try {
-                    const response = await fetch('/api/internal-task-types', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ name: newInternalTaskTypeName.trim() })
-                    });
-
-                    if (response.ok) {
-                      const newType = await response.json();
-                      setInternalTaskTypes([...internalTaskTypes, newType]);
-                      setTaskFormData({ ...taskFormData, internalTaskTypeId: newType.id.toString() });
-                      setShowNewInternalTaskTypeModal(false);
-                      setNewInternalTaskTypeName('');
-                    } else {
-                      const error = await response.json();
-                      alert(error.error || 'Failed to create internal task type');
-                    }
-                  } catch (error) {
-                    console.error('Error creating internal task type:', error);
-                    alert('An error occurred while creating the task type');
-                  }
-                }}
-              >
-                Add
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => {
-              setShowNewInternalTaskTypeModal(false);
-              setNewInternalTaskTypeName('');
-            }}>close</button>
-          </form>
-        </dialog>
-      )}
+      <TaskModal
+        show={showTaskModal}
+        onClose={() => setShowTaskModal(false)}
+        onSave={handleTaskSave}
+        onDelete={editingTask ? handleTaskDelete : undefined}
+        editingTask={editingTask}
+        projects={projects}
+        internalTaskTypes={internalTaskTypes}
+        formData={taskFormData}
+        setFormData={setTaskFormData}
+        onAddInternalTaskType={(newType) => setInternalTaskTypes([...internalTaskTypes, newType])}
+      />
 
       {/* Milestone Modal */}
-      {showMilestoneModal && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => setShowMilestoneModal(false)}
-            >
-              ✕
-            </button>
-            <h3 className="font-bold text-lg mb-4">
-              {editingMilestone ? 'Edit Milestone/Deadline' : 'New Milestone/Deadline'}
-            </h3>
-
-            <div className="space-y-4">
-              {/* Task Type */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Type</span>
-                </label>
-                <select
-                  className="select select-bordered w-full"
-                  value={milestoneFormData.taskType}
-                  onChange={(e) =>
-                    setMilestoneFormData({
-                      ...milestoneFormData,
-                      taskType: e.target.value as 'Deadline' | 'Internal Deadline' | 'Milestone'
-                    })
-                  }
-                >
-                  <option value="Deadline">Deadline</option>
-                  <option value="Internal Deadline">Internal Deadline</option>
-                  <option value="Milestone">Milestone</option>
-                </select>
-              </div>
-
-              {/* Project (optional) */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Project (optional)</span>
-                </label>
-                <select
-                  className="select select-bordered w-full"
-                  value={milestoneFormData.projectId}
-                  onChange={(e) =>
-                    setMilestoneFormData({ ...milestoneFormData, projectId: e.target.value })
-                  }
-                >
-                  <option value="">Select a project</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.commonName || project.projectName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Description */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Description (optional)</span>
-                </label>
-                <textarea
-                  className="textarea textarea-bordered w-full"
-                  rows={3}
-                  value={milestoneFormData.taskDescription}
-                  onChange={(e) =>
-                    setMilestoneFormData({ ...milestoneFormData, taskDescription: e.target.value })
-                  }
-                  placeholder="Enter description..."
-                />
-              </div>
-            </div>
-
-            <div className="modal-action">
-              {editingMilestone && (
-                <button className="btn btn-error mr-auto" onClick={handleMilestoneDelete}>
-                  Delete
-                </button>
-              )}
-              <button className="btn" onClick={() => setShowMilestoneModal(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleMilestoneSave}>
-                Save
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setShowMilestoneModal(false)}>close</button>
-          </form>
-        </dialog>
-      )}
+      <MilestoneModal
+        show={showMilestoneModal}
+        onClose={() => setShowMilestoneModal(false)}
+        onSave={handleMilestoneSave}
+        onDelete={editingMilestone ? handleMilestoneDelete : undefined}
+        editingMilestone={editingMilestone}
+        projects={projects}
+        formData={milestoneFormData}
+        setFormData={setMilestoneFormData}
+      />
     </Sidebar>
   );
 }

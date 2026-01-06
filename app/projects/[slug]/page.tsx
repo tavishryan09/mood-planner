@@ -341,13 +341,7 @@ export default function ProjectDetails() {
                           <div className="card-body p-4">
                             <div className="flex items-start justify-between">
                               <h4 className="font-semibold text-sm">{milestone.milestoneName}</h4>
-                              <span className={`badge badge-sm ${
-                                milestone.status === 'completed' ? 'badge-success' :
-                                milestone.status === 'missed' ? 'badge-error' :
-                                'badge-warning'
-                              }`}>
-                                {milestone.status}
-                              </span>
+                              <span className="badge badge-sm badge-secondary">milestone</span>
                             </div>
                             {milestone.description && (
                               <p className="text-xs opacity-60 mt-1">{milestone.description}</p>

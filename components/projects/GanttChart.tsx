@@ -72,23 +72,105 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
   const todayPercent = (todayOffset / totalDays) * 100;
   const showTodayMarker = todayPercent >= 0 && todayPercent <= 100;
 
+  // Calculate deadline positions
+  const getDeadlinePercent = (deadlineStr: string) => {
+    const deadlineDate = new Date(deadlineStr);
+    deadlineDate.setHours(0, 0, 0, 0);
+    const deadlineOffset = Math.ceil((deadlineDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
+    return (deadlineOffset / totalDays) * 100;
+  };
+
+  const projectDeadlinePercent = project?.deadline ? getDeadlinePercent(project.deadline) : null;
+  const internalDeadlinePercent = project?.internalDeadline ? getDeadlinePercent(project.internalDeadline) : null;
+  const showProjectDeadline = projectDeadlinePercent !== null && projectDeadlinePercent >= 0 && projectDeadlinePercent <= 100;
+  const showInternalDeadline = internalDeadlinePercent !== null && internalDeadlinePercent >= 0 && internalDeadlinePercent <= 100;
+
+  // Calculate milestone positions
+  const milestonePositions = milestones.map(milestone => {
+    const percent = getDeadlinePercent(milestone.dueDate);
+    return {
+      ...milestone,
+      percent,
+      show: percent >= 0 && percent <= 100
+    };
+  }).filter(m => m.show);
+
   return (
     <div className="mb-6">
       <h3 className="text-sm font-semibold mb-3 opacity-70">Gantt Chart Timeline</h3>
       <div className="overflow-x-auto">
         <div className="min-w-[800px]">
           {/* Timeline Header */}
-          <div className="flex border-b border-base-300 pb-2 mb-2">
+          <div className="flex border-b border-base-300 pb-2 mb-2 pt-6">
             <div className="w-48 font-semibold text-sm">Task</div>
-            <div className="flex-1 flex justify-between text-xs opacity-60">
-              {timelineLabels.map((label, idx) => (
-                <span key={idx}>{label}</span>
+            <div className="flex-1 relative">
+              {/* Milestone indicators above timeline */}
+              {milestonePositions.map(milestone => (
+                <div
+                  key={`milestone-label-${milestone.id}`}
+                  className="absolute -top-6 h-6 flex items-center justify-center"
+                  style={{ left: `${milestone.percent}%`, transform: 'translateX(-50%)' }}
+                >
+                  <span className="text-[10px] font-bold text-secondary whitespace-nowrap">{milestone.milestoneName}</span>
+                </div>
               ))}
+
+              {/* Deadline indicators above timeline */}
+              {showProjectDeadline && (
+                <div
+                  className="absolute -top-6 h-6 flex items-center justify-center"
+                  style={{ left: `${projectDeadlinePercent}%`, transform: 'translateX(-50%)' }}
+                >
+                  <span className="text-[10px] font-bold text-error whitespace-nowrap">Deadline</span>
+                </div>
+              )}
+              {showInternalDeadline && (
+                <div
+                  className="absolute -top-6 h-6 flex items-center justify-center"
+                  style={{ left: `${internalDeadlinePercent}%`, transform: 'translateX(-50%)' }}
+                >
+                  <span className="text-[10px] font-bold text-warning whitespace-nowrap">Internal</span>
+                </div>
+              )}
+
+              <div className="flex justify-between text-xs opacity-60">
+                {timelineLabels.map((label, idx) => (
+                  <span key={idx}>{label}</span>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Task Rows */}
-          {tasks.map((task, index) => {
+          {/* Task Rows Container with continuous lines */}
+          <div className="relative">
+            {/* Continuous milestone lines that span all rows */}
+            {milestonePositions.map(milestone => (
+              <div
+                key={`milestone-line-${milestone.id}`}
+                className="absolute top-0 bottom-0 w-px bg-secondary pointer-events-none z-10"
+                style={{ left: `calc(12rem + (100% - 12rem) * ${milestone.percent} / 100)` }}
+                title={`Milestone: ${milestone.milestoneName}`}
+              />
+            ))}
+
+            {/* Continuous deadline lines that span all rows */}
+            {showProjectDeadline && (
+              <div
+                className="absolute top-0 bottom-0 w-px bg-error pointer-events-none z-10"
+                style={{ left: `calc(12rem + (100% - 12rem) * ${projectDeadlinePercent} / 100)` }}
+                title="Project Deadline"
+              />
+            )}
+            {showInternalDeadline && (
+              <div
+                className="absolute top-0 bottom-0 w-px bg-warning pointer-events-none z-10"
+                style={{ left: `calc(12rem + (100% - 12rem) * ${internalDeadlinePercent} / 100)` }}
+                title="Internal Deadline"
+              />
+            )}
+
+            {/* Task Rows */}
+            {tasks.map((task, index) => {
             const taskStart = new Date(task.startDate);
             const taskEnd = new Date(task.endDate);
             const startOffset = Math.ceil((taskStart.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -126,105 +208,6 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
                     />
                   )}
 
-                  {/* Milestone markers */}
-                  {milestones.map((milestone) => {
-                    const milestoneDate = new Date(milestone.dueDate);
-                    milestoneDate.setHours(0, 0, 0, 0);
-                    const milestoneOffset = Math.ceil((milestoneDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
-                    const milestonePercent = (milestoneOffset / totalDays) * 100;
-                    const showMilestone = milestonePercent >= 0 && milestonePercent <= 100;
-
-                    if (!showMilestone) return null;
-
-                    return (
-                      <div key={`milestone-${milestone.id}`}>
-                        {index === 0 && (
-                          <div
-                            className="absolute top-0 bottom-0 w-1 bg-secondary z-10"
-                            style={{ left: `${milestonePercent}%` }}
-                            title={`Milestone: ${milestone.milestoneName}`}
-                          >
-                            <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-secondary whitespace-nowrap">
-                              {milestone.milestoneName}
-                            </div>
-                          </div>
-                        )}
-                        {index > 0 && (
-                          <div
-                            className="absolute top-0 bottom-0 w-1 bg-secondary opacity-50"
-                            style={{ left: `${milestonePercent}%` }}
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  {/* Project deadline marker */}
-                  {project?.deadline && (() => {
-                    const deadlineDate = new Date(project.deadline);
-                    deadlineDate.setHours(0, 0, 0, 0);
-                    const deadlineOffset = Math.ceil((deadlineDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
-                    const deadlinePercent = (deadlineOffset / totalDays) * 100;
-                    const showDeadline = deadlinePercent >= 0 && deadlinePercent <= 100;
-
-                    if (!showDeadline) return null;
-
-                    return (
-                      <div key="deadline">
-                        {index === 0 && (
-                          <div
-                            className="absolute top-0 bottom-0 w-1 bg-error z-10"
-                            style={{ left: `${deadlinePercent}%` }}
-                            title="Project Deadline"
-                          >
-                            <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-error whitespace-nowrap">
-                              Deadline
-                            </div>
-                          </div>
-                        )}
-                        {index > 0 && (
-                          <div
-                            className="absolute top-0 bottom-0 w-1 bg-error opacity-50"
-                            style={{ left: `${deadlinePercent}%` }}
-                          />
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* Internal deadline marker */}
-                  {project?.internalDeadline && (() => {
-                    const internalDeadlineDate = new Date(project.internalDeadline);
-                    internalDeadlineDate.setHours(0, 0, 0, 0);
-                    const internalDeadlineOffset = Math.ceil((internalDeadlineDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
-                    const internalDeadlinePercent = (internalDeadlineOffset / totalDays) * 100;
-                    const showInternalDeadline = internalDeadlinePercent >= 0 && internalDeadlinePercent <= 100;
-
-                    if (!showInternalDeadline) return null;
-
-                    return (
-                      <div key="internal-deadline">
-                        {index === 0 && (
-                          <div
-                            className="absolute top-0 bottom-0 w-1 bg-warning z-10"
-                            style={{ left: `${internalDeadlinePercent}%` }}
-                            title="Internal Deadline"
-                          >
-                            <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-warning whitespace-nowrap">
-                              Internal
-                            </div>
-                          </div>
-                        )}
-                        {index > 0 && (
-                          <div
-                            className="absolute top-0 bottom-0 w-1 bg-warning opacity-50"
-                            style={{ left: `${internalDeadlinePercent}%` }}
-                          />
-                        )}
-                      </div>
-                    );
-                  })()}
-
                   <div
                     className={`absolute h-6 rounded flex items-center px-2 text-xs font-medium text-white ${
                       task.status === 'completed' ? 'bg-success' :
@@ -246,6 +229,7 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     </div>

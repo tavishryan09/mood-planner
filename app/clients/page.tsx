@@ -80,7 +80,7 @@ export default function Clients() {
   } = useClientImportExport(fetchClients);
 
   return (
-    <Sidebar title="Clients">
+    <Sidebar title="Clients" hideNavbar={true}>
       <div className="p-4">
         <div className="card bg-base-100">
           <div className="card-body">
@@ -122,12 +122,11 @@ export default function Clients() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {clients.map((client) => (
+              <div className="space-y-4">
+                {[...clients].sort((a, b) => a.businessName.localeCompare(b.businessName)).map((client) => (
                   <div
                     key={client.id}
-                    className="card bg-base-200 hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => handleEdit(client.id)}
+                    className="card bg-base-200 hover:shadow-lg transition-shadow"
                   >
                     <div className="card-body">
                       <div className="flex items-start gap-4">
@@ -155,6 +154,21 @@ export default function Clients() {
                           {client.phone && (
                             <p className="text-sm opacity-70">{client.phone}</p>
                           )}
+                          {client.businessAddress && (
+                            <p className="text-sm opacity-70 truncate">{client.businessAddress}</p>
+                          )}
+                          {client.website && (
+                            <p className="text-sm opacity-70 truncate">
+                              <a
+                                href={client.website.startsWith('http') ? client.website : `https://${client.website}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="link link-primary"
+                              >
+                                {client.website}
+                              </a>
+                            </p>
+                          )}
                           {client.projects && client.projects.length > 0 && (
                             <div className="mt-2">
                               <span className="badge badge-primary badge-sm">
@@ -163,6 +177,15 @@ export default function Clients() {
                             </div>
                           )}
                         </div>
+                        <button
+                          className="btn btn-ghost btn-sm btn-square"
+                          onClick={() => handleEdit(client.id)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   </div>

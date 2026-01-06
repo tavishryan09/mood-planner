@@ -80,70 +80,59 @@ export default function MilestoneModal({
             </label>
           )}
 
-          {deadlineType === 'milestone' && (
-            <>
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text">Milestone Name *</span>
-                </div>
-                <input
-                  type="text"
-                  className="input input-bordered w-full"
-                  value={milestoneFormData.milestoneName}
-                  onChange={(e) => onFormDataChange({ ...milestoneFormData, milestoneName: e.target.value })}
-                  placeholder="e.g., Launch Beta"
-                />
-              </label>
+          <label className="form-control w-full">
+            <div className="label">
+              <span className="label-text">
+                {deadlineType === 'milestone' ? 'Milestone Name *' :
+                 deadlineType === 'deadline' ? 'Deadline Name' :
+                 'Internal Deadline Name'}
+              </span>
+            </div>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={milestoneFormData.milestoneName}
+              onChange={(e) => onFormDataChange({ ...milestoneFormData, milestoneName: e.target.value })}
+              placeholder={
+                deadlineType === 'milestone' ? 'e.g., Launch Beta' :
+                deadlineType === 'deadline' ? 'e.g., Client Delivery' :
+                'e.g., Internal Review'
+              }
+            />
+          </label>
 
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text">Description</span>
-                </div>
-                <textarea
-                  className="textarea textarea-bordered w-full"
-                  rows={3}
-                  value={milestoneFormData.description}
-                  onChange={(e) => onFormDataChange({ ...milestoneFormData, description: e.target.value })}
-                  placeholder="Optional milestone description"
-                />
-              </label>
-            </>
-          )}
+          <label className="form-control w-full">
+            <div className="label">
+              <span className="label-text">Description</span>
+            </div>
+            <textarea
+              className="textarea textarea-bordered w-full"
+              rows={3}
+              value={milestoneFormData.description}
+              onChange={(e) => onFormDataChange({ ...milestoneFormData, description: e.target.value })}
+              placeholder={
+                deadlineType === 'milestone' ? 'Optional milestone description' :
+                deadlineType === 'deadline' ? 'Optional deadline description' :
+                'Optional internal deadline description'
+              }
+            />
+          </label>
 
-          <div className="grid grid-cols-2 gap-4">
-            <label className="form-control w-full">
-              <div className="label">
-                <span className="label-text">
-                  {deadlineType === 'deadline' ? 'Deadline Date *' :
-                   deadlineType === 'internal-deadline' ? 'Internal Deadline Date *' :
-                   'Due Date *'}
-                </span>
-              </div>
-              <input
-                type="date"
-                className="input input-bordered w-full"
-                value={milestoneFormData.dueDate}
-                onChange={(e) => onFormDataChange({ ...milestoneFormData, dueDate: e.target.value })}
-              />
-            </label>
-
-            {deadlineType === 'milestone' && (
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text">Status</span>
-                </div>
-                <select
-                  className="select select-bordered w-full"
-                  value={milestoneFormData.status}
-                  onChange={(e) => onFormDataChange({ ...milestoneFormData, status: e.target.value as Milestone['status'] })}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="completed">Completed</option>
-                  <option value="missed">Missed</option>
-                </select>
-              </label>
-            )}
-          </div>
+          <label className="form-control w-full">
+            <div className="label">
+              <span className="label-text">
+                {deadlineType === 'deadline' ? 'Deadline Date *' :
+                 deadlineType === 'internal-deadline' ? 'Internal Deadline Date *' :
+                 'Due Date *'}
+              </span>
+            </div>
+            <input
+              type="date"
+              className="input input-bordered w-full"
+              value={milestoneFormData.dueDate}
+              onChange={(e) => onFormDataChange({ ...milestoneFormData, dueDate: e.target.value })}
+            />
+          </label>
         </div>
 
         <div className="modal-action">

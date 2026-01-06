@@ -12,6 +12,8 @@ export default function Billing() {
   const isAccountant = user?.role === 'Accountant';
 
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<{ image: string; description: string } | null>(null);
 
   // Accounting data
   const { projects, expenses, setExpenses, loading } = useAccountingData();
@@ -169,18 +171,11 @@ export default function Billing() {
                               <button
                                 className="btn btn-ghost btn-xs"
                                 onClick={() => {
-                                  // Open receipt in a new window/modal
-                                  const win = window.open();
-                                  if (win) {
-                                    win.document.write(`
-                                      <html>
-                                        <head><title>Receipt - ${expense.description}</title></head>
-                                        <body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#000;">
-                                          <img src="${expense.receiptImage}" style="max-width:100%;max-height:100vh;" />
-                                        </body>
-                                      </html>
-                                    `);
-                                  }
+                                  setSelectedReceipt({
+                                    image: expense.receiptImage!,
+                                    description: expense.description
+                                  });
+                                  setShowReceiptModal(true);
                                 }}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -248,6 +243,41 @@ export default function Billing() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Receipt Image Modal */}
+      {showReceiptModal && selectedReceipt && (
+        <dialog className="modal modal-open">
+          <div className="modal-box max-w-4xl">
+            <button
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+              onClick={() => {
+                setShowReceiptModal(false);
+                setSelectedReceipt(null);
+              }}
+            >
+              ✕
+            </button>
+            <h3 className="font-bold text-lg mb-4">Receipt - {selectedReceipt.description}</h3>
+            <div className="flex justify-center items-center bg-base-300 rounded-lg p-4">
+              <img
+                src={selectedReceipt.image}
+                alt={`Receipt for ${selectedReceipt.description}`}
+                className="max-w-full max-h-[70vh] object-contain"
+              />
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button
+              onClick={() => {
+                setShowReceiptModal(false);
+                setSelectedReceipt(null);
+              }}
+            >
+              close
+            </button>
+          </form>
+        </dialog>
       )}
     </Sidebar>
   );

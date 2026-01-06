@@ -1360,13 +1360,13 @@ export default function Planning() {
 
   useEffect(() => {
     // Scroll to current week's Monday after data is loaded (only on initial load)
-    if (quarterDays.length > 0 && scrollContainerRef.current && !pendingScrollTarget.current) {
+    if (quarterDays.length > 0 && !isLoading && scrollContainerRef.current && !pendingScrollTarget.current) {
       // Only scroll to current week if we're viewing the current quarter
       if (selectedQuarterOffset === 0) {
         scrollToCurrentWeek();
       }
     }
-  }, [quarterDays]);
+  }, [quarterDays, isLoading, selectedQuarterOffset]);
 
   useEffect(() => {
     // Add scroll listener to update week number when manually scrolling

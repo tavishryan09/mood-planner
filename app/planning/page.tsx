@@ -8,6 +8,7 @@ import TaskModal from '@/components/planning/TaskModal';
 import MilestoneModal from '@/components/planning/MilestoneModal';
 import UserSettingsModal from '@/components/planning/UserSettingsModal';
 import { usePlanningData } from '@/hooks/planning/usePlanningData';
+import { usePlanningTasks } from '@/hooks/planning/usePlanningTasks';
 
 interface User {
   id: number;
@@ -90,6 +91,29 @@ export default function Planning() {
     refetchMilestones
   } = usePlanningData({ quarterDays, enabled: !!currentUser });
 
+  // Use planning tasks hook for task CRUD operations
+  const {
+    showTaskModal,
+    setShowTaskModal,
+    editingTask,
+    selectedCell,
+    setSelectedCell,
+    taskFormData,
+    setTaskFormData,
+    handleTaskEdit,
+    handleTaskSave,
+    handleTaskDelete,
+    handleCellDoubleClick,
+    selectedTask,
+    setSelectedTask,
+    copiedTask,
+    isCutTask,
+    handleCopyTask,
+    handleCutTask,
+    handlePasteTask,
+    handleDeleteSelectedTask
+  } = usePlanningTasks({ tasks, refetchTasks });
+
   const [showUserSettings, setShowUserSettings] = useState(false);
   const [draggedTask, setDraggedTask] = useState<PlanningTask | null>(null);
   const [dragOverCell, setDragOverCell] = useState<{ userId: number; date: Date; rowIndex: number } | null>(null);
@@ -97,28 +121,11 @@ export default function Planning() {
   const [draggedMilestone, setDraggedMilestone] = useState<MilestoneTask | null>(null);
   const [dragOverMilestoneCell, setDragOverMilestoneCell] = useState<{ date: Date; rowIndex: number } | null>(null);
   const [selectedMilestone, setSelectedMilestone] = useState<MilestoneTask | null>(null);
-  const [showTaskModal, setShowTaskModal] = useState(false);
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   const [selectedMilestoneCell, setSelectedMilestoneCell] = useState<{ date: Date; rowIndex: number } | null>(null);
   const [editingMilestone, setEditingMilestone] = useState<MilestoneTask | null>(null);
-  const [selectedCell, setSelectedCell] = useState<{ userId: number; date: Date; rowIndex: number } | null>(null);
-  const [editingTask, setEditingTask] = useState<PlanningTask | null>(null);
-  const [selectedTask, setSelectedTask] = useState<PlanningTask | null>(null);
-  const [copiedTask, setCopiedTask] = useState<PlanningTask | null>(null);
-  const [isCutTask, setIsCutTask] = useState(false); // Track if copied task was cut
   const [isSyncing, setIsSyncing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [taskFormData, setTaskFormData] = useState({
-    projectId: '',
-    taskDescription: '',
-    taskType: 'Project Task' as 'Project Task' | 'Out of Office' | 'Unavailable' | 'PTO' | 'Internal',
-    internalTaskTypeId: '',
-    repeatEnabled: false,
-    repeatType: 'daily' as 'daily' | 'weekly' | 'monthly',
-    repeatWeekDays: [] as number[], // 0-6 for Sunday-Saturday
-    repeatMonthDates: [] as number[], // 1-31 for day of month
-    repeatEndDate: ''
-  });
   const [milestoneFormData, setMilestoneFormData] = useState({
     projectId: '',
     taskDescription: '',
@@ -380,343 +387,6 @@ export default function Planning() {
     // For now, we'll use double-click to create tasks and single-click to select cells for pasting
   };
 
-  const handleCellDoubleClick = (userId: number, date: Date, rowIndex: number) => {
-    setSelectedCell({ userId, date, rowIndex });
-    setEditingTask(null);
-    setTaskFormData({
-      projectId: '',
-      taskDescription: '',
-      taskType: 'Project Task',
-      internalTaskTypeId: '',
-      repeatEnabled: false,
-      repeatType: 'daily',
-      repeatWeekDays: [],
-      repeatMonthDates: [],
-      repeatEndDate: ''
-    });
-    setShowTaskModal(true);
-  };
-
-  const handleTaskEdit = (task: PlanningTask) => {
-    setEditingTask(task);
-    setTaskFormData({
-      projectId: task.projectId?.toString() || '',
-      // Only show description if it's different from task type (i.e., it's a custom description)
-      taskDescription: task.taskDescription === task.taskType ? '' : (task.taskDescription || ''),
-      taskType: task.taskType,
-      internalTaskTypeId: task.internalTaskTypeId?.toString() || '',
-      repeatEnabled: false,
-      repeatType: 'daily',
-      repeatWeekDays: [],
-      repeatMonthDates: [],
-      repeatEndDate: ''
-    });
-    setShowTaskModal(true);
-  };
-
-  const handleTaskSave = async () => {
-    console.log('handleTaskSave called', { editingTask, taskFormData });
-
-    // Validate required fields
-    if (taskFormData.taskType === 'Project Task' && !taskFormData.projectId) {
-      alert('Please select a project for Project Tasks');
-      return;
-    }
-
-    console.log('Validation passed, repeatEnabled:', taskFormData.repeatEnabled);
-
-    // Validate repeat options
-    if (taskFormData.repeatEnabled) {
-      console.log('Validating repeat options, repeatType:', taskFormData.repeatType);
-      if (taskFormData.repeatType === 'weekly' && taskFormData.repeatWeekDays.length === 0) {
-        alert('Please select at least one day of the week to repeat on');
-        return;
-      }
-      if (taskFormData.repeatType === 'monthly' && taskFormData.repeatMonthDates.length === 0) {
-        alert('Please select at least one date of the month to repeat on');
-        return;
-      }
-      console.log('Repeat validation passed');
-    }
-
-    try {
-      console.log('Entering try block, editingTask:', !!editingTask);
-      if (editingTask) {
-        // If repeat is enabled, create new repeated tasks based on this one
-        if (taskFormData.repeatEnabled) {
-          // Generate dates for repeated tasks starting from the edited task's date
-          const datesToCreate: string[] = [];
-
-          // Parse dates properly to avoid timezone issues
-          // Normalize the date string to just YYYY-MM-DD format (strip time if present)
-          const normalizedTaskDate = editingTask.taskDate.split('T')[0];
-          const [startYear, startMonth, startDay] = normalizedTaskDate.split('-').map(Number);
-          const startDate = new Date(startYear, startMonth - 1, startDay);
-
-          let endDate: Date;
-          if (taskFormData.repeatEndDate) {
-            const [endYear, endMonth, endDay] = taskFormData.repeatEndDate.split('-').map(Number);
-            endDate = new Date(endYear, endMonth - 1, endDay);
-          } else {
-            endDate = new Date(startYear + 1, startMonth - 1, startDay);
-          }
-
-          const currentDate = new Date(startDate);
-          currentDate.setHours(0, 0, 0, 0);
-          endDate.setHours(23, 59, 59, 999);
-
-          console.log('Date range:', {
-            startDate: startDate.toISOString(),
-            endDate: endDate.toISOString(),
-            currentDate: currentDate.toISOString(),
-            repeatEndDate: taskFormData.repeatEndDate,
-            editingTaskDate: editingTask.taskDate
-          });
-
-          while (currentDate <= endDate) {
-            let shouldInclude = false;
-
-            if (taskFormData.repeatType === 'daily') {
-              shouldInclude = true;
-            } else if (taskFormData.repeatType === 'weekly') {
-              const dayOfWeek = currentDate.getDay();
-              shouldInclude = taskFormData.repeatWeekDays.includes(dayOfWeek);
-            } else if (taskFormData.repeatType === 'monthly') {
-              const dateOfMonth = currentDate.getDate();
-              shouldInclude = taskFormData.repeatMonthDates.includes(dateOfMonth);
-            }
-
-            if (shouldInclude) {
-              const year = currentDate.getFullYear();
-              const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-              const day = String(currentDate.getDate()).padStart(2, '0');
-              datesToCreate.push(`${year}-${month}-${day}`);
-            }
-
-            currentDate.setDate(currentDate.getDate() + 1);
-          }
-
-          // Create all repeated tasks (skip if task already exists at that date/row)
-          let successCount = 0;
-          let errorCount = 0;
-          let skippedCount = 0;
-
-          console.log('Dates to create:', datesToCreate);
-
-          for (const date of datesToCreate) {
-            // Check if a task already exists at this date and row index
-            const existingTask = tasks.find(
-              t => t.userId === editingTask.userId &&
-                   t.taskDate === date &&
-                   t.rowIndex === editingTask.rowIndex
-            );
-
-            if (existingTask) {
-              console.log(`Skipping ${date} - already exists in frontend state`);
-              skippedCount++;
-              continue;
-            }
-
-            console.log(`Creating task for date ${date}`);
-            const response = await fetch('/api/planning-tasks', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userId: editingTask.userId,
-                rowIndex: editingTask.rowIndex,
-                projectId: taskFormData.projectId ? parseInt(taskFormData.projectId) : null,
-                taskDescription: taskFormData.taskDescription,
-                taskType: taskFormData.taskType,
-                taskDate: date,
-                internalTaskTypeId: taskFormData.internalTaskTypeId ? parseInt(taskFormData.internalTaskTypeId) : null
-              })
-            });
-
-            if (response.ok) {
-              console.log(`✓ Created task for ${date}`);
-              successCount++;
-            } else if (response.status === 409) {
-              console.log(`Skipping ${date} - duplicate (409)`);
-              skippedCount++;
-            } else {
-              console.error(`✗ Failed for ${date}:`, response.status);
-              errorCount++;
-            }
-          }
-
-          console.log('Final counts:', { successCount, errorCount, skippedCount });
-
-          if (successCount > 0) {
-            await refetchTasks();
-            setShowTaskModal(false);
-            if (errorCount > 0 || skippedCount > 0) {
-              const messages = [];
-              if (successCount > 0) messages.push(`Created ${successCount} task(s)`);
-              if (skippedCount > 0) messages.push(`skipped ${skippedCount} (already exist)`);
-              if (errorCount > 0) messages.push(`${errorCount} failed`);
-              alert(messages.join(', ') + '.');
-            }
-          } else if (skippedCount > 0) {
-            alert(`All ${skippedCount} tasks were skipped because they already exist at those dates.`);
-            setShowTaskModal(false);
-          } else {
-            alert('Error creating repeated tasks. Please try again.');
-          }
-        } else {
-          // Just update the existing task
-          const response = await fetch(`/api/planning-tasks/${editingTask.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              projectId: taskFormData.projectId ? parseInt(taskFormData.projectId) : null,
-              taskDescription: taskFormData.taskDescription,
-              taskType: taskFormData.taskType,
-              taskDate: editingTask.taskDate,
-              rowSpan: editingTask.rowSpan,
-              internalTaskTypeId: taskFormData.internalTaskTypeId ? parseInt(taskFormData.internalTaskTypeId) : null
-            })
-          });
-
-          if (response.ok) {
-            await refetchTasks();
-            setShowTaskModal(false);
-          } else {
-            const error = await response.json();
-            alert(`Error updating task: ${error.error || 'Unknown error'}`);
-          }
-        }
-      } else if (selectedCell) {
-        // Generate dates for repeated tasks
-        const datesToCreate: string[] = [];
-
-        if (taskFormData.repeatEnabled) {
-          // Use local date components from selectedCell.date to avoid timezone issues
-          const startDate = new Date(selectedCell.date.getFullYear(), selectedCell.date.getMonth(), selectedCell.date.getDate());
-
-          let endDate: Date;
-          if (taskFormData.repeatEndDate) {
-            const [endYear, endMonth, endDay] = taskFormData.repeatEndDate.split('-').map(Number);
-            endDate = new Date(endYear, endMonth - 1, endDay);
-          } else {
-            endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate());
-          }
-
-          const currentDate = new Date(startDate);
-          currentDate.setHours(0, 0, 0, 0);
-          endDate.setHours(23, 59, 59, 999);
-
-          while (currentDate <= endDate) {
-            let shouldInclude = false;
-
-            if (taskFormData.repeatType === 'daily') {
-              shouldInclude = true;
-            } else if (taskFormData.repeatType === 'weekly') {
-              const dayOfWeek = currentDate.getDay();
-              shouldInclude = taskFormData.repeatWeekDays.includes(dayOfWeek);
-            } else if (taskFormData.repeatType === 'monthly') {
-              const dateOfMonth = currentDate.getDate();
-              shouldInclude = taskFormData.repeatMonthDates.includes(dateOfMonth);
-            }
-
-            if (shouldInclude) {
-              const year = currentDate.getFullYear();
-              const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-              const day = String(currentDate.getDate()).padStart(2, '0');
-              datesToCreate.push(`${year}-${month}-${day}`);
-            }
-
-            // Move to next day
-            currentDate.setDate(currentDate.getDate() + 1);
-          }
-        } else {
-          // Single task
-          datesToCreate.push(selectedCell.date.toISOString().split('T')[0]);
-        }
-
-        // Create all tasks (skip if task already exists at that date/row)
-        let successCount = 0;
-        let errorCount = 0;
-        let skippedCount = 0;
-
-        for (const date of datesToCreate) {
-          // Check if a task already exists at this date and row index
-          const existingTask = tasks.find(
-            t => t.userId === selectedCell.userId &&
-                 t.taskDate === date &&
-                 t.rowIndex === selectedCell.rowIndex
-          );
-
-          if (existingTask) {
-            skippedCount++;
-            continue;
-          }
-
-          const response = await fetch('/api/planning-tasks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: selectedCell.userId,
-              rowIndex: selectedCell.rowIndex,
-              projectId: taskFormData.projectId ? parseInt(taskFormData.projectId) : null,
-              taskDescription: taskFormData.taskDescription,
-              taskType: taskFormData.taskType,
-              taskDate: date,
-              internalTaskTypeId: taskFormData.internalTaskTypeId ? parseInt(taskFormData.internalTaskTypeId) : null
-            })
-          });
-
-          if (response.ok) {
-            successCount++;
-          } else if (response.status === 409) {
-            // Duplicate - already exists
-            skippedCount++;
-          } else {
-            errorCount++;
-          }
-        }
-
-        if (successCount > 0) {
-          await refetchTasks();
-          setShowTaskModal(false);
-          if (errorCount > 0 || skippedCount > 0) {
-            const messages = [];
-            if (successCount > 0) messages.push(`Created ${successCount} task(s)`);
-            if (skippedCount > 0) messages.push(`skipped ${skippedCount} (already exist)`);
-            if (errorCount > 0) messages.push(`${errorCount} failed`);
-            alert(messages.join(', ') + '.');
-          }
-        } else if (skippedCount > 0) {
-          alert(`All ${skippedCount} tasks were skipped because they already exist at those dates.`);
-          setShowTaskModal(false);
-        } else {
-          alert('Error creating tasks. Please try again.');
-        }
-      }
-    } catch (error) {
-      console.error('Error saving task:', error);
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-      alert('An unexpected error occurred. Please try again.');
-    }
-  };
-
-  const handleTaskDelete = async () => {
-    if (!editingTask) return;
-
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      try {
-        const response = await fetch(`/api/planning-tasks/${editingTask.id}`, {
-          method: 'DELETE'
-        });
-
-        if (response.ok) {
-          setTasks(tasks.filter(t => t.id !== editingTask.id));
-          setShowTaskModal(false);
-        }
-      } catch (error) {
-        console.error('Error deleting task:', error);
-      }
-    }
-  };
 
   const getTaskForCell = (userId: number, date: Date, rowIndex: number) => {
     const dateStr = date.toISOString().split('T')[0];
@@ -1145,8 +815,7 @@ export default function Planning() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
         if (selectedTask && !showTaskModal) {
           e.preventDefault();
-          setCopiedTask(selectedTask);
-          setIsCutTask(false); // Copy, not cut
+          handleCopyTask();
           console.log('Task copied:', selectedTask);
         }
       }
@@ -1155,8 +824,7 @@ export default function Planning() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'x') {
         if (selectedTask && !showTaskModal) {
           e.preventDefault();
-          setCopiedTask(selectedTask);
-          setIsCutTask(true); // Mark as cut
+          handleCutTask();
           console.log('Task cut:', selectedTask);
         }
       }
@@ -1165,7 +833,7 @@ export default function Planning() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
         if (copiedTask && selectedCell && !showTaskModal) {
           e.preventDefault();
-          handlePasteTask(selectedCell);
+          handlePasteTask(selectedCell.userId, selectedCell.date, selectedCell.rowIndex);
         }
       }
 
@@ -1185,8 +853,6 @@ export default function Planning() {
       if (e.key === 'Escape') {
         setSelectedTask(null);
         setSelectedMilestone(null);
-        setCopiedTask(null);
-        setIsCutTask(false);
       }
     };
 
@@ -1203,92 +869,6 @@ export default function Planning() {
     setSelectedCell(null); // Deselect any selected cell when clicking a task
   };
 
-  const handlePasteTask = async (targetCell: { userId: number; date: Date; rowIndex: number }) => {
-    if (!copiedTask) return;
-
-    const dateStr = targetCell.date.toISOString().split('T')[0];
-
-    // Check if target cells are occupied
-    if (isCellOccupied(targetCell.userId, targetCell.date, targetCell.rowIndex, copiedTask.rowSpan)) {
-      alert('Cannot paste task here - cells are occupied');
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/planning-tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: targetCell.userId,
-          rowIndex: targetCell.rowIndex,
-          projectId: copiedTask.projectId,
-          taskDescription: copiedTask.taskDescription,
-          taskType: copiedTask.taskType,
-          taskDate: dateStr,
-          rowSpan: copiedTask.rowSpan,
-          internalTaskTypeId: copiedTask.internalTaskTypeId
-        })
-      });
-
-      if (response.ok) {
-        // If this was a cut operation, delete the original task
-        if (isCutTask && copiedTask.id) {
-          try {
-            const deleteResponse = await fetch(`/api/planning-tasks/${copiedTask.id}`, {
-              method: 'DELETE',
-            });
-
-            if (deleteResponse.ok) {
-              console.log('Original task deleted after cut-paste');
-              // Clear the cut state after successful move
-              setCopiedTask(null);
-              setIsCutTask(false);
-              setSelectedTask(null);
-            } else {
-              console.error('Failed to delete original task after cut');
-            }
-          } catch (deleteError) {
-            console.error('Error deleting original task:', deleteError);
-          }
-        }
-
-        await refetchTasks();
-        console.log(isCutTask ? 'Task moved successfully' : 'Task pasted successfully');
-      } else if (response.status === 409) {
-        alert('A task already exists at this location');
-      } else {
-        const error = await response.json();
-        alert(`Error pasting task: ${error.error || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Error pasting task:', error);
-      alert('An unexpected error occurred. Please try again.');
-    }
-  };
-
-  const handleDeleteSelectedTask = async () => {
-    if (!selectedTask) return;
-
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      try {
-        const response = await fetch(`/api/planning-tasks/${selectedTask.id}`, {
-          method: 'DELETE'
-        });
-
-        if (response.ok) {
-          setTasks(tasks.filter(t => t.id !== selectedTask.id));
-          setSelectedTask(null);
-          console.log('Task deleted successfully');
-        } else {
-          const error = await response.json();
-          alert(`Error deleting task: ${error.error || 'Unknown error'}`);
-        }
-      } catch (error) {
-        console.error('Error deleting task:', error);
-        alert('An unexpected error occurred. Please try again.');
-      }
-    }
-  };
 
   const handleDeleteSelectedMilestone = async () => {
     if (!selectedMilestone) return;

@@ -174,10 +174,8 @@ export function usePlanningData({ quarterDays, enabled = true }: UsePlanningData
   }, [quarterDays]);
 
   useEffect(() => {
-    if (enabled) {
-      fetchAllPlanningData();
-    }
-  }, [quarterDays.length, enabled]); // eslint-disable-line react-hooks/exhaustive-deps
+    fetchAllPlanningData();
+  }, [fetchAllPlanningData]);
 
   return {
     users,

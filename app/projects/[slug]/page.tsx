@@ -3,7 +3,9 @@
 import Sidebar from '@/components/Sidebar';
 import TaskModal from '@/components/projects/TaskModal';
 import MilestoneModal from '@/components/projects/MilestoneModal';
-import { useState, useEffect } from 'react';
+import { useProjectDetailData } from '@/hooks/projects/useProjectDetailData';
+import { useTaskManagement } from '@/hooks/projects/useTaskManagement';
+import { useMilestoneManagement } from '@/hooks/projects/useMilestoneManagement';
 import { useParams, useRouter } from 'next/navigation';
 
 interface Project {
@@ -79,409 +81,58 @@ export default function ProjectDetails() {
   const router = useRouter();
   const slug = params.slug as string;
 
-  const [project, setProject] = useState<Project | null>(null);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showTaskModal, setShowTaskModal] = useState(false);
-  const [showMilestoneModal, setShowMilestoneModal] = useState(false);
-  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
-  const [taskFormData, setTaskFormData] = useState({
-    taskName: '',
-    description: '',
-    startDate: '',
-    endDate: '',
-    status: 'not-started' as Task['status'],
-    category: '',
-    assignedUserIds: [] as number[],
-    progress: 0
-  });
-  const [milestoneFormData, setMilestoneFormData] = useState({
-    milestoneName: '',
-    description: '',
-    dueDate: '',
-    status: 'pending' as Milestone['status']
-  });
-  const [deadlineType, setDeadlineType] = useState<'milestone' | 'deadline' | 'internal-deadline'>('milestone');
+  // Data fetching hook
+  const {
+    project,
+    teamMembers,
+    timeEntries,
+    tasks,
+    categories,
+    milestones,
+    loading,
+    error,
+    fetchProjectDetails,
+    fetchTasks,
+    fetchMilestones
+  } = useProjectDetailData(slug);
 
-  useEffect(() => {
-    fetchProjectDetails();
-  }, [slug]);
+  // Task management hook
+  const {
+    showTaskModal,
+    setShowTaskModal,
+    editingTask,
+    taskFormData,
+    setTaskFormData,
+    showNewCategoryInput,
+    setShowNewCategoryInput,
+    newCategoryName,
+    setNewCategoryName,
+    handleAddTask,
+    handleEditTask,
+    handleSaveTask,
+    handleDeleteTask,
+    handleAddCategory
+  } = useTaskManagement(project?.id || null, async () => {
+    if (project) await fetchTasks(project.id);
+  }, fetchProjectDetails);
 
-  const fetchProjectDetails = async () => {
-    try {
-      setLoading(true);
-
-      // First, fetch all projects to find by project number
-      const projectsResponse = await fetch('/api/projects');
-      if (!projectsResponse.ok) throw new Error('Failed to fetch projects');
-      const projects = await projectsResponse.json();
-
-      // Find project by projectNumber or id
-      const foundProject = projects.find((p: Project) =>
-        p.projectNumber === slug || p.id.toString() === slug
-      );
-
-      if (!foundProject) {
-        throw new Error('Project not found');
-      }
-
-      const projectId = foundProject.id;
-
-      // Fetch full project details
-      const response = await fetch(`/api/projects/${projectId}`);
-      if (!response.ok) throw new Error('Failed to fetch project details');
-      const data = await response.json();
-
-      // Fetch estimated billable and hours
-      let estimatedBillable = 0;
-      let totalHours = 0;
-      let hoursThisWeek = 0;
-      let hoursThisMonth = 0;
-      let hoursThisQuarter = 0;
-
-      try {
-        const billableResponse = await fetch(`/api/projects/${projectId}/estimated-billable`);
-        if (billableResponse.ok) {
-          const billableData = await billableResponse.json();
-          estimatedBillable = billableData.estimatedBillable;
-        }
-      } catch (error) {
-        console.error('Error fetching billable:', error);
-      }
-
-      try {
-        const hoursResponse = await fetch(`/api/projects/${projectId}/hours`);
-        if (hoursResponse.ok) {
-          const hoursData = await hoursResponse.json();
-          totalHours = hoursData.totalHours;
-          hoursThisWeek = hoursData.hoursThisWeek;
-          hoursThisMonth = hoursData.hoursThisMonth;
-          hoursThisQuarter = hoursData.hoursThisQuarter;
-        }
-      } catch (error) {
-        console.error('Error fetching hours:', error);
-      }
-
-      setProject({
-        ...data,
-        estimatedBillable,
-        totalHours,
-        hoursThisWeek,
-        hoursThisMonth,
-        hoursThisQuarter,
-      });
-
-      // Fetch team members, time entries, tasks, categories, and milestones
-      await Promise.all([
-        fetchTeamMembers(projectId),
-        fetchTimeEntries(projectId),
-        fetchTasks(projectId),
-        fetchCategories(),
-        fetchMilestones(projectId)
-      ]);
-    } catch (error) {
-      console.error('Error fetching project details:', error);
-      setError('Failed to load project details');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTeamMembers = async (projectId: number) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/team`);
-      if (response.ok) {
-        const data = await response.json();
-        setTeamMembers(data);
-      }
-    } catch (error) {
-      console.error('Error fetching team members:', error);
-    }
-  };
-
-  const fetchTimeEntries = async (projectId: number) => {
-    try {
-      const response = await fetch(`/api/time-entries?projectId=${projectId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setTimeEntries(data);
-      }
-    } catch (error) {
-      console.error('Error fetching time entries:', error);
-    }
-  };
-
-  const fetchTasks = async (projectId: number) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/tasks`);
-      if (response.ok) {
-        const data = await response.json();
-        setTasks(data);
-      }
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/categories');
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data);
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
-
-  const fetchMilestones = async (projectId: number) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/milestones`);
-      if (response.ok) {
-        const data = await response.json();
-        setMilestones(data);
-      }
-    } catch (error) {
-      console.error('Error fetching milestones:', error);
-    }
-  };
-
-  const handleAddTask = () => {
-    setTaskFormData({
-      taskName: '',
-      description: '',
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      status: 'not-started',
-      category: '',
-      assignedUserIds: [],
-      progress: 0
-    });
-    setEditingTask(null);
-    setShowTaskModal(true);
-  };
-
-  const handleEditTask = (task: Task) => {
-    setTaskFormData({
-      taskName: task.taskName,
-      description: task.description || '',
-      startDate: task.startDate.split('T')[0],
-      endDate: task.endDate.split('T')[0],
-      status: task.status,
-      category: task.category || '',
-      assignedUserIds: task.assignedUsers.map(u => u.id),
-      progress: task.progress
-    });
-    setEditingTask(task);
-    setShowTaskModal(true);
-  };
-
-  const handleSaveTask = async () => {
-    if (!project) return;
-
-    try {
-      const payload = {
-        ...taskFormData
-      };
-
-      if (editingTask) {
-        const response = await fetch(`/api/projects/${project.id}/tasks/${editingTask.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) throw new Error('Failed to update task');
-      } else {
-        const response = await fetch(`/api/projects/${project.id}/tasks`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) throw new Error('Failed to create task');
-      }
-
-      await fetchTasks(project.id);
-      setShowTaskModal(false);
-    } catch (error) {
-      console.error('Error saving task:', error);
-      alert('Failed to save task. Please try again.');
-    }
-  };
-
-  const handleDeleteTask = async (taskId: number) => {
-    if (!project) return;
-    if (!confirm('Are you sure you want to delete this task?')) return;
-
-    try {
-      const response = await fetch(`/api/projects/${project.id}/tasks/${taskId}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) throw new Error('Failed to delete task');
-
-      await fetchTasks(project.id);
-    } catch (error) {
-      console.error('Error deleting task:', error);
-      alert('Failed to delete task. Please try again.');
-    }
-  };
-
-  const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) return;
-
-    try {
-      const response = await fetch('/api/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newCategoryName.trim() })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create category');
-      }
-
-      await fetchCategories();
-      setTaskFormData({ ...taskFormData, category: newCategoryName.trim() });
-      setNewCategoryName('');
-      setShowNewCategoryInput(false);
-    } catch (error: any) {
-      console.error('Error creating category:', error);
-      alert(error.message || 'Failed to create category. Please try again.');
-    }
-  };
-
-  const handleAddMilestone = () => {
-    setMilestoneFormData({
-      milestoneName: '',
-      description: '',
-      dueDate: new Date().toISOString().split('T')[0],
-      status: 'pending'
-    });
-    setDeadlineType('milestone');
-    setEditingMilestone(null);
-    setShowMilestoneModal(true);
-  };
-
-  const handleEditMilestone = (milestone: Milestone) => {
-    setMilestoneFormData({
-      milestoneName: milestone.milestoneName,
-      description: milestone.description || '',
-      dueDate: milestone.dueDate.split('T')[0],
-      status: milestone.status
-    });
-    setDeadlineType('milestone');
-    setEditingMilestone(milestone);
-    setShowMilestoneModal(true);
-  };
-
-  const handleSaveMilestone = async () => {
-    if (!project) return;
-
-    try {
-      if (deadlineType === 'deadline' || deadlineType === 'internal-deadline') {
-        // Save as project deadline
-        const updateData = deadlineType === 'deadline'
-          ? { deadline: milestoneFormData.dueDate }
-          : { internalDeadline: milestoneFormData.dueDate };
-
-        const response = await fetch(`/api/projects/${project.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...project,
-            ...updateData
-          })
-        });
-
-        if (!response.ok) throw new Error('Failed to update project deadline');
-
-        // Refresh project details
-        await fetchProjectDetails();
-      } else {
-        // Save as milestone
-        if (editingMilestone) {
-          const response = await fetch(`/api/projects/${project.id}/milestones/${editingMilestone.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(milestoneFormData)
-          });
-
-          if (!response.ok) throw new Error('Failed to update milestone');
-        } else {
-          const response = await fetch(`/api/projects/${project.id}/milestones`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(milestoneFormData)
-          });
-
-          if (!response.ok) throw new Error('Failed to create milestone');
-        }
-
-        await fetchMilestones(project.id);
-      }
-
-      setShowMilestoneModal(false);
-    } catch (error) {
-      console.error('Error saving:', error);
-      alert('Failed to save. Please try again.');
-    }
-  };
-
-  const handleDeleteMilestone = async (milestoneId: number) => {
-    if (!project) return;
-    if (!confirm('Are you sure you want to delete this milestone?')) return;
-
-    try {
-      const response = await fetch(`/api/projects/${project.id}/milestones/${milestoneId}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) throw new Error('Failed to delete milestone');
-
-      await fetchMilestones(project.id);
-    } catch (error) {
-      console.error('Error deleting milestone:', error);
-      alert('Failed to delete milestone. Please try again.');
-    }
-  };
-
-  const handleRemoveDeadline = async (type: 'deadline' | 'internal-deadline') => {
-    if (!project) return;
-
-    try {
-      const updateData = type === 'deadline'
-        ? { deadline: null }
-        : { internalDeadline: null };
-
-      const response = await fetch(`/api/projects/${project.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...project,
-          ...updateData
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to remove deadline');
-
-      await fetchProjectDetails();
-    } catch (error) {
-      console.error('Error removing deadline:', error);
-      alert('Failed to remove deadline. Please try again.');
-    }
-  };
+  // Milestone management hook
+  const {
+    showMilestoneModal,
+    setShowMilestoneModal,
+    editingMilestone,
+    milestoneFormData,
+    setMilestoneFormData,
+    deadlineType,
+    setDeadlineType,
+    handleAddMilestone,
+    handleEditMilestone,
+    handleSaveMilestone,
+    handleDeleteMilestone,
+    handleRemoveDeadline
+  } = useMilestoneManagement(project, async () => {
+    if (project) await fetchMilestones(project.id);
+  }, fetchProjectDetails);
 
   const getStatusColor = (status: Task['status']) => {
     switch (status) {
@@ -954,7 +605,6 @@ export default function ProjectDetails() {
                               dueDate: project.deadline!.split('T')[0],
                               status: 'pending'
                             });
-                            setEditingMilestone(null);
                             setShowMilestoneModal(true);
                           }}
                         >
@@ -982,7 +632,6 @@ export default function ProjectDetails() {
                               dueDate: project.internalDeadline!.split('T')[0],
                               status: 'pending'
                             });
-                            setEditingMilestone(null);
                             setShowMilestoneModal(true);
                           }}
                         >

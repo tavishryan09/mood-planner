@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import TaskModal from '@/components/planning/TaskModal';
 import MilestoneModal from '@/components/planning/MilestoneModal';
 import UserSettingsModal from '@/components/planning/UserSettingsModal';
+import { usePlanningData } from '@/hooks/planning/usePlanningData';
 
 interface User {
   id: number;
@@ -66,7 +67,29 @@ export default function Planning() {
   const [selectedQuarterOffset, setSelectedQuarterOffset] = useState(0); // 0 = current, 1 = next, -1 = previous
   const [loadedQuarterOffsets, setLoadedQuarterOffsets] = useState<number[]>([0]); // Track which quarters are loaded
   const [currentWeekNumber, setCurrentWeekNumber] = useState(1);
-  const [users, setUsers] = useState<UserDisplay[]>([]);
+
+  // Use planning data hook for data fetching and state management
+  const {
+    users,
+    projects,
+    internalTaskTypes,
+    tasks,
+    milestoneTasks,
+    outlookConnected,
+    showInstructions,
+    loading: isLoading,
+    setUsers,
+    setProjects,
+    setInternalTaskTypes,
+    setTasks,
+    setMilestoneTasks,
+    setOutlookConnected,
+    setShowInstructions,
+    refetchAll,
+    refetchTasks,
+    refetchMilestones
+  } = usePlanningData({ quarterDays, enabled: !!currentUser });
+
   const [showUserSettings, setShowUserSettings] = useState(false);
   const [draggedTask, setDraggedTask] = useState<PlanningTask | null>(null);
   const [dragOverCell, setDragOverCell] = useState<{ userId: number; date: Date; rowIndex: number } | null>(null);
@@ -74,9 +97,6 @@ export default function Planning() {
   const [draggedMilestone, setDraggedMilestone] = useState<MilestoneTask | null>(null);
   const [dragOverMilestoneCell, setDragOverMilestoneCell] = useState<{ date: Date; rowIndex: number } | null>(null);
   const [selectedMilestone, setSelectedMilestone] = useState<MilestoneTask | null>(null);
-  const [tasks, setTasks] = useState<PlanningTask[]>([]);
-  const [milestoneTasks, setMilestoneTasks] = useState<MilestoneTask[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   const [selectedMilestoneCell, setSelectedMilestoneCell] = useState<{ date: Date; rowIndex: number } | null>(null);
@@ -86,11 +106,7 @@ export default function Planning() {
   const [selectedTask, setSelectedTask] = useState<PlanningTask | null>(null);
   const [copiedTask, setCopiedTask] = useState<PlanningTask | null>(null);
   const [isCutTask, setIsCutTask] = useState(false); // Track if copied task was cut
-  const [isLoading, setIsLoading] = useState(true);
-  const [internalTaskTypes, setInternalTaskTypes] = useState<InternalTaskType[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [outlookConnected, setOutlookConnected] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [taskFormData, setTaskFormData] = useState({
     projectId: '',
@@ -111,18 +127,6 @@ export default function Planning() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScroll = useRef(false);
   const pendingScrollTarget = useRef<Date | null>(null);
-
-  const fetchPlanningPreferences = async () => {
-    try {
-      const response = await fetch('/api/planning-preferences');
-      if (response.ok) {
-        const preferences = await response.json();
-        setShowInstructions(preferences.showInstructions);
-      }
-    } catch (error) {
-      console.error('Error fetching planning preferences:', error);
-    }
-  };
 
   const updateShowInstructions = async (value: boolean) => {
     try {
@@ -230,98 +234,24 @@ export default function Planning() {
         console.error('Error loading quarters with tasks:', error);
         // Fallback to current quarter
         generateQuarterDays(0);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     loadQuartersWithTasks();
   }, [currentUser]);
 
-  // Initial data load - use bundled endpoint for better performance
+  // Handle pending scroll after quarter change
   useEffect(() => {
-    if (currentUser) {
-      fetchAllPlanningData();
-    }
-  }, [currentUser]);
+    if (quarterDays.length > 0 && pendingScrollTarget.current) {
+      const monday = getMondayOfWeek(pendingScrollTarget.current);
+      const weekNum = getWeekNumber(monday);
+      setCurrentWeekNumber(weekNum);
 
-  const fetchAllPlanningData = async () => {
-    if (quarterDays.length === 0) {
-      // Load base data without date range
-      try {
-        const response = await fetch('/api/planning-bundle');
-        if (response.ok) {
-          const data = await response.json();
-          setUsers(data.users);
-
-          // Sort projects alphabetically by common name
-          const sortedProjects = data.projects.sort((a: Project, b: Project) => {
-            const nameA = (a.commonName || a.projectName).toLowerCase();
-            const nameB = (b.commonName || b.projectName).toLowerCase();
-            return nameA.localeCompare(nameB);
-          });
-          setProjects(sortedProjects);
-
-          setInternalTaskTypes(data.internalTaskTypes);
-          setOutlookConnected(data.outlookConnected);
-          setShowInstructions(data.planningPreferences.showInstructions);
-        }
-      } catch (error) {
-        console.error('Error fetching planning data:', error);
-      }
-      return;
-    }
-
-    // Load all data including tasks/milestones
-    try {
-      const startDate = quarterDays[0].toISOString().split('T')[0];
-      const endDate = quarterDays[quarterDays.length - 1].toISOString().split('T')[0];
-
-      const response = await fetch(`/api/planning-bundle?startDate=${startDate}&endDate=${endDate}`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Planning bundle data received:', data);
-        console.log('Tasks count:', data.tasks?.length, 'Milestones count:', data.milestoneTasks?.length);
-
-        setUsers(data.users);
-
-        // Sort projects alphabetically by common name
-        const sortedProjects = data.projects.sort((a: Project, b: Project) => {
-          const nameA = (a.commonName || a.projectName).toLowerCase();
-          const nameB = (b.commonName || b.projectName).toLowerCase();
-          return nameA.localeCompare(nameB);
-        });
-        setProjects(sortedProjects);
-
-        setInternalTaskTypes(data.internalTaskTypes);
-        setTasks(data.tasks || []);
-        setMilestoneTasks(data.milestoneTasks || []);
-        setOutlookConnected(data.outlookConnected);
-        setShowInstructions(data.planningPreferences.showInstructions);
-      } else {
-        console.error('Failed to fetch planning bundle:', response.status, await response.text());
-      }
-    } catch (error) {
-      console.error('Error fetching planning data:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (quarterDays.length > 0 && currentUser) {
-      fetchAllPlanningData();
-
-      // Handle pending scroll after quarter change
-      if (pendingScrollTarget.current) {
-        const monday = getMondayOfWeek(pendingScrollTarget.current);
-        const weekNum = getWeekNumber(monday);
-        setCurrentWeekNumber(weekNum);
-
-        // Find the Monday in the new quarter days
-        setTimeout(() => {
-          scrollToMonday(monday);
-          pendingScrollTarget.current = null;
-        }, 50);
-      }
+      // Find the Monday in the new quarter days
+      setTimeout(() => {
+        scrollToMonday(monday);
+        pendingScrollTarget.current = null;
+      }, 50);
     }
   }, [quarterDays]);
 
@@ -398,44 +328,6 @@ export default function Planning() {
     }
   };
 
-  const fetchTasks = async () => {
-    if (quarterDays.length === 0) return;
-
-    try {
-      const startDate = quarterDays[0].toISOString().split('T')[0];
-      const endDate = quarterDays[quarterDays.length - 1].toISOString().split('T')[0];
-
-      const response = await fetch(`/api/planning-tasks?startDate=${startDate}&endDate=${endDate}`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Fetched tasks:', data);
-        console.log('Tasks state will be updated with', data.length, 'tasks');
-        if (data.length > 0) {
-          console.log('First task:', data[0]);
-        }
-        setTasks(data);
-      }
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    }
-  };
-
-  const fetchMilestoneTasks = async () => {
-    if (quarterDays.length === 0) return;
-
-    try {
-      const startDate = quarterDays[0].toISOString().split('T')[0];
-      const endDate = quarterDays[quarterDays.length - 1].toISOString().split('T')[0];
-
-      const response = await fetch(`/api/milestone-tasks?startDate=${startDate}&endDate=${endDate}`);
-      if (response.ok) {
-        const data = await response.json();
-        setMilestoneTasks(data);
-      }
-    } catch (error) {
-      console.error('Error fetching milestone tasks:', error);
-    }
-  };
 
   const checkOutlookStatus = async () => {
     try {
@@ -655,7 +547,7 @@ export default function Planning() {
           console.log('Final counts:', { successCount, errorCount, skippedCount });
 
           if (successCount > 0) {
-            await fetchTasks();
+            await refetchTasks();
             setShowTaskModal(false);
             if (errorCount > 0 || skippedCount > 0) {
               const messages = [];
@@ -686,7 +578,7 @@ export default function Planning() {
           });
 
           if (response.ok) {
-            await fetchTasks();
+            await refetchTasks();
             setShowTaskModal(false);
           } else {
             const error = await response.json();
@@ -784,7 +676,7 @@ export default function Planning() {
         }
 
         if (successCount > 0) {
-          await fetchTasks();
+          await refetchTasks();
           setShowTaskModal(false);
           if (errorCount > 0 || skippedCount > 0) {
             const messages = [];
@@ -1041,7 +933,7 @@ export default function Planning() {
       });
 
       if (response.ok) {
-        await fetchTasks();
+        await refetchTasks();
       } else {
         const error = await response.json();
         alert(`Error moving task: ${error.error || 'Unknown error'}`);
@@ -1112,7 +1004,7 @@ export default function Planning() {
       });
 
       if (response.ok) {
-        await fetchMilestoneTasks();
+        await refetchMilestones();
       } else {
         const error = await response.json();
         alert(`Error moving milestone: ${error.error || 'Unknown error'}`);
@@ -1224,7 +1116,7 @@ export default function Planning() {
         });
 
         if (response.ok) {
-          await fetchTasks();
+          await refetchTasks();
         } else {
           const error = await response.json();
           alert(`Error updating task: ${error.error || 'Unknown error'}`);
@@ -1360,7 +1252,7 @@ export default function Planning() {
           }
         }
 
-        await fetchTasks();
+        await refetchTasks();
         console.log(isCutTask ? 'Task moved successfully' : 'Task pasted successfully');
       } else if (response.status === 409) {
         alert('A task already exists at this location');

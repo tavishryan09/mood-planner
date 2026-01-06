@@ -1892,7 +1892,7 @@ export default function Planning() {
                 className="mt-4 overflow-auto border border-base-300 rounded-lg"
                 style={{
                   maxHeight: isMobile
-                    ? 'calc(100dvh - 170px)'
+                    ? 'calc(100dvh - 190px)'
                     : showInstructions
                     ? 'calc(100vh - 200px)'
                     : 'calc(100vh - 150px)'

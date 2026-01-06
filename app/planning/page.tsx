@@ -164,23 +164,31 @@ export default function Planning() {
       if (!currentUser) return;
 
       try {
-        // Check current quarter and next 3 quarters for tasks
+        // Check current quarter and next 3 quarters for tasks in parallel
         const quartersToCheck = [0, 1, 2, 3];
-        const quartersWithTasks: number[] = [];
 
-        for (const offset of quartersToCheck) {
-          const quarterInfo = getQuarterInfo(offset);
-          const startDate = quarterInfo.quarterStart.toISOString().split('T')[0];
-          const endDate = quarterInfo.quarterEnd.toISOString().split('T')[0];
+        // Fetch all quarters in parallel instead of sequentially
+        const quarterChecks = await Promise.all(
+          quartersToCheck.map(async (offset) => {
+            const quarterInfo = getQuarterInfo(offset);
+            const startDate = quarterInfo.quarterStart.toISOString().split('T')[0];
+            const endDate = quarterInfo.quarterEnd.toISOString().split('T')[0];
 
-          const response = await fetch(`/api/planning-tasks?startDate=${startDate}&endDate=${endDate}`);
-          if (response.ok) {
-            const tasksInQuarter = await response.json();
-            if (tasksInQuarter.length > 0) {
-              quartersWithTasks.push(offset);
+            try {
+              const response = await fetch(`/api/planning-tasks?startDate=${startDate}&endDate=${endDate}`);
+              if (response.ok) {
+                const tasksInQuarter = await response.json();
+                return tasksInQuarter.length > 0 ? offset : null;
+              }
+            } catch (error) {
+              console.error(`Error checking quarter ${offset}:`, error);
             }
-          }
-        }
+            return null;
+          })
+        );
+
+        // Filter out null values to get quarters with tasks
+        const quartersWithTasks = quarterChecks.filter((offset): offset is number => offset !== null);
 
         // Load all quarters with tasks
         if (quartersWithTasks.length > 0) {
@@ -231,22 +239,77 @@ export default function Planning() {
     loadQuartersWithTasks();
   }, [currentUser]);
 
+  // Initial data load - use bundled endpoint for better performance
   useEffect(() => {
     if (currentUser) {
-      fetchUsers();
-      fetchProjects();
-      fetchInternalTaskTypes();
-      fetchTasks();
-      fetchMilestoneTasks();
-      checkOutlookStatus();
-      fetchPlanningPreferences();
+      fetchAllPlanningData();
     }
   }, [currentUser]);
 
+  const fetchAllPlanningData = async () => {
+    if (quarterDays.length === 0) {
+      // Load base data without date range
+      try {
+        const response = await fetch('/api/planning-bundle');
+        if (response.ok) {
+          const data = await response.json();
+          setUsers(data.users);
+
+          // Sort projects alphabetically by common name
+          const sortedProjects = data.projects.sort((a: Project, b: Project) => {
+            const nameA = (a.commonName || a.projectName).toLowerCase();
+            const nameB = (b.commonName || b.projectName).toLowerCase();
+            return nameA.localeCompare(nameB);
+          });
+          setProjects(sortedProjects);
+
+          setInternalTaskTypes(data.internalTaskTypes);
+          setOutlookConnected(data.outlookConnected);
+          setShowInstructions(data.planningPreferences.showInstructions);
+        }
+      } catch (error) {
+        console.error('Error fetching planning data:', error);
+      }
+      return;
+    }
+
+    // Load all data including tasks/milestones
+    try {
+      const startDate = quarterDays[0].toISOString().split('T')[0];
+      const endDate = quarterDays[quarterDays.length - 1].toISOString().split('T')[0];
+
+      const response = await fetch(`/api/planning-bundle?startDate=${startDate}&endDate=${endDate}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Planning bundle data received:', data);
+        console.log('Tasks count:', data.tasks?.length, 'Milestones count:', data.milestoneTasks?.length);
+
+        setUsers(data.users);
+
+        // Sort projects alphabetically by common name
+        const sortedProjects = data.projects.sort((a: Project, b: Project) => {
+          const nameA = (a.commonName || a.projectName).toLowerCase();
+          const nameB = (b.commonName || b.projectName).toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+        setProjects(sortedProjects);
+
+        setInternalTaskTypes(data.internalTaskTypes);
+        setTasks(data.tasks || []);
+        setMilestoneTasks(data.milestoneTasks || []);
+        setOutlookConnected(data.outlookConnected);
+        setShowInstructions(data.planningPreferences.showInstructions);
+      } else {
+        console.error('Failed to fetch planning bundle:', response.status, await response.text());
+      }
+    } catch (error) {
+      console.error('Error fetching planning data:', error);
+    }
+  };
+
   useEffect(() => {
-    if (quarterDays.length > 0) {
-      fetchTasks();
-      fetchMilestoneTasks();
+    if (quarterDays.length > 0 && currentUser) {
+      fetchAllPlanningData();
 
       // Handle pending scroll after quarter change
       if (pendingScrollTarget.current) {

@@ -6,7 +6,27 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Performance optimizations
+  experimental: {
+    // Optimize package imports to reduce bundle size
+    optimizePackageImports: ['react-day-picker', 'date-fns', 'cally'],
+  },
+
+  // Compiler optimizations
+  compiler: {
+    // Remove console logs in production
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
+
+  // Server-side code optimization
+  serverExternalPackages: [
+    '@azure/msal-node',
+    '@microsoft/microsoft-graph-client',
+    'xlsx',
+    'bcrypt',
+  ],
 };
 
 export default withBundleAnalyzer(nextConfig);

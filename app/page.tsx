@@ -115,7 +115,7 @@ export default function Home() {
     fetchTasksForDate();
   }, [selectedDate]);
 
-  // Batch all initial API calls in parallel
+  // Fetch all dashboard data in a single bundled request
   useEffect(() => {
     const fetchAllDashboardData = async () => {
       setProjectsLoading(true);
@@ -123,50 +123,36 @@ export default function Home() {
       setMilestonesLoading(true);
 
       try {
-        // Prepare all fetch promises
+        // Calculate date range
         const today = formatDateLocal(new Date());
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + 90);
         const endDateStr = formatDateLocal(endDate);
 
-        const projectsUrl = showProjectsWithNoTasks
-          ? '/api/my-projects?includeNoTasks=true'
-          : '/api/my-projects';
+        // Single bundled API call instead of 4 separate calls
+        const params = new URLSearchParams({
+          includeNoTasks: showProjectsWithNoTasks.toString(),
+          startDate: today,
+          endDate: endDateStr,
+          taskLimit: '10'
+        });
 
-        // Execute all fetches in parallel
-        const [projectsRes, tasksRes, milestonesRes, widgetSettingsRes] = await Promise.all([
-          fetch(projectsUrl),
-          fetch('/api/my-upcoming-tasks?limit=10'),
-          fetch(`/api/milestone-tasks?startDate=${today}&endDate=${endDateStr}`),
-          fetch('/api/dashboard-widget-settings')
-        ]);
+        const response = await fetch(`/api/dashboard-bundle?${params}`);
 
-        // Process projects
-        if (projectsRes.ok) {
-          const projects = await projectsRes.json();
-          setMyProjects(projects);
-        }
+        if (response.ok) {
+          const data = await response.json();
 
-        // Process tasks
-        if (tasksRes.ok) {
-          const tasks = await tasksRes.json();
-          setUpcomingTasks(tasks);
-        }
+          setMyProjects(data.projects);
+          setUpcomingTasks(data.upcomingTasks);
 
-        // Process milestones
-        if (milestonesRes.ok) {
-          const milestones = await milestonesRes.json();
-          const sortedMilestones = milestones
+          // Sort and limit milestones
+          const sortedMilestones = data.milestones
             .sort((a: MilestoneTask, b: MilestoneTask) =>
               new Date(a.taskDate).getTime() - new Date(b.taskDate).getTime()
             )
             .slice(0, 10);
           setUpcomingMilestones(sortedMilestones);
-        }
 
-        // Process widget settings
-        if (widgetSettingsRes.ok) {
-          const data = await widgetSettingsRes.json();
           if (data.widgets && data.widgets.length > 0) {
             setWidgets(data.widgets);
           }
@@ -435,7 +421,7 @@ export default function Home() {
     >
       <div className="p-4">
         <div className="card bg-base-100">
-          <div className="card-body p-0 lg:p-8">
+          <div className="card-body p-4 lg:p-8">
             <div className="flex justify-between items-center w-full mb-4">
               <div>
                 <h2 className="text-2xl opacity-70">{formatDate(new Date())}</h2>
@@ -461,7 +447,7 @@ export default function Home() {
             >
               {widget.id === 'projects' && (
                 <div className="card bg-base-100 shadow-xl border border-base-300 h-80">
-                  <div className="card-body p-0 lg:p-8 flex flex-col h-full overflow-hidden">
+                  <div className="card-body p-4 lg:p-8 flex flex-col h-full overflow-hidden">
                     <div className="flex justify-between items-center flex-shrink-0 mb-2">
                       <h2 className="card-title">My Current Projects</h2>
                       <label className="label cursor-pointer gap-2 p-0">
@@ -525,7 +511,7 @@ export default function Home() {
 
               {widget.id === 'tasks' && (
                 <div className="card bg-base-100 shadow-xl border border-base-300 h-80">
-                  <div className="card-body p-0 lg:p-8 flex flex-col h-full overflow-hidden">
+                  <div className="card-body p-4 lg:p-8 flex flex-col h-full overflow-hidden">
                     <h2 className="card-title flex-shrink-0">My Upcoming Tasks</h2>
                     {tasksLoading ? (
                       <div className="space-y-2">
@@ -592,7 +578,7 @@ export default function Home() {
 
               {widget.id === 'milestones' && (
                 <div className="card bg-base-100 shadow-xl border border-base-300 h-80">
-                  <div className="card-body p-0 lg:p-8 flex flex-col h-full overflow-hidden">
+                  <div className="card-body p-4 lg:p-8 flex flex-col h-full overflow-hidden">
                     <h2 className="card-title flex-shrink-0">Upcoming Deadlines/Milestones</h2>
                     {milestonesLoading ? (
                       <div className="space-y-2">
@@ -645,7 +631,7 @@ export default function Home() {
 
               {widget.id === 'team-tasks' && (
                 <div className="card bg-base-100 shadow-xl border border-base-300">
-                  <div className="card-body p-0 lg:p-8 flex flex-col">
+                  <div className="card-body p-4 lg:p-8 flex flex-col">
                     <div className="flex justify-between items-center flex-shrink-0 mb-4">
                       <h2 className="card-title">
                         {isToday() ? "Today's" : formatShortDate(selectedDate.toISOString())} Tasks by Team Member

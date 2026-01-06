@@ -236,36 +236,42 @@ export async function POST(request: Request) {
       }
     }
 
-    // Automatically sync to Outlook if connected
+    // Return immediately, sync to Outlook in background (non-blocking)
     const createdTask = result[0];
-    try {
-      // Get project details if needed
-      let projectDetails = null;
-      if (projectId) {
-        const project = await sql`
-          SELECT project_name, project_number, common_name
-          FROM projects
-          WHERE id = ${projectId}
-        `;
-        projectDetails = project[0];
+    const response = NextResponse.json(result[0], { status: 201 });
+
+    // Sync to Outlook asynchronously without blocking the response
+    // This runs in the background and doesn't delay the user's task creation
+    (async () => {
+      try {
+        // Get project details if needed
+        let projectDetails = null;
+        if (projectId) {
+          const project = await sql`
+            SELECT project_name, project_number, common_name
+            FROM projects
+            WHERE id = ${projectId}
+          `;
+          projectDetails = project[0];
+        }
+
+        await syncTaskToOutlook({
+          id: createdTask.id,
+          userId: createdTask.userId,
+          taskDescription: createdTask.taskDescription,
+          taskType: createdTask.taskType,
+          taskDate: createdTask.taskDate,
+          projectName: projectDetails?.project_name,
+          projectNumber: projectDetails?.project_number,
+          projectCommonName: projectDetails?.common_name,
+        });
+      } catch (error) {
+        // Log error but don't fail task creation
+        console.error('Error syncing task to Outlook (background):', error);
       }
+    })();
 
-      await syncTaskToOutlook({
-        id: createdTask.id,
-        userId: createdTask.userId,
-        taskDescription: createdTask.taskDescription,
-        taskType: createdTask.taskType,
-        taskDate: createdTask.taskDate,
-        projectName: projectDetails?.project_name,
-        projectNumber: projectDetails?.project_number,
-        projectCommonName: projectDetails?.common_name,
-      });
-    } catch (error) {
-      // Log error but don't fail task creation
-      console.error('Error syncing task to Outlook:', error);
-    }
-
-    return NextResponse.json(result[0], { status: 201 });
+    return response;
   } catch (error: any) {
     console.error('Error creating planning task:', error);
 

@@ -2,6 +2,7 @@
 
 import Sidebar from '@/components/Sidebar';
 import CalendarDatePicker from '@/components/CalendarDatePicker';
+import CalendarHeader from '@/components/planning/CalendarHeader';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import TaskModal from '@/components/planning/TaskModal';
@@ -11,6 +12,7 @@ import { usePlanningData } from '@/hooks/planning/usePlanningData';
 import { usePlanningTasks } from '@/hooks/planning/usePlanningTasks';
 import { useMilestones } from '@/hooks/planning/useMilestones';
 import { usePlanningInteractions } from '@/hooks/planning/usePlanningInteractions';
+import { formatMonthDay, getDayName, isToday, isWeekend } from '@/lib/date-utils';
 
 interface User {
   id: number;
@@ -803,28 +805,8 @@ export default function Planning() {
     return date.getDate().toString();
   };
 
-  const formatMonthDay = (date: Date) => {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const getDayName = (date: Date) => {
-    return date.toLocaleDateString('en-US', { weekday: 'short' });
-  };
-
   const getMonthName = (date: Date) => {
     return date.toLocaleDateString('en-US', { month: 'long' });
-  };
-
-  const isToday = (date: Date) => {
-    const today = new Date();
-    return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
-  };
-
-  const isWeekend = (date: Date) => {
-    const day = date.getDay();
-    return day === 0 || day === 6; // Sunday or Saturday
   };
 
   // Group days by month for better visual separation
@@ -954,38 +936,13 @@ export default function Planning() {
                 ref={scrollContainerRef}
               >
                 <table className="table table-zebra">
-                  <thead className="bg-base-100 sticky top-0 z-30">
-                    <tr>
-                      <th className="bg-base-100 sticky left-0 z-50 text-center" style={{ minWidth: '120px', width: '120px' }}>
-                        Date
-                      </th>
-                      {quarterDays.map((day, index) => {
-                        const isNewMonth = index === 0 || day.getDate() === 1;
-                        return (
-                          <th
-                            key={day.toISOString()}
-                            className={`text-center px-2 ${
-                              isToday(day)
-                                ? 'bg-primary text-primary-content'
-                                : isWeekend(day)
-                                ? 'bg-base-300'
-                                : 'bg-base-100'
-                            } ${isNewMonth ? 'border-l-2 border-base-300' : ''}`}
-                            style={{ minWidth: '140px', width: '140px' }}
-                          >
-                            <div className="flex flex-col items-center">
-                              <div className="text-xs font-normal opacity-70">
-                                {getDayName(day)}
-                              </div>
-                              <div className="text-sm font-bold">
-                                {formatMonthDay(day)}
-                              </div>
-                            </div>
-                          </th>
-                        );
-                      })}
-                    </tr>
-                  </thead>
+                  <CalendarHeader
+                    quarterDays={quarterDays}
+                    formatMonthDay={formatMonthDay}
+                    getDayName={getDayName}
+                    isToday={isToday}
+                    isWeekend={isWeekend}
+                  />
                   <tbody>
                   {/* Deadlines/Milestones Section */}
                   {Array.from({ length: 2 }).map((_, rowIndex) => (

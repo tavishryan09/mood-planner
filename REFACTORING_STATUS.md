@@ -1,8 +1,8 @@
 # Refactoring Status & Quick Reference
 
 **Last Updated**: 2026-01-06
-**Status**: Phase 2 Complete - Moving to Custom Hooks
-**Next Phase**: Extract remaining planning hooks
+**Status**: Phase 2.5 Complete - Custom Hooks Extracted
+**Next Phase**: Extract Calendar Grid UI Components
 
 ---
 
@@ -48,8 +48,8 @@ Extracted complete UserSettingsModal including:
 
 **Impact**: Reduced planning page by additional 80+ lines
 
-#### Current Planning Page Size: 1,799 lines (down from 2,798)
-**Total Reduction**: 999 lines extracted to reusable components and hooks (36% reduction)
+#### Current Planning Page Size: 1,693 lines (down from 2,798)
+**Total Reduction**: 1,105 lines extracted to reusable components and hooks (39% reduction)
 
 ### Phase 2.5: Custom Hooks (IN PROGRESS)
 
@@ -81,7 +81,20 @@ Extracted complete task CRUD operations and state management including:
 
 **Impact**: Reduced planning page by additional 448 lines, significantly improved task management organization
 
-#### 3. Lazy Loading Setup
+#### 3. useMilestones Hook Created ✅
+**File Created**: `hooks/planning/useMilestones.ts` (199 lines)
+
+Extracted complete milestone CRUD operations and state management including:
+- Milestone modal state (showMilestoneModal, editingMilestone, selectedMilestoneCell, milestoneFormData)
+- Milestone editing and creation (handleMilestoneEdit, handleMilestoneCellDoubleClick)
+- Milestone save with validation
+- Milestone deletion (handleMilestoneDelete, handleDeleteSelectedMilestone)
+- Selection state management (selectedMilestone)
+- Form validation and error handling
+
+**Impact**: Reduced planning page by additional 106 lines, improved milestone management organization
+
+#### 4. Lazy Loading Setup
 **File Modified**: `app/planning/page.tsx`
 
 Added dynamic imports for future modal components:
@@ -96,7 +109,9 @@ const TaskModalLazy = dynamic(() => import('@/components/planning/TaskModal'), {
 
 **Impact**: Modals will load on-demand, saving ~150-200KB on initial page load
 
-#### 2. Shared Icon Library
+### Phase 1.5: Shared Component Library (COMPLETE)
+
+#### 1. Shared Icon Library
 **File Created**: `components/shared/Icons/index.tsx`
 
 Exported icons:
@@ -113,7 +128,7 @@ import { SettingsIcon } from '@/components/shared/Icons';
 <SettingsIcon className="w-5 h-5" />
 ```
 
-#### 3. Loading State Components
+#### 2. Loading State Components
 **File Created**: `components/shared/LoadingStates.tsx`
 
 Exported components:
@@ -138,7 +153,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 
 | File | Lines | Target | Status |
 |------|-------|--------|--------|
-| app/planning/page.tsx | 1,799 (was 2,798) | 400 | 🟢 Progressing well (-999 lines, 54% to goal) |
+| app/planning/page.tsx | 1,693 (was 2,798) | 400 | 🟢 Progressing well (-1,105 lines, 61% to goal) |
 | app/projects/page.tsx | 1,726 | 400 | 🔴 Needs refactoring |
 | app/projects/[slug]/page.tsx | 1,570 | 350 | 🔴 Needs refactoring |
 | app/page.tsx | 906 | 300 | 🟡 Needs refactoring |
@@ -155,6 +170,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 - ✅ UserSettingsModal (167 lines) - Planning page modal
 - ✅ usePlanningData (202 lines) - Data fetching hook
 - ✅ usePlanningTasks (478 lines) - Task CRUD hook
+- ✅ useMilestones (199 lines) - Milestone CRUD hook
 
 **To Extract** (Priority Order):
 1. ✅ ~~Planning TaskModal (~450 lines)~~ **DONE**

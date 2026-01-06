@@ -26,7 +26,11 @@ interface Milestone {
 
 interface Project {
   deadline?: string;
+  deadlineTitle?: string;
+  deadlineDescription?: string;
   internalDeadline?: string;
+  internalDeadlineTitle?: string;
+  internalDeadlineDescription?: string;
 }
 
 interface GanttChartProps {
@@ -111,7 +115,7 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
                   className="absolute -top-6 h-6 flex items-center justify-center"
                   style={{ left: `${milestone.percent}%`, transform: 'translateX(-50%)' }}
                 >
-                  <span className="text-[10px] font-bold text-secondary whitespace-nowrap">{milestone.description || milestone.milestoneName || 'Milestone'}</span>
+                  <span className="text-[10px] font-bold text-secondary whitespace-nowrap">{milestone.milestoneName || milestone.description || 'Milestone'}</span>
                 </div>
               ))}
 
@@ -121,7 +125,7 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
                   className="absolute -top-6 h-6 flex items-center justify-center"
                   style={{ left: `${projectDeadlinePercent}%`, transform: 'translateX(-50%)' }}
                 >
-                  <span className="text-[10px] font-bold text-error whitespace-nowrap">Deadline</span>
+                  <span className="text-[10px] font-bold text-error whitespace-nowrap">{project?.deadlineTitle || 'Deadline'}</span>
                 </div>
               )}
               {showInternalDeadline && (
@@ -129,7 +133,7 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
                   className="absolute -top-6 h-6 flex items-center justify-center"
                   style={{ left: `${internalDeadlinePercent}%`, transform: 'translateX(-50%)' }}
                 >
-                  <span className="text-[10px] font-bold text-warning whitespace-nowrap">Internal</span>
+                  <span className="text-[10px] font-bold text-warning whitespace-nowrap">{project?.internalDeadlineTitle || 'Internal'}</span>
                 </div>
               )}
 
@@ -149,7 +153,7 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
                 key={`milestone-line-${milestone.id}`}
                 className="absolute top-0 bottom-0 w-px bg-secondary pointer-events-none z-10"
                 style={{ left: `calc(12rem + (100% - 12rem) * ${milestone.percent} / 100)` }}
-                title={`Milestone: ${milestone.description || milestone.milestoneName || 'Milestone'}`}
+                title={`Milestone: ${milestone.milestoneName || milestone.description || 'Milestone'}`}
               />
             ))}
 

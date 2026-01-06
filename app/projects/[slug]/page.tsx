@@ -21,8 +21,10 @@ interface Project {
   billingRate?: number;
   useTeamRates?: boolean;
   deadline?: string;
+  deadlineTitle?: string;
   deadlineDescription?: string;
   internalDeadline?: string;
+  internalDeadlineTitle?: string;
   internalDeadlineDescription?: string;
   estimatedBillable?: number;
   totalHours?: number;
@@ -286,7 +288,7 @@ export default function ProjectDetails() {
                           onClick={() => {
                             setDeadlineType('deadline');
                             setMilestoneFormData({
-                              milestoneName: '',
+                              milestoneName: project.deadlineTitle || '',
                               description: project.deadlineDescription || '',
                               dueDate: project.deadline!.split('T')[0],
                               status: 'pending'
@@ -296,7 +298,7 @@ export default function ProjectDetails() {
                         >
                           <div className="card-body p-4">
                             <div className="flex items-start justify-between">
-                              <h4 className="font-semibold text-sm">Project Deadline</h4>
+                              <h4 className="font-semibold text-sm">{project.deadlineTitle || 'Project Deadline'}</h4>
                               <span className="badge badge-sm badge-error">deadline</span>
                             </div>
                             {project.deadlineDescription && (
@@ -316,7 +318,7 @@ export default function ProjectDetails() {
                           onClick={() => {
                             setDeadlineType('internal-deadline');
                             setMilestoneFormData({
-                              milestoneName: '',
+                              milestoneName: project.internalDeadlineTitle || '',
                               description: project.internalDeadlineDescription || '',
                               dueDate: project.internalDeadline!.split('T')[0],
                               status: 'pending'
@@ -326,7 +328,7 @@ export default function ProjectDetails() {
                         >
                           <div className="card-body p-4">
                             <div className="flex items-start justify-between">
-                              <h4 className="font-semibold text-sm">Internal Deadline</h4>
+                              <h4 className="font-semibold text-sm">{project.internalDeadlineTitle || 'Internal Deadline'}</h4>
                               <span className="badge badge-sm badge-warning">internal</span>
                             </div>
                             {project.internalDeadlineDescription && (
@@ -348,9 +350,12 @@ export default function ProjectDetails() {
                         >
                           <div className="card-body p-4">
                             <div className="flex items-start justify-between">
-                              <h4 className="font-semibold text-sm">{milestone.description || milestone.milestoneName || 'Milestone'}</h4>
+                              <h4 className="font-semibold text-sm">{milestone.milestoneName || 'Milestone'}</h4>
                               <span className="badge badge-sm badge-secondary">milestone</span>
                             </div>
+                            {milestone.description && (
+                              <p className="text-xs opacity-60 mt-1">{milestone.description}</p>
+                            )}
                             <div className="text-xs mt-2 opacity-70">
                               Due: {formatDate(milestone.dueDate)}
                             </div>

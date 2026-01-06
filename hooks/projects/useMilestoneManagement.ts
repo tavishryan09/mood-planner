@@ -28,8 +28,10 @@ interface Project {
   billingRate?: number;
   useTeamRates?: boolean;
   deadline?: string;
+  deadlineTitle?: string;
   deadlineDescription?: string;
   internalDeadline?: string;
+  internalDeadlineTitle?: string;
   internalDeadlineDescription?: string;
   estimatedBillable?: number;
   totalHours?: number;
@@ -86,8 +88,16 @@ export function useMilestoneManagement(
       if (deadlineType === 'deadline' || deadlineType === 'internal-deadline') {
         // Save as project deadline
         const updateData = deadlineType === 'deadline'
-          ? { deadline: milestoneFormData.dueDate, deadlineDescription: milestoneFormData.description }
-          : { internalDeadline: milestoneFormData.dueDate, internalDeadlineDescription: milestoneFormData.description };
+          ? {
+              deadline: milestoneFormData.dueDate,
+              deadlineTitle: milestoneFormData.milestoneName,
+              deadlineDescription: milestoneFormData.description
+            }
+          : {
+              internalDeadline: milestoneFormData.dueDate,
+              internalDeadlineTitle: milestoneFormData.milestoneName,
+              internalDeadlineDescription: milestoneFormData.description
+            };
 
         const response = await fetch(`/api/projects/${project.id}`, {
           method: 'PUT',
@@ -103,11 +113,8 @@ export function useMilestoneManagement(
         // Refresh project details
         await onProjectUpdate();
       } else {
-        // Save as milestone - use description as milestoneName
-        const milestoneData = {
-          ...milestoneFormData,
-          milestoneName: milestoneFormData.description || 'Milestone'
-        };
+        // Save as milestone
+        const milestoneData = milestoneFormData;
 
         if (editingMilestone) {
           const response = await fetch(`/api/projects/${project.id}/milestones/${editingMilestone.id}`, {

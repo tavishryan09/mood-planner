@@ -37,18 +37,20 @@ export async function GET(
 
     const project = result[0];
 
-    // Fetch deadline descriptions from milestone_tasks
+    // Fetch deadline titles and descriptions from milestone_tasks
     const deadlineData = await sql`
-      SELECT task_description, task_type
+      SELECT task_description, task_type, milestone_name
       FROM milestone_tasks
       WHERE project_id = ${id}
         AND task_type IN ('Deadline', 'Internal Deadline')
     `;
 
-    deadlineData.forEach((row: { task_description: string; task_type: string }) => {
+    deadlineData.forEach((row: { task_description: string; task_type: string; milestone_name?: string }) => {
       if (row.task_type === 'Deadline') {
+        project.deadlineTitle = row.milestone_name;
         project.deadlineDescription = row.task_description;
       } else if (row.task_type === 'Internal Deadline') {
+        project.internalDeadlineTitle = row.milestone_name;
         project.internalDeadlineDescription = row.task_description;
       }
     });
@@ -70,7 +72,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { projectNumber, projectName, clientId, commonName, projectValue, billingRate, useTeamRates, deadline, internalDeadline, deadlineDescription, internalDeadlineDescription } = body;
+    const { projectNumber, projectName, clientId, commonName, projectValue, billingRate, useTeamRates, deadline, internalDeadline, deadlineTitle, deadlineDescription, internalDeadlineTitle, internalDeadlineDescription } = body;
 
     // Get the old deadline values before updating
     const oldProject = await sql`
@@ -137,6 +139,7 @@ export async function PUT(
           await sql`
             INSERT INTO milestone_tasks (
               project_id,
+              milestone_name,
               task_description,
               task_type,
               task_date,
@@ -144,6 +147,7 @@ export async function PUT(
             )
             VALUES (
               ${id},
+              ${deadlineTitle || null},
               ${deadlineDescription || projectName},
               'Deadline',
               ${deadline},
@@ -152,6 +156,7 @@ export async function PUT(
             ON CONFLICT (task_date, row_index) DO UPDATE
             SET
               project_id = ${id},
+              milestone_name = ${deadlineTitle || null},
               task_description = ${deadlineDescription || projectName},
               task_type = 'Deadline'
           `;
@@ -174,6 +179,7 @@ export async function PUT(
           await sql`
             INSERT INTO milestone_tasks (
               project_id,
+              milestone_name,
               task_description,
               task_type,
               task_date,
@@ -181,6 +187,7 @@ export async function PUT(
             )
             VALUES (
               ${id},
+              ${internalDeadlineTitle || null},
               ${internalDeadlineDescription || projectName},
               'Internal Deadline',
               ${internalDeadline},
@@ -189,6 +196,7 @@ export async function PUT(
             ON CONFLICT (task_date, row_index) DO UPDATE
             SET
               project_id = ${id},
+              milestone_name = ${internalDeadlineTitle || null},
               task_description = ${internalDeadlineDescription || projectName},
               task_type = 'Internal Deadline'
           `;

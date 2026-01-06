@@ -11,8 +11,10 @@ interface Project {
   billingRate?: number;
   useTeamRates?: boolean;
   deadline?: string;
+  deadlineTitle?: string;
   deadlineDescription?: string;
   internalDeadline?: string;
+  internalDeadlineTitle?: string;
   internalDeadlineDescription?: string;
   estimatedBillable?: number;
   totalHours?: number;

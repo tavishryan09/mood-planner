@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
 
@@ -75,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -98,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await fetch('/api/user-preferences', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ sidebarOpen: isOpen }),
       });
 

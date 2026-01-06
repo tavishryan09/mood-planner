@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,27 +18,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Login failed');
-        setLoading(false);
-        return;
-      }
-
-      // Redirect to homepage on successful login
-      router.push('/');
-      router.refresh();
+      await login(email, password);
+      // login function handles navigation and user state update
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An error occurred. Please try again.');
+      }
       setLoading(false);
     }
   };

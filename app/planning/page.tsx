@@ -845,6 +845,22 @@ export default function Planning() {
     return taskDate >= today;
   });
 
+  // Show loading state while auth is being verified
+  if (authLoading) {
+    return (
+      <Sidebar title="Planning" hideNavbar={true}>
+        <div className="p-4">
+          <div className="card bg-base-100">
+            <div className="card-body p-4 lg:p-8">
+              <div className="skeleton h-8 w-64 mb-4"></div>
+              <div className="skeleton h-96 w-full"></div>
+            </div>
+          </div>
+        </div>
+      </Sidebar>
+    );
+  }
+
   return (
     <Sidebar title="Planning" hideNavbar={true}>
       <div

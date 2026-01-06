@@ -9,6 +9,7 @@ import MilestoneModal from '@/components/planning/MilestoneModal';
 import UserSettingsModal from '@/components/planning/UserSettingsModal';
 import { usePlanningData } from '@/hooks/planning/usePlanningData';
 import { usePlanningTasks } from '@/hooks/planning/usePlanningTasks';
+import { useMilestones } from '@/hooks/planning/useMilestones';
 
 interface User {
   id: number;
@@ -114,23 +115,32 @@ export default function Planning() {
     handleDeleteSelectedTask
   } = usePlanningTasks({ tasks, refetchTasks });
 
+  // Use milestones hook for milestone CRUD operations
+  const {
+    showMilestoneModal,
+    setShowMilestoneModal,
+    editingMilestone,
+    selectedMilestoneCell,
+    setSelectedMilestoneCell,
+    milestoneFormData,
+    setMilestoneFormData,
+    handleMilestoneEdit,
+    handleMilestoneSave,
+    handleMilestoneDelete,
+    handleMilestoneCellDoubleClick,
+    selectedMilestone,
+    setSelectedMilestone,
+    handleDeleteSelectedMilestone
+  } = useMilestones({ milestoneTasks, refetchMilestones });
+
   const [showUserSettings, setShowUserSettings] = useState(false);
   const [draggedTask, setDraggedTask] = useState<PlanningTask | null>(null);
   const [dragOverCell, setDragOverCell] = useState<{ userId: number; date: Date; rowIndex: number } | null>(null);
   const [resizingTask, setResizingTask] = useState<{ task: PlanningTask; edge: 'top' | 'bottom'; startY: number; startRowIndex: number; startRowSpan: number } | null>(null);
   const [draggedMilestone, setDraggedMilestone] = useState<MilestoneTask | null>(null);
   const [dragOverMilestoneCell, setDragOverMilestoneCell] = useState<{ date: Date; rowIndex: number } | null>(null);
-  const [selectedMilestone, setSelectedMilestone] = useState<MilestoneTask | null>(null);
-  const [showMilestoneModal, setShowMilestoneModal] = useState(false);
-  const [selectedMilestoneCell, setSelectedMilestoneCell] = useState<{ date: Date; rowIndex: number } | null>(null);
-  const [editingMilestone, setEditingMilestone] = useState<MilestoneTask | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [milestoneFormData, setMilestoneFormData] = useState({
-    projectId: '',
-    taskDescription: '',
-    taskType: 'Deadline' as 'Deadline' | 'Internal Deadline' | 'Milestone'
-  });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScroll = useRef(false);
   const pendingScrollTarget = useRef<Date | null>(null);
@@ -414,99 +424,6 @@ export default function Planning() {
     return foundMilestone;
   };
 
-  const handleMilestoneCellDoubleClick = (date: Date, rowIndex: number) => {
-    setSelectedMilestoneCell({ date, rowIndex });
-    setEditingMilestone(null);
-    setMilestoneFormData({
-      projectId: '',
-      taskDescription: '',
-      taskType: 'Deadline'
-    });
-    setShowMilestoneModal(true);
-  };
-
-  const handleMilestoneEdit = (milestone: MilestoneTask) => {
-    setEditingMilestone(milestone);
-    setMilestoneFormData({
-      projectId: milestone.projectId?.toString() || '',
-      taskDescription: milestone.taskDescription || '',
-      taskType: milestone.taskType
-    });
-    setShowMilestoneModal(true);
-  };
-
-  const handleMilestoneSave = async () => {
-    try {
-      if (editingMilestone) {
-        // Update existing milestone
-        const response = await fetch(`/api/milestone-tasks/${editingMilestone.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            projectId: milestoneFormData.projectId ? parseInt(milestoneFormData.projectId) : null,
-            taskDescription: milestoneFormData.taskDescription || null,
-            taskType: milestoneFormData.taskType,
-            taskDate: editingMilestone.taskDate,
-            rowIndex: editingMilestone.rowIndex
-          })
-        });
-
-        if (response.ok) {
-          const updatedMilestone = await response.json();
-          setMilestoneTasks(milestoneTasks.map(m => m.id === updatedMilestone.id ? updatedMilestone : m));
-          setShowMilestoneModal(false);
-        } else {
-          const error = await response.json();
-          alert(error.error || 'Failed to update milestone');
-        }
-      } else if (selectedMilestoneCell) {
-        // Create new milestone
-        const taskDate = selectedMilestoneCell.date.toISOString().split('T')[0];
-        const response = await fetch('/api/milestone-tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            projectId: milestoneFormData.projectId ? parseInt(milestoneFormData.projectId) : null,
-            taskDescription: milestoneFormData.taskDescription || null,
-            taskType: milestoneFormData.taskType,
-            taskDate,
-            rowIndex: selectedMilestoneCell.rowIndex
-          })
-        });
-
-        if (response.ok) {
-          const newMilestone = await response.json();
-          setMilestoneTasks([...milestoneTasks, newMilestone]);
-          setShowMilestoneModal(false);
-        } else {
-          const error = await response.json();
-          alert(error.error || 'Failed to create milestone');
-        }
-      }
-    } catch (error) {
-      console.error('Error saving milestone:', error);
-      alert('An error occurred while saving the milestone');
-    }
-  };
-
-  const handleMilestoneDelete = async () => {
-    if (!editingMilestone) return;
-
-    if (window.confirm('Are you sure you want to delete this milestone?')) {
-      try {
-        const response = await fetch(`/api/milestone-tasks/${editingMilestone.id}`, {
-          method: 'DELETE'
-        });
-
-        if (response.ok) {
-          setMilestoneTasks(milestoneTasks.filter(m => m.id !== editingMilestone.id));
-          setShowMilestoneModal(false);
-        }
-      } catch (error) {
-        console.error('Error deleting milestone:', error);
-      }
-    }
-  };
 
   const isCellOccupied = (userId: number, date: Date, rowIndex: number, rowSpan: number, excludeTaskId?: number) => {
     const dateStr = date.toISOString().split('T')[0];
@@ -870,29 +787,6 @@ export default function Planning() {
   };
 
 
-  const handleDeleteSelectedMilestone = async () => {
-    if (!selectedMilestone) return;
-
-    if (window.confirm('Are you sure you want to delete this milestone?')) {
-      try {
-        const response = await fetch(`/api/milestone-tasks/${selectedMilestone.id}`, {
-          method: 'DELETE'
-        });
-
-        if (response.ok) {
-          setMilestoneTasks(milestoneTasks.filter(m => m.id !== selectedMilestone.id));
-          setSelectedMilestone(null);
-          console.log('Milestone deleted successfully');
-        } else {
-          const error = await response.json();
-          alert(`Error deleting milestone: ${error.error || 'Unknown error'}`);
-        }
-      } catch (error) {
-        console.error('Error deleting milestone:', error);
-        alert('An unexpected error occurred. Please try again.');
-      }
-    }
-  };
 
   const openUserSettings = () => {
     setShowUserSettings(true);

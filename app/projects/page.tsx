@@ -1,6 +1,7 @@
 'use client';
 
 import Sidebar from '@/components/Sidebar';
+import ProjectModal from '@/components/projects/ProjectModal';
 import { useState, useEffect } from 'react';
 
 interface Project {
@@ -1122,223 +1123,99 @@ export default function Projects() {
         </div>
       </div>
 
-      {/* Modal for Add/Edit Project */}
-      {showModal && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => setShowModal(false)}
-            >
-              ✕
-            </button>
-            <h3 className="font-bold text-lg mb-5">
-              {editingProject ? 'Edit Project' : 'Add New Project'}
-            </h3>
+      {/* Project Modal */}
+      <ProjectModal
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        onSave={async (formData, selectedTeamMembers, teamMemberRates) => {
+          try {
+            let clientId = null;
+            if (formData.clientId && formData.clientId !== 'confidential') {
+              clientId = parseInt(formData.clientId);
+            }
 
-            <label className="input input-bordered w-full mb-5">
-              <span className="label">Project Name</span>
-              <input
-                type="text"
-                value={formData.projectName}
-                onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                required
-              />
-            </label>
+            const payload = {
+              projectNumber: formData.projectNumber || null,
+              projectName: formData.projectName,
+              clientId: clientId,
+              commonName: formData.commonName || null,
+              projectValue: formData.projectValue ? parseFloat(formData.projectValue) : null,
+              billingRate: formData.billingRate ? parseFloat(formData.billingRate) : null,
+              useTeamRates: formData.useTeamRates
+            };
 
-            <label className="input input-bordered w-full mb-5">
-              <span className="label">Project Number (Optional)</span>
-              <input
-                type="text"
-                value={formData.projectNumber}
-                onChange={(e) => setFormData({ ...formData, projectNumber: e.target.value })}
-                placeholder="e.g., PRJ-2025-001"
-              />
-            </label>
+            let projectId: number;
 
-            <div className="form-control w-full mb-5">
-              <label className="label">
-                <span className="label-text">Client (Optional)</span>
-              </label>
-              {!showNewClientInput ? (
-                <select
-                  className="select select-bordered w-full"
-                  value={formData.clientId}
-                  onChange={(e) => handleClientChange(e.target.value)}
-                >
-                  <option value="">-- Select a client --</option>
-                  <option value="confidential">Confidential</option>
-                  <option disabled>───────────────</option>
-                  {clients.sort((a, b) => a.businessName.localeCompare(b.businessName)).map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.businessName}
-                    </option>
-                  ))}
-                  <option disabled>───────────────</option>
-                  <option value="create-new">+ Create New Client</option>
-                </select>
-              ) : (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    className="input input-bordered flex-1"
-                    placeholder="Enter new client name"
-                    value={newClientName}
-                    onChange={(e) => setNewClientName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        createNewClient();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={createNewClient}
-                    disabled={!newClientName.trim()}
-                  >
-                    Add
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => {
-                      setShowNewClientInput(false);
-                      setNewClientName('');
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-            </div>
+            if (editingProject) {
+              const response = await fetch(`/api/projects/${editingProject}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              });
+              if (!response.ok) throw new Error('Failed to update project');
+              projectId = editingProject;
+              await fetchProjects();
+            } else {
+              const response = await fetch('/api/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              });
+              if (!response.ok) throw new Error('Failed to create project');
+              const newProject = await response.json();
+              projectId = newProject.id;
+              await fetchProjects();
+            }
 
-            <label className="input input-bordered w-full mb-5">
-              <span className="label">Common Name (Optional)</span>
-              <input
-                type="text"
-                value={formData.commonName}
-                onChange={(e) => setFormData({ ...formData, commonName: e.target.value })}
-                placeholder="e.g., Website Redesign"
-              />
-            </label>
+            await fetch(`/api/projects/${projectId}/team`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userIds: selectedTeamMembers }),
+            });
 
-            <label className="input input-bordered w-full mb-5">
-              <span className="label">Project Value (Optional)</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.projectValue}
-                onChange={(e) => setFormData({ ...formData, projectValue: e.target.value })}
-                placeholder="0.00"
-              />
-            </label>
+            if (formData.useTeamRates) {
+              await fetch(`/api/projects/${projectId}/team-rates`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rates: teamMemberRates }),
+              });
+            }
 
-            <label className="input input-bordered w-full mb-5">
-              <span className="label">Billing Rate ($/hr)</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.billingRate}
-                onChange={(e) => setFormData({ ...formData, billingRate: e.target.value })}
-                placeholder="0.00"
-              />
-            </label>
+            setShowModal(false);
+          } catch (error) {
+            console.error('Error saving project:', error);
+            alert('Failed to save project. Please try again.');
+          }
+        }}
+        onDelete={editingProject ? async () => {
+          const confirmDelete = window.confirm('Are you sure you want to delete this project? This action cannot be undone.');
+          if (!confirmDelete) return;
 
-            <div className="form-control w-full mb-5">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <span className="label-text font-medium block mb-1">Use different billing rates per team member</span>
-                  <p className="text-xs opacity-60">When enabled, you can set individual billing rates for each team member assigned to this project</p>
-                </div>
-                <input
-                  type="checkbox"
-                  className="toggle toggle-primary flex-shrink-0 mt-1"
-                  checked={formData.useTeamRates}
-                  onChange={(e) => setFormData({ ...formData, useTeamRates: e.target.checked })}
-                />
-              </div>
-            </div>
-
-            <div className="form-control w-full mb-5">
-              <label className="label">
-                <span className="label-text">Team Members (Optional)</span>
-              </label>
-              <div className="border border-base-300 rounded-lg p-3 max-h-48 overflow-y-auto">
-                {users.length === 0 ? (
-                  <p className="text-sm text-base-content/60">Loading users...</p>
-                ) : (
-                  <div className="space-y-2">
-                    {users.sort((a, b) => a.name.localeCompare(b.name)).map((user) => (
-                      <div key={user.id} className="hover:bg-base-200 p-2 rounded">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="checkbox checkbox-sm"
-                            checked={selectedTeamMembers.includes(user.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedTeamMembers([...selectedTeamMembers, user.id]);
-                              } else {
-                                setSelectedTeamMembers(selectedTeamMembers.filter(id => id !== user.id));
-                              }
-                            }}
-                          />
-                          <span className="text-sm flex-1">{user.name}</span>
-                          <span className="text-xs opacity-60">{user.email}</span>
-                        </label>
-                        {formData.useTeamRates && selectedTeamMembers.includes(user.id) && (
-                          <div className="flex items-center gap-2 mt-2 ml-7">
-                            <span className="text-xs opacity-70">$</span>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={getTeamMemberRate(user.id) || 0}
-                              onChange={(e) => updateTeamMemberRate(user.id, e.target.value)}
-                              onClick={(e) => e.stopPropagation()}
-                              className="input input-xs input-bordered w-24"
-                              placeholder={user.billingRate?.toString() || "0.00"}
-                            />
-                            <span className="text-xs opacity-70">/hr</span>
-                            {user.billingRate && (
-                              <span className="text-xs opacity-60">(Default: ${Number(user.billingRate || 0).toFixed(2)}/hr)</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="modal-action">
-              {editingProject && (
-                <button className="btn btn-error mr-auto" onClick={handleDelete}>
-                  Delete
-                </button>
-              )}
-              <button className="btn" onClick={() => setShowModal(false)}>
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleSave}
-                disabled={!formData.projectName.trim()}
-              >
-                {editingProject ? 'Save Changes' : 'Add Project'}
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setShowModal(false)}>close</button>
-          </form>
-        </dialog>
-      )}
+          try {
+            const response = await fetch(`/api/projects/${editingProject}`, {
+              method: 'DELETE',
+            });
+            if (!response.ok) throw new Error('Failed to delete project');
+            setProjects(projects.filter(project => project.id !== editingProject));
+            setShowModal(false);
+          } catch (error) {
+            console.error('Error deleting project:', error);
+            alert('Failed to delete project. Please try again.');
+          }
+        } : undefined}
+        editingProject={editingProject}
+        formData={formData}
+        setFormData={setFormData}
+        clients={clients}
+        users={users}
+        selectedTeamMembers={selectedTeamMembers}
+        setSelectedTeamMembers={setSelectedTeamMembers}
+        teamMemberRates={teamMemberRates}
+        setTeamMemberRates={setTeamMemberRates}
+        onClientCreated={(newClient) => {
+          setClients([...clients, newClient]);
+        }}
+      />
 
       {/* Column Visibility Modal */}
       {showColumnModal && (

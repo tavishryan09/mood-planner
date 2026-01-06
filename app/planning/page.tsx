@@ -64,7 +64,7 @@ interface MilestoneTask {
 }
 
 export default function Planning() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, loading: authLoading } = useAuth();
   const [quarterDays, setQuarterDays] = useState<Date[]>([]);
   const [currentQuarter, setCurrentQuarter] = useState('');
   const [selectedQuarterOffset, setSelectedQuarterOffset] = useState(0); // 0 = current, 1 = next, -1 = previous
@@ -253,7 +253,8 @@ export default function Planning() {
   useEffect(() => {
     // Load quarters with tasks on mount
     const loadQuartersWithTasks = async () => {
-      if (!currentUser) return;
+      // Wait for auth to finish loading before attempting to load data
+      if (authLoading || !currentUser) return;
 
       try {
         // Check current quarter and next 3 quarters for tasks in parallel
@@ -327,7 +328,7 @@ export default function Planning() {
     };
 
     loadQuartersWithTasks();
-  }, [currentUser]);
+  }, [currentUser, authLoading]);
 
   // Handle pending scroll after quarter change
   useEffect(() => {

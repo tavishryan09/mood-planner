@@ -1,8 +1,8 @@
 # Refactoring Status & Quick Reference
 
 **Last Updated**: 2026-01-06
-**Status**: Phase 2.5 Complete - Custom Hooks Extracted
-**Next Phase**: Extract Calendar Grid UI Components
+**Status**: Phase 3 - Planning Page 77% Complete (1,316 lines remaining)
+**Next Phase**: Extract Calendar Grid UI or move to other pages
 
 ---
 
@@ -48,10 +48,10 @@ Extracted complete UserSettingsModal including:
 
 **Impact**: Reduced planning page by additional 80+ lines
 
-#### Current Planning Page Size: 1,693 lines (down from 2,798)
-**Total Reduction**: 1,105 lines extracted to reusable components and hooks (39% reduction)
+#### Current Planning Page Size: 1,316 lines (down from 2,798)
+**Total Reduction**: 1,482 lines extracted to reusable components and hooks (53% reduction)
 
-### Phase 2.5: Custom Hooks (IN PROGRESS)
+### Phase 2.5: Custom Hooks (COMPLETE)
 
 #### 1. usePlanningData Hook Created ✅
 **File Created**: `hooks/planning/usePlanningData.ts` (202 lines)
@@ -94,7 +94,22 @@ Extracted complete milestone CRUD operations and state management including:
 
 **Impact**: Reduced planning page by additional 106 lines, improved milestone management organization
 
-#### 4. Lazy Loading Setup
+#### 4. usePlanningInteractions Hook Created ✅
+**File Created**: `hooks/planning/usePlanningInteractions.ts` (577 lines)
+
+Extracted complete interaction logic including:
+- Task drag-and-drop handlers (handleTaskDragStart, handleTaskDragEnd, handleCellDragOver, handleCellDrop)
+- Milestone drag-and-drop handlers (handleMilestoneDragStart, handleMilestoneDragEnd, etc.)
+- Task resize functionality with mouse event handling (handleResizeStart, useEffect for resize)
+- User reordering drag handlers (handleDragStart, handleDragOver, handleDragEnd)
+- Click handlers (handleTaskClick, handleMilestoneClick)
+- Keyboard shortcuts (Cmd+C/X/V for copy/cut/paste, Delete/Backspace, Escape)
+- Helper functions (getTaskForCell, getMilestoneForCell, isCellOccupied, isCellInDragPreview)
+- All drag/resize/selection state management
+
+**Impact**: Reduced planning page by additional 377 lines, consolidated all interaction logic
+
+#### 5. Lazy Loading Setup
 **File Modified**: `app/planning/page.tsx`
 
 Added dynamic imports for future modal components:
@@ -153,7 +168,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 
 | File | Lines | Target | Status |
 |------|-------|--------|--------|
-| app/planning/page.tsx | 1,693 (was 2,798) | 400 | 🟢 Progressing well (-1,105 lines, 61% to goal) |
+| app/planning/page.tsx | 1,316 (was 2,798) | 400 | 🟢 Excellent progress (-1,482 lines, 77% to goal) |
 | app/projects/page.tsx | 1,726 | 400 | 🔴 Needs refactoring |
 | app/projects/[slug]/page.tsx | 1,570 | 350 | 🔴 Needs refactoring |
 | app/page.tsx | 906 | 300 | 🟡 Needs refactoring |
@@ -171,6 +186,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 - ✅ usePlanningData (202 lines) - Data fetching hook
 - ✅ usePlanningTasks (478 lines) - Task CRUD hook
 - ✅ useMilestones (199 lines) - Milestone CRUD hook
+- ✅ usePlanningInteractions (577 lines) - Drag-and-drop, resize, keyboard shortcuts hook
 
 **To Extract** (Priority Order):
 1. ✅ ~~Planning TaskModal (~450 lines)~~ **DONE**

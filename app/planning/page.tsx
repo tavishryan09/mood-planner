@@ -254,7 +254,7 @@ export default function Planning() {
     // Load quarters with tasks on mount
     const loadQuartersWithTasks = async () => {
       // Wait for auth to finish loading before attempting to load data
-      if (authLoading || !currentUser) return;
+      if (authLoading) return;
 
       try {
         // Check current quarter and next 3 quarters for tasks in parallel
@@ -328,7 +328,7 @@ export default function Planning() {
     };
 
     loadQuartersWithTasks();
-  }, [currentUser, authLoading]);
+  }, [authLoading]);
 
   // Handle pending scroll after quarter change
   useEffect(() => {
@@ -845,8 +845,8 @@ export default function Planning() {
     return taskDate >= today;
   });
 
-  // Show loading state while auth is being verified
-  if (authLoading) {
+  // Show loading state while auth is being verified OR while quarters are being initialized
+  if (authLoading || (quarterDays.length === 0 && isLoading)) {
     return (
       <Sidebar title="Planning" hideNavbar={true}>
         <div className="p-4">

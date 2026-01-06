@@ -1,5 +1,7 @@
 'use client';
 
+import DatePicker from '../DatePicker';
+
 interface Task {
   id: number;
   taskName: string;
@@ -115,29 +117,19 @@ export default function TaskModal({
           </label>
 
           <div className="grid grid-cols-2 gap-4">
-            <label className="form-control w-full">
-              <div className="label">
-                <span className="label-text">Start Date *</span>
-              </div>
-              <input
-                type="date"
-                className="input input-bordered w-full"
-                value={taskFormData.startDate}
-                onChange={(e) => onFormDataChange({ ...taskFormData, startDate: e.target.value })}
-              />
-            </label>
+            <DatePicker
+              value={taskFormData.startDate}
+              onChange={(date) => onFormDataChange({ ...taskFormData, startDate: date })}
+              label="Start Date"
+              required
+            />
 
-            <label className="form-control w-full">
-              <div className="label">
-                <span className="label-text">End Date *</span>
-              </div>
-              <input
-                type="date"
-                className="input input-bordered w-full"
-                value={taskFormData.endDate}
-                onChange={(e) => onFormDataChange({ ...taskFormData, endDate: e.target.value })}
-              />
-            </label>
+            <DatePicker
+              value={taskFormData.endDate}
+              onChange={(date) => onFormDataChange({ ...taskFormData, endDate: date })}
+              label="End Date"
+              required
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

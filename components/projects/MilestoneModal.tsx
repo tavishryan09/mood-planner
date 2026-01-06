@@ -1,5 +1,7 @@
 'use client';
 
+import DatePicker from '../DatePicker';
+
 interface Milestone {
   id: number;
   milestoneName: string;
@@ -122,21 +124,14 @@ export default function MilestoneModal({
             />
           </label>
 
-          <label className="form-control w-full">
-            <div className="label">
-              <span className="label-text">
-                {deadlineType === 'deadline' ? 'Deadline Date *' :
-                 deadlineType === 'internal-deadline' ? 'Internal Deadline Date *' :
-                 'Due Date *'}
-              </span>
-            </div>
-            <input
-              type="date"
-              className="input input-bordered w-full"
-              value={milestoneFormData.dueDate}
-              onChange={(e) => onFormDataChange({ ...milestoneFormData, dueDate: e.target.value })}
-            />
-          </label>
+          <DatePicker
+            value={milestoneFormData.dueDate}
+            onChange={(date) => onFormDataChange({ ...milestoneFormData, dueDate: date })}
+            label={deadlineType === 'deadline' ? 'Deadline Date' :
+                   deadlineType === 'internal-deadline' ? 'Internal Deadline Date' :
+                   'Due Date'}
+            required
+          />
         </div>
 
         <div className="modal-action">

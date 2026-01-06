@@ -4,7 +4,8 @@ import Sidebar from '@/components/Sidebar';
 import ProjectModal from '@/components/projects/ProjectModal';
 import ColumnVisibilityModal from '@/components/projects/ColumnVisibilityModal';
 import ImportModal from '@/components/projects/ImportModal';
-import { useState, useEffect } from 'react';
+import { useProjectsData } from '@/hooks/projects/useProjectsData';
+import { useState } from 'react';
 
 interface Project {
   id: number;
@@ -43,51 +44,45 @@ interface TeamMemberRate {
 }
 
 export default function Projects() {
+  // Use custom hook for data management
+  const {
+    projects,
+    setProjects,
+    clients,
+    setClients,
+    users,
+    loading,
+    visibleColumns,
+    setVisibleColumns,
+    tempVisibleColumns,
+    setTempVisibleColumns,
+    fetchProjects,
+    fetchClients,
+    fetchUsers
+  } = useProjectsData();
+
+  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingProject, setEditingProject] = useState<number | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+
+  // Project form state
   const [selectedTeamMembers, setSelectedTeamMembers] = useState<number[]>([]);
   const [teamMemberRates, setTeamMemberRates] = useState<TeamMemberRate[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showNewClientInput, setShowNewClientInput] = useState(false);
   const [newClientName, setNewClientName] = useState('');
+
+  // Table state
   const [sortField, setSortField] = useState<keyof Project>('projectName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [editingCell, setEditingCell] = useState<{ id: number; field: string } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+
+  // Import state
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<any>(null);
-  const [visibleColumns, setVisibleColumns] = useState({
-    projectNumber: true,
-    projectName: true,
-    clientName: true,
-    commonName: true,
-    projectValue: true,
-    estimatedBillable: true,
-    billablePercent: true,
-    totalHours: true,
-    hoursThisWeek: true,
-    hoursThisMonth: true,
-    hoursThisQuarter: true
-  });
-  const [tempVisibleColumns, setTempVisibleColumns] = useState({
-    projectNumber: true,
-    projectName: true,
-    clientName: true,
-    commonName: true,
-    projectValue: true,
-    estimatedBillable: true,
-    billablePercent: true,
-    totalHours: true,
-    hoursThisWeek: true,
-    hoursThisMonth: true,
-    hoursThisQuarter: true
-  });
 
   const [formData, setFormData] = useState({
     projectNumber: '',
@@ -98,127 +93,6 @@ export default function Projects() {
     billingRate: '',
     useTeamRates: true
   });
-
-  useEffect(() => {
-    // Load column visibility preferences from database
-    const loadColumnPreferences = async () => {
-      try {
-        const response = await fetch('/api/projects-column-preferences');
-        if (response.ok) {
-          const data = await response.json();
-          setVisibleColumns(data.columnSettings);
-        }
-      } catch (error) {
-        console.error('Error loading column visibility preferences:', error);
-      }
-    };
-
-    loadColumnPreferences();
-    fetchProjects();
-    fetchClients();
-    fetchUsers();
-  }, []);
-
-  // Save column visibility to database whenever it changes
-  useEffect(() => {
-    const saveColumnPreferences = async () => {
-      try {
-        await fetch('/api/projects-column-preferences', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ columnSettings: visibleColumns })
-        });
-      } catch (error) {
-        console.error('Error saving column visibility preferences:', error);
-      }
-    };
-
-    // Only save if we're not in the initial render
-    // We can check if projects have been loaded as an indicator
-    if (projects.length > 0 || !loading) {
-      saveColumnPreferences();
-    }
-  }, [visibleColumns]);
-
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/projects');
-      if (!response.ok) throw new Error('Failed to fetch projects');
-      const data = await response.json();
-
-      // Fetch estimated billable and hours for each project
-      const projectsWithData = await Promise.all(
-        data.map(async (project: Project) => {
-          let estimatedBillable = 0;
-          let totalHours = 0;
-          let hoursThisWeek = 0;
-          let hoursThisMonth = 0;
-          let hoursThisQuarter = 0;
-
-          try {
-            const billableResponse = await fetch(`/api/projects/${project.id}/estimated-billable`);
-            if (billableResponse.ok) {
-              const billableData = await billableResponse.json();
-              estimatedBillable = billableData.estimatedBillable;
-            }
-          } catch (error) {
-            console.error(`Error fetching billable for project ${project.id}:`, error);
-          }
-
-          try {
-            const hoursResponse = await fetch(`/api/projects/${project.id}/hours`);
-            if (hoursResponse.ok) {
-              const hoursData = await hoursResponse.json();
-              totalHours = hoursData.totalHours;
-              hoursThisWeek = hoursData.hoursThisWeek;
-              hoursThisMonth = hoursData.hoursThisMonth;
-              hoursThisQuarter = hoursData.hoursThisQuarter;
-            }
-          } catch (error) {
-            console.error(`Error fetching hours for project ${project.id}:`, error);
-          }
-
-          return {
-            ...project,
-            estimatedBillable,
-            totalHours,
-            hoursThisWeek,
-            hoursThisMonth,
-            hoursThisQuarter,
-          };
-        })
-      );
-
-      setProjects(projectsWithData);
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchClients = async () => {
-    try {
-      const response = await fetch('/api/clients');
-      if (!response.ok) throw new Error('Failed to fetch clients');
-      const data = await response.json();
-      setClients(data);
-    } catch (error) {
-      console.error('Error fetching clients:', error);
-    }
-  };
-
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch('/api/users');
-      if (!response.ok) throw new Error('Failed to fetch users');
-      const data = await response.json();
-      setUsers(data);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
 
   const fetchProjectTeam = async (projectId: number) => {
     try {

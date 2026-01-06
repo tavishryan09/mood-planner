@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import TaskModal from '@/components/planning/TaskModal';
 import MilestoneModal from '@/components/planning/MilestoneModal';
+import UserSettingsModal from '@/components/planning/UserSettingsModal';
 
 interface User {
   id: number;
@@ -66,9 +67,7 @@ export default function Planning() {
   const [loadedQuarterOffsets, setLoadedQuarterOffsets] = useState<number[]>([0]); // Track which quarters are loaded
   const [currentWeekNumber, setCurrentWeekNumber] = useState(1);
   const [users, setUsers] = useState<UserDisplay[]>([]);
-  const [tempUsers, setTempUsers] = useState<UserDisplay[]>([]);
   const [showUserSettings, setShowUserSettings] = useState(false);
-  const [draggedUser, setDraggedUser] = useState<number | null>(null);
   const [draggedTask, setDraggedTask] = useState<PlanningTask | null>(null);
   const [dragOverCell, setDragOverCell] = useState<{ userId: number; date: Date; rowIndex: number } | null>(null);
   const [resizingTask, setResizingTask] = useState<{ task: PlanningTask; edge: 'top' | 'bottom'; startY: number; startRowIndex: number; startRowSpan: number } | null>(null);
@@ -1424,26 +1423,11 @@ export default function Planning() {
   };
 
   const openUserSettings = () => {
-    setTempUsers([...users]);
     setShowUserSettings(true);
   };
 
-  const saveSettings = () => {
-    setUsers(tempUsers);
-    saveUserSettings(tempUsers);
-    setShowUserSettings(false);
-  };
-
-  const cancelSettings = () => {
-    setTempUsers([]);
-    setShowUserSettings(false);
-  };
-
-  const toggleUserVisibility = (userId: number) => {
-    setTempUsers(tempUsers.map(user =>
-      user.id === userId ? { ...user, visible: !user.visible } : user
-    ));
-  };
+  // Drag handlers for reordering team members in calendar view
+  const [draggedUser, setDraggedUser] = useState<number | null>(null);
 
   const handleDragStart = (userId: number) => {
     setDraggedUser(userId);
@@ -1453,12 +1437,12 @@ export default function Planning() {
     e.preventDefault();
     if (draggedUser === null || draggedUser === targetUserId) return;
 
-    const draggedIndex = tempUsers.findIndex(u => u.id === draggedUser);
-    const targetIndex = tempUsers.findIndex(u => u.id === targetUserId);
+    const draggedIndex = users.findIndex(u => u.id === draggedUser);
+    const targetIndex = users.findIndex(u => u.id === targetUserId);
 
     if (draggedIndex === -1 || targetIndex === -1) return;
 
-    const newUsers = [...tempUsers];
+    const newUsers = [...users];
     const [removed] = newUsers.splice(draggedIndex, 1);
     newUsers.splice(targetIndex, 0, removed);
 
@@ -1468,7 +1452,8 @@ export default function Planning() {
       order: index
     }));
 
-    setTempUsers(reorderedUsers);
+    setUsers(reorderedUsers);
+    saveUserSettings(reorderedUsers);
   };
 
   const handleDragEnd = () => {
@@ -2299,85 +2284,18 @@ export default function Planning() {
       </div>
 
       {/* User Settings Modal */}
-      {showUserSettings && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => setShowUserSettings(false)}
-            >
-              ✕
-            </button>
-            <h3 className="font-bold text-lg mb-4">Manage Team Members</h3>
-            <p className="text-sm opacity-70 mb-4">
-              Drag team members to reorder them. Toggle visibility to show/hide team members in the planning table.
-            </p>
-
-            {/* Show Instructions Toggle */}
-            <div className="flex items-center justify-between p-3 rounded-lg border border-base-300 bg-base-100 mb-4">
-              <div>
-                <div className="font-medium">Show Instructions</div>
-                <div className="text-xs opacity-60">Display help text below the calendar</div>
-              </div>
-              <label className="cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="toggle toggle-primary"
-                  checked={showInstructions}
-                  onChange={(e) => updateShowInstructions(e.target.checked)}
-                />
-              </label>
-            </div>
-
-            <div className="space-y-2">
-              {tempUsers.map((user) => (
-                <div
-                  key={user.id}
-                  draggable
-                  onDragStart={() => handleDragStart(user.id)}
-                  onDragOver={(e) => handleDragOver(e, user.id)}
-                  onDragEnd={handleDragEnd}
-                  className={`flex items-center justify-between p-3 rounded-lg border border-base-300 bg-base-100 cursor-move ${
-                    draggedUser === user.id ? 'opacity-50' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-5 opacity-50">
-                      <line x1="3" y1="9" x2="21" y2="9"></line>
-                      <line x1="3" y1="15" x2="21" y2="15"></line>
-                    </svg>
-                    <div>
-                      <div className="font-medium">{user.name}</div>
-                      <div className="text-xs opacity-60">{user.email}</div>
-                    </div>
-                  </div>
-                  <label className="cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="toggle toggle-primary"
-                      checked={user.visible}
-                      onChange={() => toggleUserVisibility(user.id)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </label>
-                </div>
-              ))}
-            </div>
-
-            <div className="modal-action">
-              <button className="btn" onClick={cancelSettings}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={saveSettings}>
-                Save
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={cancelSettings}>close</button>
-          </form>
-        </dialog>
-      )}
+      <UserSettingsModal
+        show={showUserSettings}
+        onClose={() => setShowUserSettings(false)}
+        onSave={(updatedUsers) => {
+          setUsers(updatedUsers);
+          saveUserSettings(updatedUsers);
+          setShowUserSettings(false);
+        }}
+        users={users}
+        showInstructions={showInstructions}
+        onUpdateShowInstructions={updateShowInstructions}
+      />
 
       {/* Task Modal */}
       <TaskModal

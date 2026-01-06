@@ -36,8 +36,20 @@ Extracted complete MilestoneModal including:
 
 **Impact**: Reduced planning page by additional 90+ lines
 
-#### Current Planning Page Size: 2,409 lines (down from 2,798)
-**Total Reduction**: 389 lines extracted to reusable components
+#### 3. UserSettingsModal Component Extracted ✅
+**File Created**: `components/planning/UserSettingsModal.tsx` (167 lines)
+
+Extracted complete UserSettingsModal including:
+- Team member drag-and-drop reordering
+- Team member visibility toggles
+- Show instructions preference toggle
+- All drag state management internalized
+- Save/Cancel handlers
+
+**Impact**: Reduced planning page by additional 80+ lines
+
+#### Current Planning Page Size: 2,327 lines (down from 2,798)
+**Total Reduction**: 471 lines extracted to reusable components (17% reduction)
 
 #### 3. Lazy Loading Setup
 **File Modified**: `app/planning/page.tsx`
@@ -96,7 +108,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 
 | File | Lines | Target | Status |
 |------|-------|--------|--------|
-| app/planning/page.tsx | 2,409 (was 2,798) | 400 | 🟡 In progress (-389 lines) |
+| app/planning/page.tsx | 2,327 (was 2,798) | 400 | 🟡 In progress (-471 lines, 24% to goal) |
 | app/projects/page.tsx | 1,726 | 400 | 🔴 Needs refactoring |
 | app/projects/[slug]/page.tsx | 1,570 | 350 | 🔴 Needs refactoring |
 | app/page.tsx | 906 | 300 | 🟡 Needs refactoring |
@@ -110,11 +122,12 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 - ✅ Loading States (6 components)
 - ✅ TaskModal (396 lines) - Planning page modal
 - ✅ MilestoneModal (144 lines) - Planning page modal
+- ✅ UserSettingsModal (167 lines) - Planning page modal
 
 **To Extract** (Priority Order):
 1. ✅ ~~Planning TaskModal (~450 lines)~~ **DONE**
 2. ✅ ~~Planning MilestoneModal (~250 lines)~~ **DONE**
-3. Planning UserSettingsModal (~200 lines)
+3. ✅ ~~Planning UserSettingsModal (~200 lines)~~ **DONE**
 4. Planning Calendar Grid (~600 lines)
 5. Projects Table Components (~400 lines)
 6. Projects Modals (~650 lines)

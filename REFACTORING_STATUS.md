@@ -1,8 +1,8 @@
 # Refactoring Status & Quick Reference
 
 **Last Updated**: 2026-01-06
-**Status**: Phase 2 In Progress - Modal Extraction
-**Next Phase**: Extract remaining UserSettingsModal
+**Status**: Phase 2 Complete - Moving to Custom Hooks
+**Next Phase**: Extract remaining planning hooks
 
 ---
 
@@ -48,8 +48,23 @@ Extracted complete UserSettingsModal including:
 
 **Impact**: Reduced planning page by additional 80+ lines
 
-#### Current Planning Page Size: 2,327 lines (down from 2,798)
-**Total Reduction**: 471 lines extracted to reusable components (17% reduction)
+#### Current Planning Page Size: 2,247 lines (down from 2,798)
+**Total Reduction**: 551 lines extracted to reusable components and hooks (20% reduction)
+
+### Phase 2.5: Custom Hooks (IN PROGRESS)
+
+#### 1. usePlanningData Hook Created ✅
+**File Created**: `hooks/planning/usePlanningData.ts` (202 lines)
+
+Extracted complete data fetching and management logic including:
+- All data state: users, projects, internalTaskTypes, tasks, milestoneTasks, outlookConnected, showInstructions
+- Automatic data fetching based on quarterDays and enabled state
+- Sorted projects (alphabetically by common name)
+- Refetch methods: refetchAll, refetchTasks, refetchMilestones
+- Loading state management
+- Integration with planning-bundle API endpoint
+
+**Impact**: Reduced planning page by additional 80+ lines, improved data management organization
 
 #### 3. Lazy Loading Setup
 **File Modified**: `app/planning/page.tsx`
@@ -108,7 +123,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 
 | File | Lines | Target | Status |
 |------|-------|--------|--------|
-| app/planning/page.tsx | 2,327 (was 2,798) | 400 | 🟡 In progress (-471 lines, 24% to goal) |
+| app/planning/page.tsx | 2,247 (was 2,798) | 400 | 🟡 In progress (-551 lines, 30% to goal) |
 | app/projects/page.tsx | 1,726 | 400 | 🔴 Needs refactoring |
 | app/projects/[slug]/page.tsx | 1,570 | 350 | 🔴 Needs refactoring |
 | app/page.tsx | 906 | 300 | 🟡 Needs refactoring |
@@ -123,6 +138,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 - ✅ TaskModal (396 lines) - Planning page modal
 - ✅ MilestoneModal (144 lines) - Planning page modal
 - ✅ UserSettingsModal (167 lines) - Planning page modal
+- ✅ usePlanningData (202 lines) - Data fetching hook
 
 **To Extract** (Priority Order):
 1. ✅ ~~Planning TaskModal (~450 lines)~~ **DONE**

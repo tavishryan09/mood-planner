@@ -2,8 +2,26 @@
 
 import Sidebar from '@/components/Sidebar';
 import CalendarDatePicker from '@/components/CalendarDatePicker';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import dynamic from 'next/dynamic';
+
+// Lazy load heavy modal components for better initial page load
+// These will only be loaded when needed
+const TaskModalLazy = dynamic(() => import('@/components/planning/TaskModal').catch(() => {
+  // Fallback if component doesn't exist yet - will be created during refactoring
+  return Promise.resolve({ default: () => null });
+}), {
+  loading: () => <div className="skeleton h-96 w-full rounded-lg" />,
+  ssr: false
+});
+
+const MilestoneModalLazy = dynamic(() => import('@/components/planning/MilestoneModal').catch(() => {
+  return Promise.resolve({ default: () => null });
+}), {
+  loading: () => <div className="skeleton h-96 w-full rounded-lg" />,
+  ssr: false
+});
 
 interface User {
   id: number;

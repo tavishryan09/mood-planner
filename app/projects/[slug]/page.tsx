@@ -348,12 +348,9 @@ export default function ProjectDetails() {
                         >
                           <div className="card-body p-4">
                             <div className="flex items-start justify-between">
-                              <h4 className="font-semibold text-sm">{milestone.milestoneName}</h4>
+                              <h4 className="font-semibold text-sm">{milestone.description || milestone.milestoneName || 'Milestone'}</h4>
                               <span className="badge badge-sm badge-secondary">milestone</span>
                             </div>
-                            {milestone.description && (
-                              <p className="text-xs opacity-60 mt-1">{milestone.description}</p>
-                            )}
                             <div className="text-xs mt-2 opacity-70">
                               Due: {formatDate(milestone.dueDate)}
                             </div>

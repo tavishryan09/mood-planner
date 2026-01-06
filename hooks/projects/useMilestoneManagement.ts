@@ -103,12 +103,17 @@ export function useMilestoneManagement(
         // Refresh project details
         await onProjectUpdate();
       } else {
-        // Save as milestone
+        // Save as milestone - use description as milestoneName
+        const milestoneData = {
+          ...milestoneFormData,
+          milestoneName: milestoneFormData.description || 'Milestone'
+        };
+
         if (editingMilestone) {
           const response = await fetch(`/api/projects/${project.id}/milestones/${editingMilestone.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(milestoneFormData)
+            body: JSON.stringify(milestoneData)
           });
 
           if (!response.ok) throw new Error('Failed to update milestone');
@@ -116,7 +121,7 @@ export function useMilestoneManagement(
           const response = await fetch(`/api/projects/${project.id}/milestones`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(milestoneFormData)
+            body: JSON.stringify(milestoneData)
           });
 
           if (!response.ok) throw new Error('Failed to create milestone');

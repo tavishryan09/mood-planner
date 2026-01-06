@@ -80,25 +80,10 @@ export default function MilestoneModal({
             </label>
           )}
 
-          {deadlineType === 'milestone' && (
-            <label className="form-control w-full">
-              <div className="label">
-                <span className="label-text">Milestone Name *</span>
-              </div>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={milestoneFormData.milestoneName}
-                onChange={(e) => onFormDataChange({ ...milestoneFormData, milestoneName: e.target.value })}
-                placeholder="e.g., Launch Beta"
-              />
-            </label>
-          )}
-
           <label className="form-control w-full">
             <div className="label">
               <span className="label-text">
-                {deadlineType === 'milestone' ? 'Description' :
+                {deadlineType === 'milestone' ? 'Milestone Description' :
                  deadlineType === 'deadline' ? 'Deadline Description' :
                  'Internal Deadline Description'}
               </span>
@@ -109,7 +94,7 @@ export default function MilestoneModal({
               value={milestoneFormData.description}
               onChange={(e) => onFormDataChange({ ...milestoneFormData, description: e.target.value })}
               placeholder={
-                deadlineType === 'milestone' ? 'Optional milestone description' :
+                deadlineType === 'milestone' ? 'e.g., Launch beta version to selected users' :
                 deadlineType === 'deadline' ? 'e.g., Client presentation and final deliverables' :
                 'e.g., Internal review and QA testing'
               }
@@ -163,10 +148,7 @@ export default function MilestoneModal({
           <button
             className="btn btn-primary"
             onClick={onSave}
-            disabled={
-              !milestoneFormData.dueDate ||
-              (deadlineType === 'milestone' && !milestoneFormData.milestoneName)
-            }
+            disabled={!milestoneFormData.dueDate}
           >
             {editingMilestone ? 'Save Changes' :
              deadlineType === 'deadline' ? 'Set Deadline' :

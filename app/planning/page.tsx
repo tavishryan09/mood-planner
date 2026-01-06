@@ -1810,8 +1810,8 @@ export default function Planning() {
   return (
     <Sidebar title="Planning" hideNavbar={true}>
       <div
-        className={isMobile ? "" : "p-4"}
-        style={isMobile ? { paddingBottom: 'calc(var(--spacing) * 10)' } : undefined}
+        className="p-4"
+        style={isMobile ? { paddingBottom: '0px' } : undefined}
       >
         <div className="card bg-base-100">
           <div className={`card-body ${isMobile ? 'p-0' : 'p-4'} lg:p-8`}>

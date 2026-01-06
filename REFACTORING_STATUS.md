@@ -169,7 +169,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 | File | Lines | Target | Status |
 |------|-------|--------|--------|
 | app/planning/page.tsx | 1,316 (was 2,798) | 400 | 🟢 Excellent progress (-1,482 lines, 77% to goal) |
-| app/projects/page.tsx | 1,247 (was 1,726) | 400 | 🟡 In progress (-479 lines, 39% to goal) |
+| app/projects/page.tsx | 1,121 (was 1,726) | 400 | 🟡 In progress (-605 lines, 50% to goal) |
 | app/projects/[slug]/page.tsx | 1,570 | 350 | 🔴 Needs refactoring |
 | app/page.tsx | 906 | 300 | 🟡 Needs refactoring |
 | app/clients/page.tsx | 746 | 250 | 🟡 Needs refactoring |
@@ -190,6 +190,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 - ✅ ProjectModal (351 lines) - Projects page modal
 - ✅ ColumnVisibilityModal (290 lines) - Projects page modal
 - ✅ ImportModal (189 lines) - Projects page modal
+- ✅ useProjectsData (238 lines) - Projects data fetching hook
 
 **To Extract** (Priority Order):
 1. ✅ ~~Planning TaskModal (~450 lines)~~ **DONE**

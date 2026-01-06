@@ -110,8 +110,11 @@ export function useMilestoneManagement(
 
         if (!response.ok) throw new Error('Failed to update project deadline');
 
-        // Refresh project details
-        await onProjectUpdate();
+        // Update project data and refresh milestones for Gantt chart
+        await Promise.all([
+          onProjectUpdate(),
+          onMilestonesUpdate()
+        ]);
       } else {
         // Save as milestone
         const milestoneData = milestoneFormData;

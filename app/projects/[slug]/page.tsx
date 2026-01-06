@@ -98,6 +98,7 @@ export default function ProjectDetails() {
     loading,
     error,
     fetchProjectDetails,
+    fetchProjectOnly,
     fetchTasks,
     fetchMilestones
   } = useProjectDetailData(slug);
@@ -138,7 +139,7 @@ export default function ProjectDetails() {
     handleRemoveDeadline
   } = useMilestoneManagement(project, async () => {
     if (project) await fetchMilestones(project.id);
-  }, fetchProjectDetails);
+  }, fetchProjectOnly);
 
   const getStatusColor = (status: Task['status']) => {
     switch (status) {

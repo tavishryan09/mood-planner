@@ -23,7 +23,8 @@
       "Bash(npx vercel:*)",
       "Bash(find:*)",
       "Bash(while read file)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(node -r dotenv/config node_modules/.bin/tsx:*)"
     ]
   }
 }

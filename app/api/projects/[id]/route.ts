@@ -148,7 +148,7 @@ export async function PUT(
             VALUES (
               ${id},
               ${deadlineTitle || null},
-              ${deadlineDescription || projectName},
+              ${deadlineDescription || null},
               'Deadline',
               ${deadline},
               0
@@ -157,7 +157,7 @@ export async function PUT(
             SET
               project_id = ${id},
               milestone_name = ${deadlineTitle || null},
-              task_description = ${deadlineDescription || projectName},
+              task_description = ${deadlineDescription || null},
               task_type = 'Deadline'
           `;
         }
@@ -188,7 +188,7 @@ export async function PUT(
             VALUES (
               ${id},
               ${internalDeadlineTitle || null},
-              ${internalDeadlineDescription || projectName},
+              ${internalDeadlineDescription || null},
               'Internal Deadline',
               ${internalDeadline},
               1
@@ -197,7 +197,7 @@ export async function PUT(
             SET
               project_id = ${id},
               milestone_name = ${internalDeadlineTitle || null},
-              task_description = ${internalDeadlineDescription || projectName},
+              task_description = ${internalDeadlineDescription || null},
               task_type = 'Internal Deadline'
           `;
         }

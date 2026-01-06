@@ -226,6 +226,57 @@ export function useProjectDetailData(slug: string) {
     fetchProjectDetails();
   }, [slug]);
 
+  const fetchProjectOnly = async () => {
+    if (!project) return;
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}`);
+      if (!response.ok) throw new Error('Failed to fetch project');
+      const data = await response.json();
+
+      // Fetch estimated billable and hours
+      let estimatedBillable = 0;
+      let totalHours = 0;
+      let hoursThisWeek = 0;
+      let hoursThisMonth = 0;
+      let hoursThisQuarter = 0;
+
+      try {
+        const billableResponse = await fetch(`/api/projects/${project.id}/estimated-billable`);
+        if (billableResponse.ok) {
+          const billableData = await billableResponse.json();
+          estimatedBillable = billableData.estimatedBillable;
+        }
+      } catch (error) {
+        console.error('Error fetching billable:', error);
+      }
+
+      try {
+        const hoursResponse = await fetch(`/api/projects/${project.id}/hours`);
+        if (hoursResponse.ok) {
+          const hoursData = await hoursResponse.json();
+          totalHours = hoursData.totalHours;
+          hoursThisWeek = hoursData.hoursThisWeek;
+          hoursThisMonth = hoursData.hoursThisMonth;
+          hoursThisQuarter = hoursData.hoursThisQuarter;
+        }
+      } catch (error) {
+        console.error('Error fetching hours:', error);
+      }
+
+      setProject({
+        ...data,
+        estimatedBillable,
+        totalHours,
+        hoursThisWeek,
+        hoursThisMonth,
+        hoursThisQuarter,
+      });
+    } catch (error) {
+      console.error('Error fetching project:', error);
+    }
+  };
+
   return {
     project,
     teamMembers,
@@ -236,6 +287,7 @@ export function useProjectDetailData(slug: string) {
     loading,
     error,
     fetchProjectDetails,
+    fetchProjectOnly,
     fetchTasks,
     fetchMilestones
   };

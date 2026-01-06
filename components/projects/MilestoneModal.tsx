@@ -80,30 +80,28 @@ export default function MilestoneModal({
             </label>
           )}
 
-          <label className="form-control w-full">
-            <div className="label">
-              <span className="label-text">
-                {deadlineType === 'milestone' ? 'Milestone Name *' :
-                 deadlineType === 'deadline' ? 'Deadline Name' :
-                 'Internal Deadline Name'}
-              </span>
-            </div>
-            <input
-              type="text"
-              className="input input-bordered w-full"
-              value={milestoneFormData.milestoneName}
-              onChange={(e) => onFormDataChange({ ...milestoneFormData, milestoneName: e.target.value })}
-              placeholder={
-                deadlineType === 'milestone' ? 'e.g., Launch Beta' :
-                deadlineType === 'deadline' ? 'e.g., Client Delivery' :
-                'e.g., Internal Review'
-              }
-            />
-          </label>
+          {deadlineType === 'milestone' && (
+            <label className="form-control w-full">
+              <div className="label">
+                <span className="label-text">Milestone Name *</span>
+              </div>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={milestoneFormData.milestoneName}
+                onChange={(e) => onFormDataChange({ ...milestoneFormData, milestoneName: e.target.value })}
+                placeholder="e.g., Launch Beta"
+              />
+            </label>
+          )}
 
           <label className="form-control w-full">
             <div className="label">
-              <span className="label-text">Description</span>
+              <span className="label-text">
+                {deadlineType === 'milestone' ? 'Description' :
+                 deadlineType === 'deadline' ? 'Deadline Description' :
+                 'Internal Deadline Description'}
+              </span>
             </div>
             <textarea
               className="textarea textarea-bordered w-full"
@@ -112,8 +110,8 @@ export default function MilestoneModal({
               onChange={(e) => onFormDataChange({ ...milestoneFormData, description: e.target.value })}
               placeholder={
                 deadlineType === 'milestone' ? 'Optional milestone description' :
-                deadlineType === 'deadline' ? 'Optional deadline description' :
-                'Optional internal deadline description'
+                deadlineType === 'deadline' ? 'e.g., Client presentation and final deliverables' :
+                'e.g., Internal review and QA testing'
               }
             />
           </label>

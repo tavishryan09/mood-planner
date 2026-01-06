@@ -21,7 +21,9 @@ interface Project {
   billingRate?: number;
   useTeamRates?: boolean;
   deadline?: string;
+  deadlineDescription?: string;
   internalDeadline?: string;
+  internalDeadlineDescription?: string;
   estimatedBillable?: number;
   totalHours?: number;
   hoursThisWeek?: number;
@@ -285,7 +287,7 @@ export default function ProjectDetails() {
                             setDeadlineType('deadline');
                             setMilestoneFormData({
                               milestoneName: '',
-                              description: '',
+                              description: project.deadlineDescription || '',
                               dueDate: project.deadline!.split('T')[0],
                               status: 'pending'
                             });
@@ -297,6 +299,9 @@ export default function ProjectDetails() {
                               <h4 className="font-semibold text-sm">Project Deadline</h4>
                               <span className="badge badge-sm badge-error">deadline</span>
                             </div>
+                            {project.deadlineDescription && (
+                              <p className="text-xs opacity-60 mt-1">{project.deadlineDescription}</p>
+                            )}
                             <div className="text-xs mt-2 opacity-70">
                               Due: {formatDate(project.deadline)}
                             </div>
@@ -312,7 +317,7 @@ export default function ProjectDetails() {
                             setDeadlineType('internal-deadline');
                             setMilestoneFormData({
                               milestoneName: '',
-                              description: '',
+                              description: project.internalDeadlineDescription || '',
                               dueDate: project.internalDeadline!.split('T')[0],
                               status: 'pending'
                             });
@@ -324,6 +329,9 @@ export default function ProjectDetails() {
                               <h4 className="font-semibold text-sm">Internal Deadline</h4>
                               <span className="badge badge-sm badge-warning">internal</span>
                             </div>
+                            {project.internalDeadlineDescription && (
+                              <p className="text-xs opacity-60 mt-1">{project.internalDeadlineDescription}</p>
+                            )}
                             <div className="text-xs mt-2 opacity-70">
                               Due: {formatDate(project.internalDeadline)}
                             </div>

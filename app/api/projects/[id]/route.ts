@@ -35,7 +35,25 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(result[0]);
+    const project = result[0];
+
+    // Fetch deadline descriptions from milestone_tasks
+    const deadlineData = await sql`
+      SELECT task_description, task_type
+      FROM milestone_tasks
+      WHERE project_id = ${id}
+        AND task_type IN ('Deadline', 'Internal Deadline')
+    `;
+
+    deadlineData.forEach((row: { task_description: string; task_type: string }) => {
+      if (row.task_type === 'Deadline') {
+        project.deadlineDescription = row.task_description;
+      } else if (row.task_type === 'Internal Deadline') {
+        project.internalDeadlineDescription = row.task_description;
+      }
+    });
+
+    return NextResponse.json(project);
   } catch (error) {
     console.error('Error fetching project:', error);
     return NextResponse.json(
@@ -52,7 +70,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { projectNumber, projectName, clientId, commonName, projectValue, billingRate, useTeamRates, deadline, internalDeadline } = body;
+    const { projectNumber, projectName, clientId, commonName, projectValue, billingRate, useTeamRates, deadline, internalDeadline, deadlineDescription, internalDeadlineDescription } = body;
 
     // Get the old deadline values before updating
     const oldProject = await sql`
@@ -126,7 +144,7 @@ export async function PUT(
             )
             VALUES (
               ${id},
-              ${projectName},
+              ${deadlineDescription || projectName},
               'Deadline',
               ${deadline},
               0
@@ -134,7 +152,7 @@ export async function PUT(
             ON CONFLICT (task_date, row_index) DO UPDATE
             SET
               project_id = ${id},
-              task_description = ${projectName},
+              task_description = ${deadlineDescription || projectName},
               task_type = 'Deadline'
           `;
         }
@@ -163,7 +181,7 @@ export async function PUT(
             )
             VALUES (
               ${id},
-              ${projectName},
+              ${internalDeadlineDescription || projectName},
               'Internal Deadline',
               ${internalDeadline},
               1
@@ -171,7 +189,7 @@ export async function PUT(
             ON CONFLICT (task_date, row_index) DO UPDATE
             SET
               project_id = ${id},
-              task_description = ${projectName},
+              task_description = ${internalDeadlineDescription || projectName},
               task_type = 'Internal Deadline'
           `;
         }

@@ -10,6 +10,7 @@ import UserSettingsModal from '@/components/planning/UserSettingsModal';
 import { usePlanningData } from '@/hooks/planning/usePlanningData';
 import { usePlanningTasks } from '@/hooks/planning/usePlanningTasks';
 import { useMilestones } from '@/hooks/planning/useMilestones';
+import { usePlanningInteractions } from '@/hooks/planning/usePlanningInteractions';
 
 interface User {
   id: number;
@@ -133,12 +134,83 @@ export default function Planning() {
     handleDeleteSelectedMilestone
   } = useMilestones({ milestoneTasks, refetchMilestones });
 
+  const saveUserSettings = async (userSettings: UserDisplay[]) => {
+    if (!currentUser) return;
+
+    try {
+      const response = await fetch('/api/planning-user-display-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          settings: userSettings.map(({ id, visible, order }) => ({
+            userId: id,
+            visible,
+            order
+          }))
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to save planning user display settings');
+      }
+    } catch (error) {
+      console.error('Error saving planning user display settings:', error);
+    }
+  };
+
+  // Use planning interactions hook for drag-and-drop, resize, and keyboard shortcuts
+  const {
+    draggedTask,
+    dragOverCell,
+    handleTaskDragStart,
+    handleTaskDragEnd,
+    handleCellDragOver,
+    handleCellDrop,
+    draggedMilestone,
+    dragOverMilestoneCell,
+    handleMilestoneDragStart,
+    handleMilestoneDragEnd,
+    handleMilestoneCellDragOver,
+    handleMilestoneCellDrop,
+    resizingTask,
+    handleResizeStart,
+    draggedUser,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+    handleTaskClick,
+    handleMilestoneClick,
+    getTaskForCell,
+    getMilestoneForCell,
+    isCellOccupied,
+    isCellInDragPreview
+  } = usePlanningInteractions({
+    tasks,
+    milestoneTasks,
+    users,
+    selectedTask,
+    selectedMilestone,
+    selectedCell,
+    copiedTask,
+    showTaskModal,
+    showMilestoneModal,
+    setSelectedTask,
+    setSelectedMilestone,
+    setSelectedCell,
+    setUsers,
+    handleCopyTask,
+    handleCutTask,
+    handlePasteTask,
+    handleDeleteSelectedTask,
+    handleDeleteSelectedMilestone,
+    handleTaskEdit,
+    handleMilestoneEdit,
+    refetchTasks,
+    refetchMilestones,
+    saveUserSettings
+  });
+
   const [showUserSettings, setShowUserSettings] = useState(false);
-  const [draggedTask, setDraggedTask] = useState<PlanningTask | null>(null);
-  const [dragOverCell, setDragOverCell] = useState<{ userId: number; date: Date; rowIndex: number } | null>(null);
-  const [resizingTask, setResizingTask] = useState<{ task: PlanningTask; edge: 'top' | 'bottom'; startY: number; startRowIndex: number; startRowSpan: number } | null>(null);
-  const [draggedMilestone, setDraggedMilestone] = useState<MilestoneTask | null>(null);
-  const [dragOverMilestoneCell, setDragOverMilestoneCell] = useState<{ date: Date; rowIndex: number } | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -279,30 +351,6 @@ export default function Planning() {
     }
   }, [tasks]);
 
-  const saveUserSettings = async (userSettings: UserDisplay[]) => {
-    if (!currentUser) return;
-
-    try {
-      const response = await fetch('/api/planning-user-display-settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          settings: userSettings.map(({ id, visible, order }) => ({
-            userId: id,
-            visible,
-            order
-          }))
-        }),
-      });
-
-      if (!response.ok) {
-        console.error('Failed to save planning user display settings');
-      }
-    } catch (error) {
-      console.error('Error saving planning user display settings:', error);
-    }
-  };
-
   const fetchUsers = async () => {
     try {
       const response = await fetch('/api/planning-user-display-settings');
@@ -397,433 +445,8 @@ export default function Planning() {
     // For now, we'll use double-click to create tasks and single-click to select cells for pasting
   };
 
-
-  const getTaskForCell = (userId: number, date: Date, rowIndex: number) => {
-    const dateStr = date.toISOString().split('T')[0];
-    const foundTask = tasks.find(task => {
-      const userMatch = task.userId === userId;
-      // Check if this cell is within the task's row span
-      const rowMatch = task.rowIndex <= rowIndex && rowIndex < task.rowIndex + task.rowSpan;
-      // Normalize taskDate to just the date part for comparison
-      const taskDateStr = task.taskDate.split('T')[0];
-      const dateMatch = taskDateStr === dateStr;
-
-      return userMatch && rowMatch && dateMatch;
-    });
-
-    return foundTask;
-  };
-
-  const getMilestoneForCell = (date: Date, rowIndex: number) => {
-    const dateStr = date.toISOString().split('T')[0];
-    const foundMilestone = milestoneTasks.find(milestone => {
-      const taskDateStr = milestone.taskDate.split('T')[0];
-      return taskDateStr === dateStr && milestone.rowIndex === rowIndex;
-    });
-
-    return foundMilestone;
-  };
-
-
-  const isCellOccupied = (userId: number, date: Date, rowIndex: number, rowSpan: number, excludeTaskId?: number) => {
-    const dateStr = date.toISOString().split('T')[0];
-    // Check if any of the rows that would be spanned are occupied
-    for (let i = 0; i < rowSpan; i++) {
-      const checkRow = rowIndex + i;
-      if (checkRow >= 4) return true; // Would exceed available rows
-
-      const occupyingTask = tasks.find(task => {
-        if (excludeTaskId && task.id === excludeTaskId) return false; // Ignore the task being moved
-        const userMatch = task.userId === userId;
-        const taskDateStr = task.taskDate.split('T')[0];
-        const dateMatch = taskDateStr === dateStr;
-        const rowMatch = task.rowIndex <= checkRow && checkRow < task.rowIndex + task.rowSpan;
-        return userMatch && dateMatch && rowMatch;
-      });
-
-      if (occupyingTask) return true;
-    }
-    return false;
-  };
-
-  const isCellInDragPreview = (userId: number, date: Date, rowIndex: number) => {
-    if (!dragOverCell || !draggedTask) return false;
-
-    // Check if this cell matches the user and date of the drag target
-    const dragDateStr = dragOverCell.date.toISOString().split('T')[0];
-    const cellDateStr = date.toISOString().split('T')[0];
-
-    if (userId !== dragOverCell.userId || cellDateStr !== dragDateStr) return false;
-
-    // Check if this cell is within the span range
-    const startRow = dragOverCell.rowIndex;
-    const endRow = startRow + draggedTask.rowSpan;
-
-    return rowIndex >= startRow && rowIndex < endRow;
-  };
-
-  const handleTaskDragStart = (e: React.DragEvent, task: PlanningTask) => {
-    e.stopPropagation();
-    setDraggedTask(task);
-  };
-
-  const handleTaskDragEnd = () => {
-    setDraggedTask(null);
-    setDragOverCell(null);
-  };
-
-  const handleCellDragOver = (e: React.DragEvent, userId: number, date: Date, rowIndex: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (draggedTask) {
-      setDragOverCell({ userId, date, rowIndex });
-    }
-  };
-
-  const handleCellDrop = async (e: React.DragEvent, userId: number, date: Date, rowIndex: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!draggedTask) return;
-
-    const dateStr = date.toISOString().split('T')[0];
-    const taskDateStr = draggedTask.taskDate.split('T')[0];
-
-    // Check if dropping on the same cell
-    if (draggedTask.userId === userId && taskDateStr === dateStr && draggedTask.rowIndex === rowIndex) {
-      setDraggedTask(null);
-      return;
-    }
-
-    // Check if target cells are occupied
-    if (isCellOccupied(userId, date, rowIndex, draggedTask.rowSpan, draggedTask.id)) {
-      alert('Cannot move task here - cells are occupied');
-      setDraggedTask(null);
-      return;
-    }
-
-    // Update the task - including the new userId if moved to a different team member
-    try {
-      const response = await fetch(`/api/planning-tasks/${draggedTask.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: userId, // Allow changing the user assignment
-          projectId: draggedTask.projectId,
-          taskDescription: draggedTask.taskDescription,
-          taskType: draggedTask.taskType,
-          taskDate: dateStr,
-          rowIndex: rowIndex,
-          rowSpan: draggedTask.rowSpan,
-          internalTaskTypeId: draggedTask.internalTaskTypeId
-        })
-      });
-
-      if (response.ok) {
-        await refetchTasks();
-      } else {
-        const error = await response.json();
-        alert(`Error moving task: ${error.error || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Error moving task:', error);
-      alert('An unexpected error occurred. Please try again.');
-    }
-
-    setDraggedTask(null);
-    setDragOverCell(null);
-  };
-
-  // Milestone drag and drop handlers
-  const handleMilestoneDragStart = (e: React.DragEvent, milestone: MilestoneTask) => {
-    e.stopPropagation();
-    setDraggedMilestone(milestone);
-  };
-
-  const handleMilestoneDragEnd = () => {
-    setDraggedMilestone(null);
-    setDragOverMilestoneCell(null);
-  };
-
-  const handleMilestoneCellDragOver = (e: React.DragEvent, date: Date, rowIndex: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (draggedMilestone) {
-      setDragOverMilestoneCell({ date, rowIndex });
-    }
-  };
-
-  const handleMilestoneCellDrop = async (e: React.DragEvent, date: Date, rowIndex: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!draggedMilestone) return;
-
-    const dateStr = date.toISOString().split('T')[0];
-    const milestoneDateStr = draggedMilestone.taskDate.split('T')[0];
-
-    // Check if dropping on the same cell
-    if (milestoneDateStr === dateStr && draggedMilestone.rowIndex === rowIndex) {
-      setDraggedMilestone(null);
-      return;
-    }
-
-    // Check if target cell is occupied
-    const existingMilestone = getMilestoneForCell(date, rowIndex);
-    if (existingMilestone && existingMilestone.id !== draggedMilestone.id) {
-      alert('Cannot move milestone here - cell is occupied');
-      setDraggedMilestone(null);
-      return;
-    }
-
-    // Update the milestone
-    try {
-      const response = await fetch(`/api/milestone-tasks/${draggedMilestone.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId: draggedMilestone.projectId,
-          taskDescription: draggedMilestone.taskDescription,
-          taskType: draggedMilestone.taskType,
-          taskDate: dateStr,
-          rowIndex: rowIndex
-        })
-      });
-
-      if (response.ok) {
-        await refetchMilestones();
-      } else {
-        const error = await response.json();
-        alert(`Error moving milestone: ${error.error || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Error moving milestone:', error);
-      alert('An unexpected error occurred. Please try again.');
-    }
-
-    setDraggedMilestone(null);
-    setDragOverMilestoneCell(null);
-  };
-
-  const handleMilestoneClick = (e: React.MouseEvent, milestone: MilestoneTask) => {
-    e.stopPropagation();
-    setSelectedMilestone(milestone);
-    setSelectedTask(null); // Deselect any selected task when clicking a milestone
-    setSelectedCell(null); // Deselect any selected cell when clicking a milestone
-  };
-
-  const handleResizeStart = (e: React.MouseEvent, task: PlanningTask, edge: 'top' | 'bottom') => {
-    e.preventDefault();
-    e.stopPropagation();
-    setResizingTask({
-      task,
-      edge,
-      startY: e.clientY,
-      startRowIndex: task.rowIndex,
-      startRowSpan: task.rowSpan
-    });
-  };
-
-  useEffect(() => {
-    if (!resizingTask) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaY = e.clientY - resizingTask.startY;
-      const rowHeight = 60; // Height of each row in pixels
-      const rowDelta = Math.round(deltaY / rowHeight);
-
-      let newRowIndex = resizingTask.task.rowIndex;
-      let newRowSpan = resizingTask.task.rowSpan;
-
-      if (resizingTask.edge === 'top') {
-        // Dragging top edge - adjust rowIndex and rowSpan
-        const proposedRowIndex = resizingTask.task.rowIndex + rowDelta;
-        newRowIndex = Math.max(0, Math.min(3, proposedRowIndex));
-        newRowSpan = resizingTask.task.rowSpan - (newRowIndex - resizingTask.task.rowIndex);
-      } else {
-        // Dragging bottom edge - adjust rowSpan only
-        newRowSpan = resizingTask.task.rowSpan + rowDelta;
-      }
-
-      // Ensure rowSpan is within valid range
-      newRowSpan = Math.max(1, Math.min(4, newRowSpan));
-      // Ensure task doesn't exceed available rows
-      if (newRowIndex + newRowSpan > 4) {
-        if (resizingTask.edge === 'top') {
-          newRowIndex = 4 - newRowSpan;
-        } else {
-          newRowSpan = 4 - newRowIndex;
-        }
-      }
-
-      // Update visual feedback - only update if values changed
-      if (newRowIndex !== resizingTask.startRowIndex || newRowSpan !== resizingTask.startRowSpan) {
-        setResizingTask(prev => prev ? {
-          ...prev,
-          startRowIndex: newRowIndex,
-          startRowSpan: newRowSpan
-        } : null);
-      }
-    };
-
-    const handleMouseUp = async () => {
-      if (!resizingTask) return;
-
-      const task = resizingTask.task;
-      const newRowIndex = resizingTask.startRowIndex;
-      const newRowSpan = resizingTask.startRowSpan;
-
-      // Check if anything changed
-      if (newRowIndex === task.rowIndex && newRowSpan === task.rowSpan) {
-        setResizingTask(null);
-        return;
-      }
-
-      // Check if new position would overlap with other tasks
-      const date = new Date(task.taskDate);
-      if (isCellOccupied(task.userId, date, newRowIndex, newRowSpan, task.id)) {
-        alert('Cannot resize task - cells are occupied');
-        setResizingTask(null);
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/planning-tasks/${task.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            projectId: task.projectId,
-            taskDescription: task.taskDescription,
-            taskType: task.taskType,
-            taskDate: task.taskDate,
-            rowIndex: newRowIndex,
-            rowSpan: newRowSpan,
-            internalTaskTypeId: task.internalTaskTypeId
-          })
-        });
-
-        if (response.ok) {
-          await refetchTasks();
-        } else {
-          const error = await response.json();
-          alert(`Error updating task: ${error.error || 'Unknown error'}`);
-        }
-      } catch (error) {
-        console.error('Error updating task:', error);
-        alert('An unexpected error occurred. Please try again.');
-      }
-
-      setResizingTask(null);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [resizingTask, tasks]);
-
-  // Keyboard shortcuts for copy/paste/delete
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Check for Cmd+C (Mac) or Ctrl+C (Windows/Linux)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
-        if (selectedTask && !showTaskModal) {
-          e.preventDefault();
-          handleCopyTask();
-          console.log('Task copied:', selectedTask);
-        }
-      }
-
-      // Check for Cmd+X (Mac) or Ctrl+X (Windows/Linux) - Cut
-      if ((e.metaKey || e.ctrlKey) && e.key === 'x') {
-        if (selectedTask && !showTaskModal) {
-          e.preventDefault();
-          handleCutTask();
-          console.log('Task cut:', selectedTask);
-        }
-      }
-
-      // Check for Cmd+V (Mac) or Ctrl+V (Windows/Linux)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
-        if (copiedTask && selectedCell && !showTaskModal) {
-          e.preventDefault();
-          handlePasteTask(selectedCell.userId, selectedCell.date, selectedCell.rowIndex);
-        }
-      }
-
-      // Backspace or Delete key to delete selected task
-      if ((e.key === 'Backspace' || e.key === 'Delete') && selectedTask && !showTaskModal) {
-        e.preventDefault();
-        handleDeleteSelectedTask();
-      }
-
-      // Backspace or Delete key to delete selected milestone
-      if ((e.key === 'Backspace' || e.key === 'Delete') && selectedMilestone && !showMilestoneModal) {
-        e.preventDefault();
-        handleDeleteSelectedMilestone();
-      }
-
-      // Escape key to deselect
-      if (e.key === 'Escape') {
-        setSelectedTask(null);
-        setSelectedMilestone(null);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [selectedTask, selectedMilestone, copiedTask, selectedCell, showTaskModal, showMilestoneModal]);
-
-  const handleTaskClick = (e: React.MouseEvent, task: PlanningTask) => {
-    e.stopPropagation();
-    setSelectedTask(task);
-    setSelectedMilestone(null); // Deselect any selected milestone when clicking a task
-    setSelectedCell(null); // Deselect any selected cell when clicking a task
-  };
-
-
-
   const openUserSettings = () => {
     setShowUserSettings(true);
-  };
-
-  // Drag handlers for reordering team members in calendar view
-  const [draggedUser, setDraggedUser] = useState<number | null>(null);
-
-  const handleDragStart = (userId: number) => {
-    setDraggedUser(userId);
-  };
-
-  const handleDragOver = (e: React.DragEvent, targetUserId: number) => {
-    e.preventDefault();
-    if (draggedUser === null || draggedUser === targetUserId) return;
-
-    const draggedIndex = users.findIndex(u => u.id === draggedUser);
-    const targetIndex = users.findIndex(u => u.id === targetUserId);
-
-    if (draggedIndex === -1 || targetIndex === -1) return;
-
-    const newUsers = [...users];
-    const [removed] = newUsers.splice(draggedIndex, 1);
-    newUsers.splice(targetIndex, 0, removed);
-
-    // Update order values
-    const reorderedUsers = newUsers.map((user, index) => ({
-      ...user,
-      order: index
-    }));
-
-    setUsers(reorderedUsers);
-    saveUserSettings(reorderedUsers);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedUser(null);
   };
 
   const getVisibleUsers = () => {

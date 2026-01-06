@@ -5,6 +5,7 @@ import ProjectModal from '@/components/projects/ProjectModal';
 import ColumnVisibilityModal from '@/components/projects/ColumnVisibilityModal';
 import ImportModal from '@/components/projects/ImportModal';
 import { useProjectsData } from '@/hooks/projects/useProjectsData';
+import { useProjectManagement } from '@/hooks/projects/useProjectManagement';
 import { useState } from 'react';
 
 interface Project {
@@ -44,7 +45,7 @@ interface TeamMemberRate {
 }
 
 export default function Projects() {
-  // Use custom hook for data management
+  // Use custom hooks for data and project management
   const {
     projects,
     setProjects,
@@ -61,17 +62,38 @@ export default function Projects() {
     fetchUsers
   } = useProjectsData();
 
+  const {
+    showModal,
+    setShowModal,
+    editingProject,
+    setEditingProject,
+    formData,
+    setFormData,
+    selectedTeamMembers,
+    setSelectedTeamMembers,
+    teamMemberRates,
+    setTeamMemberRates,
+    showNewClientInput,
+    setShowNewClientInput,
+    newClientName,
+    setNewClientName,
+    handleEdit,
+    handleAddNew,
+    handleSave,
+    handleDelete,
+    createNewClient,
+    updateTeamMemberRate,
+    getTeamMemberRate
+  } = useProjectManagement({
+    projects,
+    users,
+    fetchProjects,
+    fetchClients
+  });
+
   // Modal state
-  const [showModal, setShowModal] = useState(false);
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [editingProject, setEditingProject] = useState<number | null>(null);
-
-  // Project form state
-  const [selectedTeamMembers, setSelectedTeamMembers] = useState<number[]>([]);
-  const [teamMemberRates, setTeamMemberRates] = useState<TeamMemberRate[]>([]);
-  const [showNewClientInput, setShowNewClientInput] = useState(false);
-  const [newClientName, setNewClientName] = useState('');
 
   // Table state
   const [sortField, setSortField] = useState<keyof Project>('projectName');
@@ -83,250 +105,6 @@ export default function Projects() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<any>(null);
-
-  const [formData, setFormData] = useState({
-    projectNumber: '',
-    projectName: '',
-    clientId: '',
-    commonName: '',
-    projectValue: '',
-    billingRate: '',
-    useTeamRates: true
-  });
-
-  const fetchProjectTeam = async (projectId: number) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/team`);
-      if (!response.ok) throw new Error('Failed to fetch project team');
-      const data = await response.json();
-      setSelectedTeamMembers(data.map((member: User) => member.id));
-    } catch (error) {
-      console.error('Error fetching project team:', error);
-      setSelectedTeamMembers([]);
-    }
-  };
-
-  const fetchProjectTeamRates = async (projectId: number) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/team-rates`);
-      if (!response.ok) throw new Error('Failed to fetch team rates');
-      const data = await response.json();
-      setTeamMemberRates(data);
-    } catch (error) {
-      console.error('Error fetching team rates:', error);
-      setTeamMemberRates([]);
-    }
-  };
-
-  const handleEdit = async (projectId: number) => {
-    const project = projects.find(p => p.id === projectId);
-    if (project) {
-      // Check if project has no client (confidential) but has data
-      const isConfidential = !project.clientId && !project.clientName;
-
-      setFormData({
-        projectNumber: project.projectNumber || '',
-        projectName: project.projectName,
-        clientId: isConfidential ? 'confidential' : (project.clientId?.toString() || ''),
-        commonName: project.commonName || '',
-        projectValue: project.projectValue?.toString() || '',
-        billingRate: project.billingRate?.toString() || '',
-        useTeamRates: project.useTeamRates || false
-      });
-      setEditingProject(projectId);
-      setShowNewClientInput(false);
-      setNewClientName('');
-
-      // Fetch team members and their rates for this project
-      await fetchProjectTeam(projectId);
-      await fetchProjectTeamRates(projectId);
-
-      setShowModal(true);
-    }
-  };
-
-  const handleAddNew = () => {
-    setFormData({
-      projectNumber: '',
-      projectName: '',
-      clientId: '',
-      commonName: '',
-      projectValue: '',
-      billingRate: '',
-      useTeamRates: true
-    });
-    setEditingProject(null);
-    setSelectedTeamMembers([]);
-    setTeamMemberRates([]);
-    setShowNewClientInput(false);
-    setNewClientName('');
-    setShowModal(true);
-  };
-
-  const handleClientChange = (value: string) => {
-    if (value === 'create-new') {
-      setShowNewClientInput(true);
-      setFormData({ ...formData, clientId: '' });
-    } else {
-      setShowNewClientInput(false);
-      setNewClientName('');
-      setFormData({ ...formData, clientId: value });
-    }
-  };
-
-  const updateTeamMemberRate = (userId: number, rate: string) => {
-    const numericRate = parseFloat(rate) || 0;
-    const existingRate = teamMemberRates.find(r => r.userId === userId);
-
-    if (existingRate) {
-      setTeamMemberRates(teamMemberRates.map(r =>
-        r.userId === userId ? { ...r, billingRate: numericRate } : r
-      ));
-    } else {
-      setTeamMemberRates([...teamMemberRates, { userId, billingRate: numericRate }]);
-    }
-  };
-
-  const getTeamMemberRate = (userId: number): number => {
-    const rate = teamMemberRates.find(r => r.userId === userId);
-    if (rate) return rate.billingRate;
-
-    // Return user's default billing rate if no project-specific rate is set
-    const user = users.find(u => u.id === userId);
-    return user?.billingRate || 0;
-  };
-
-  const createNewClient = async () => {
-    if (!newClientName.trim()) return;
-
-    try {
-      const response = await fetch('/api/clients', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          businessName: newClientName,
-          businessAddress: '',
-          website: '',
-          primaryContact: '',
-          email: '',
-          phone: '',
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to create client');
-
-      const newClient = await response.json();
-      await fetchClients();
-      setFormData({ ...formData, clientId: newClient.id.toString() });
-      setShowNewClientInput(false);
-      setNewClientName('');
-    } catch (error) {
-      console.error('Error creating client:', error);
-      alert('Failed to create client. Please try again.');
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      // Handle clientId: if "confidential" is selected, use null; otherwise parse the number
-      let clientId = null;
-      if (formData.clientId && formData.clientId !== 'confidential') {
-        clientId = parseInt(formData.clientId);
-      }
-
-      const payload = {
-        projectNumber: formData.projectNumber || null,
-        projectName: formData.projectName,
-        clientId: clientId,
-        commonName: formData.commonName || null,
-        projectValue: formData.projectValue ? parseFloat(formData.projectValue) : null,
-        billingRate: formData.billingRate ? parseFloat(formData.billingRate) : null,
-        useTeamRates: formData.useTeamRates
-      };
-
-      let projectId: number;
-
-      if (editingProject) {
-        // Update existing project
-        const response = await fetch(`/api/projects/${editingProject}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) throw new Error('Failed to update project');
-
-        projectId = editingProject;
-        await fetchProjects();
-      } else {
-        // Add new project
-        const response = await fetch('/api/projects', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) throw new Error('Failed to create project');
-
-        const newProject = await response.json();
-        projectId = newProject.id;
-        await fetchProjects();
-      }
-
-      // Update team members
-      await fetch(`/api/projects/${projectId}/team`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userIds: selectedTeamMembers }),
-      });
-
-      // Update team member billing rates if using team rates
-      if (formData.useTeamRates) {
-        await fetch(`/api/projects/${projectId}/team-rates`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ rates: teamMemberRates }),
-        });
-      }
-
-      setShowModal(false);
-    } catch (error) {
-      console.error('Error saving project:', error);
-      alert('Failed to save project. Please try again.');
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!editingProject) return;
-
-    const confirmDelete = window.confirm('Are you sure you want to delete this project? This action cannot be undone.');
-
-    if (!confirmDelete) return;
-
-    try {
-      const response = await fetch(`/api/projects/${editingProject}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete project');
-
-      setProjects(projects.filter(project => project.id !== editingProject));
-      setShowModal(false);
-    } catch (error) {
-      console.error('Error deleting project:', error);
-      alert('Failed to delete project. Please try again.');
-    }
-  };
 
   const formatCurrency = (value?: number) => {
     if (!value) return '';

@@ -169,7 +169,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 | File | Lines | Target | Status |
 |------|-------|--------|--------|
 | app/planning/page.tsx | 1,316 (was 2,798) | 400 | 🟢 Excellent progress (-1,482 lines, 77% to goal) |
-| app/projects/page.tsx | 1,387 (was 1,726) | 400 | 🟡 In progress (-339 lines, 28% to goal) |
+| app/projects/page.tsx | 1,247 (was 1,726) | 400 | 🟡 In progress (-479 lines, 39% to goal) |
 | app/projects/[slug]/page.tsx | 1,570 | 350 | 🔴 Needs refactoring |
 | app/page.tsx | 906 | 300 | 🟡 Needs refactoring |
 | app/clients/page.tsx | 746 | 250 | 🟡 Needs refactoring |
@@ -189,6 +189,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 - ✅ usePlanningInteractions (577 lines) - Drag-and-drop, resize, keyboard shortcuts hook
 - ✅ ProjectModal (351 lines) - Projects page modal
 - ✅ ColumnVisibilityModal (290 lines) - Projects page modal
+- ✅ ImportModal (189 lines) - Projects page modal
 
 **To Extract** (Priority Order):
 1. ✅ ~~Planning TaskModal (~450 lines)~~ **DONE**
@@ -196,7 +197,7 @@ import { ModalSkeleton } from '@/components/shared/LoadingStates';
 3. ✅ ~~Planning UserSettingsModal (~200 lines)~~ **DONE**
 4. ✅ ~~ProjectModal (~350 lines)~~ **DONE**
 5. ✅ ~~ColumnVisibilityModal (~220 lines)~~ **DONE**
-6. Projects ImportModal (~157 lines)
+6. ✅ ~~ImportModal (~157 lines)~~ **DONE**
 7. Planning Calendar Grid (~600 lines)
 8. Projects Table Components (~400 lines)
 9. Dashboard Widgets (~750 lines)

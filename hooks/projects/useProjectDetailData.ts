@@ -11,7 +11,9 @@ interface Project {
   billingRate?: number;
   useTeamRates?: boolean;
   deadline?: string;
+  deadlineDescription?: string;
   internalDeadline?: string;
+  internalDeadlineDescription?: string;
   estimatedBillable?: number;
   totalHours?: number;
   hoursThisWeek?: number;

@@ -21,7 +21,9 @@
       "Bash(wc:*)",
       "Bash(ls:*)",
       "Bash(npx vercel:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(while read file)",
+      "Bash(done)"
     ]
   }
 }

@@ -20,7 +20,8 @@
       "Bash(grep:*)",
       "Bash(wc:*)",
       "Bash(ls:*)",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "Bash(find:*)"
     ]
   }
 }

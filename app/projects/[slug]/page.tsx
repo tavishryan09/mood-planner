@@ -1,6 +1,8 @@
 'use client';
 
 import Sidebar from '@/components/Sidebar';
+import TaskModal from '@/components/projects/TaskModal';
+import MilestoneModal from '@/components/projects/MilestoneModal';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
@@ -452,6 +454,32 @@ export default function ProjectDetails() {
     } catch (error) {
       console.error('Error deleting milestone:', error);
       alert('Failed to delete milestone. Please try again.');
+    }
+  };
+
+  const handleRemoveDeadline = async (type: 'deadline' | 'internal-deadline') => {
+    if (!project) return;
+
+    try {
+      const updateData = type === 'deadline'
+        ? { deadline: null }
+        : { internalDeadline: null };
+
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...project,
+          ...updateData
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to remove deadline');
+
+      await fetchProjectDetails();
+    } catch (error) {
+      console.error('Error removing deadline:', error);
+      alert('Failed to remove deadline. Please try again.');
     }
   };
 
@@ -1162,409 +1190,37 @@ export default function ProjectDetails() {
       </div>
 
       {/* Task Modal */}
-      {showTaskModal && (
-        <dialog className="modal modal-open">
-          <div className="modal-box max-w-2xl">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => setShowTaskModal(false)}
-            >
-              ✕
-            </button>
-            <h3 className="font-bold text-lg mb-5">
-              {editingTask ? 'Edit Task' : 'Add New Task'}
-            </h3>
-
-            <div className="space-y-4">
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text">Task Name *</span>
-                </div>
-                <input
-                  type="text"
-                  className="input input-bordered w-full"
-                  value={taskFormData.taskName}
-                  onChange={(e) => setTaskFormData({ ...taskFormData, taskName: e.target.value })}
-                  placeholder="e.g., Design mockups"
-                />
-              </label>
-
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text">Description</span>
-                </div>
-                <textarea
-                  className="textarea textarea-bordered w-full"
-                  rows={3}
-                  value={taskFormData.description}
-                  onChange={(e) => setTaskFormData({ ...taskFormData, description: e.target.value })}
-                  placeholder="Optional task description"
-                />
-              </label>
-
-              <div className="grid grid-cols-2 gap-4">
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text">Start Date *</span>
-                  </div>
-                  <input
-                    type="date"
-                    className="input input-bordered w-full"
-                    value={taskFormData.startDate}
-                    onChange={(e) => setTaskFormData({ ...taskFormData, startDate: e.target.value })}
-                  />
-                </label>
-
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text">End Date *</span>
-                  </div>
-                  <input
-                    type="date"
-                    className="input input-bordered w-full"
-                    value={taskFormData.endDate}
-                    onChange={(e) => setTaskFormData({ ...taskFormData, endDate: e.target.value })}
-                  />
-                </label>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text">Status</span>
-                  </div>
-                  <select
-                    className="select select-bordered w-full"
-                    value={taskFormData.status}
-                    onChange={(e) => setTaskFormData({ ...taskFormData, status: e.target.value as Task['status'] })}
-                  >
-                    <option value="not-started">Not Started</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="blocked">Blocked</option>
-                  </select>
-                </label>
-
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text">Category</span>
-                  </div>
-                  {showNewCategoryInput ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        className="input input-bordered w-full"
-                        placeholder="Enter new category name"
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        onKeyPress={async (e) => {
-                          if (e.key === 'Enter' && newCategoryName.trim()) {
-                            await handleAddCategory();
-                          }
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={handleAddCategory}
-                        disabled={!newCategoryName.trim()}
-                      >
-                        Add
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => {
-                          setShowNewCategoryInput(false);
-                          setNewCategoryName('');
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <select
-                      className="select select-bordered w-full"
-                      value={taskFormData.category}
-                      onChange={(e) => {
-                        if (e.target.value === '__add_new__') {
-                          setShowNewCategoryInput(true);
-                        } else {
-                          setTaskFormData({ ...taskFormData, category: e.target.value });
-                        }
-                      }}
-                    >
-                      <option value="">No Category</option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                      ))}
-                      <option value="__add_new__">+ Add New Category</option>
-                    </select>
-                  )}
-                </label>
-              </div>
-
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text">Assign To (select multiple)</span>
-                </div>
-                <div className="border border-base-300 rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
-                  {teamMembers.length === 0 ? (
-                    <p className="text-sm opacity-60">No team members available</p>
-                  ) : (
-                    teamMembers.map((member) => (
-                      <label key={member.id} className="flex items-center gap-2 cursor-pointer hover:bg-base-200 p-2 rounded">
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm checkbox-primary"
-                          checked={taskFormData.assignedUserIds.includes(member.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setTaskFormData({
-                                ...taskFormData,
-                                assignedUserIds: [...taskFormData.assignedUserIds, member.id]
-                              });
-                            } else {
-                              setTaskFormData({
-                                ...taskFormData,
-                                assignedUserIds: taskFormData.assignedUserIds.filter(id => id !== member.id)
-                              });
-                            }
-                          }}
-                        />
-                        <span className="text-sm">{member.name}</span>
-                      </label>
-                    ))
-                  )}
-                </div>
-                {taskFormData.assignedUserIds.length > 0 && (
-                  <div className="label">
-                    <span className="label-text-alt">{taskFormData.assignedUserIds.length} member{taskFormData.assignedUserIds.length !== 1 ? 's' : ''} selected</span>
-                  </div>
-                )}
-              </label>
-
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text">Progress: {taskFormData.progress}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  className="range range-primary w-full"
-                  value={taskFormData.progress}
-                  onChange={(e) => setTaskFormData({ ...taskFormData, progress: parseInt(e.target.value) })}
-                />
-                <div className="w-full flex justify-between text-xs opacity-60 px-2 mt-1">
-                  <span>0%</span>
-                  <span>25%</span>
-                  <span>50%</span>
-                  <span>75%</span>
-                  <span>100%</span>
-                </div>
-              </label>
-            </div>
-
-            <div className="modal-action">
-              {editingTask && (
-                <button
-                  className="btn btn-error mr-auto"
-                  onClick={() => {
-                    handleDeleteTask(editingTask.id);
-                    setShowTaskModal(false);
-                  }}
-                >
-                  Delete
-                </button>
-              )}
-              <button className="btn" onClick={() => setShowTaskModal(false)}>
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleSaveTask}
-                disabled={!taskFormData.taskName || !taskFormData.startDate || !taskFormData.endDate}
-              >
-                {editingTask ? 'Save Changes' : 'Add Task'}
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setShowTaskModal(false)}>close</button>
-          </form>
-        </dialog>
-      )}
+      <TaskModal
+        show={showTaskModal}
+        editingTask={editingTask}
+        taskFormData={taskFormData}
+        teamMembers={teamMembers}
+        categories={categories}
+        showNewCategoryInput={showNewCategoryInput}
+        newCategoryName={newCategoryName}
+        onClose={() => setShowTaskModal(false)}
+        onSave={handleSaveTask}
+        onDelete={handleDeleteTask}
+        onFormDataChange={setTaskFormData}
+        onAddCategory={handleAddCategory}
+        onNewCategoryNameChange={setNewCategoryName}
+        onShowNewCategoryInput={setShowNewCategoryInput}
+      />
 
       {/* Milestone Modal */}
-      {showMilestoneModal && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => setShowMilestoneModal(false)}
-            >
-              ✕
-            </button>
-            <h3 className="font-bold text-lg mb-5">
-              {editingMilestone ? 'Edit Milestone' :
-               deadlineType === 'deadline' ? 'Project Deadline' :
-               deadlineType === 'internal-deadline' ? 'Internal Deadline' :
-               'Add Deadline/Milestone'}
-            </h3>
-
-            <div className="space-y-4">
-              {!editingMilestone && (
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text">Type *</span>
-                  </div>
-                  <select
-                    className="select select-bordered w-full"
-                    value={deadlineType}
-                    onChange={(e) => setDeadlineType(e.target.value as typeof deadlineType)}
-                  >
-                    <option value="milestone">Milestone</option>
-                    <option value="deadline">Project Deadline</option>
-                    <option value="internal-deadline">Internal Deadline</option>
-                  </select>
-                </label>
-              )}
-
-              {deadlineType === 'milestone' && (
-                <>
-                  <label className="form-control w-full">
-                    <div className="label">
-                      <span className="label-text">Milestone Name *</span>
-                    </div>
-                    <input
-                      type="text"
-                      className="input input-bordered w-full"
-                      value={milestoneFormData.milestoneName}
-                      onChange={(e) => setMilestoneFormData({ ...milestoneFormData, milestoneName: e.target.value })}
-                      placeholder="e.g., Launch Beta"
-                    />
-                  </label>
-
-                  <label className="form-control w-full">
-                    <div className="label">
-                      <span className="label-text">Description</span>
-                    </div>
-                    <textarea
-                      className="textarea textarea-bordered w-full"
-                      rows={3}
-                      value={milestoneFormData.description}
-                      onChange={(e) => setMilestoneFormData({ ...milestoneFormData, description: e.target.value })}
-                      placeholder="Optional milestone description"
-                    />
-                  </label>
-                </>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text">
-                      {deadlineType === 'deadline' ? 'Deadline Date *' :
-                       deadlineType === 'internal-deadline' ? 'Internal Deadline Date *' :
-                       'Due Date *'}
-                    </span>
-                  </div>
-                  <input
-                    type="date"
-                    className="input input-bordered w-full"
-                    value={milestoneFormData.dueDate}
-                    onChange={(e) => setMilestoneFormData({ ...milestoneFormData, dueDate: e.target.value })}
-                  />
-                </label>
-
-                {deadlineType === 'milestone' && (
-                  <label className="form-control w-full">
-                    <div className="label">
-                      <span className="label-text">Status</span>
-                    </div>
-                    <select
-                      className="select select-bordered w-full"
-                      value={milestoneFormData.status}
-                      onChange={(e) => setMilestoneFormData({ ...milestoneFormData, status: e.target.value as Milestone['status'] })}
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="completed">Completed</option>
-                      <option value="missed">Missed</option>
-                    </select>
-                  </label>
-                )}
-              </div>
-            </div>
-
-            <div className="modal-action">
-              {editingMilestone ? (
-                <button
-                  className="btn btn-error mr-auto"
-                  onClick={() => {
-                    handleDeleteMilestone(editingMilestone.id);
-                    setShowMilestoneModal(false);
-                  }}
-                >
-                  Delete
-                </button>
-              ) : (deadlineType === 'deadline' || deadlineType === 'internal-deadline') && project && (
-                <button
-                  className="btn btn-error mr-auto"
-                  onClick={async () => {
-                    if (!confirm(`Are you sure you want to remove the ${deadlineType === 'deadline' ? 'project deadline' : 'internal deadline'}?`)) return;
-
-                    try {
-                      const updateData = deadlineType === 'deadline'
-                        ? { deadline: null }
-                        : { internalDeadline: null };
-
-                      const response = await fetch(`/api/projects/${project.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          ...project,
-                          ...updateData
-                        })
-                      });
-
-                      if (!response.ok) throw new Error('Failed to remove deadline');
-
-                      await fetchProjectDetails();
-                      setShowMilestoneModal(false);
-                    } catch (error) {
-                      console.error('Error removing deadline:', error);
-                      alert('Failed to remove deadline. Please try again.');
-                    }
-                  }}
-                >
-                  Remove {deadlineType === 'deadline' ? 'Deadline' : 'Internal Deadline'}
-                </button>
-              )}
-              <button className="btn" onClick={() => setShowMilestoneModal(false)}>
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleSaveMilestone}
-                disabled={
-                  !milestoneFormData.dueDate ||
-                  (deadlineType === 'milestone' && !milestoneFormData.milestoneName)
-                }
-              >
-                {editingMilestone ? 'Save Changes' :
-                 deadlineType === 'deadline' ? 'Set Deadline' :
-                 deadlineType === 'internal-deadline' ? 'Set Internal Deadline' :
-                 'Add Milestone'}
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setShowMilestoneModal(false)}>close</button>
-          </form>
-        </dialog>
-      )}
+      <MilestoneModal
+        show={showMilestoneModal}
+        editingMilestone={editingMilestone}
+        milestoneFormData={milestoneFormData}
+        deadlineType={deadlineType}
+        projectId={project?.id || null}
+        onClose={() => setShowMilestoneModal(false)}
+        onSave={handleSaveMilestone}
+        onDelete={handleDeleteMilestone}
+        onRemoveDeadline={handleRemoveDeadline}
+        onFormDataChange={setMilestoneFormData}
+        onDeadlineTypeChange={setDeadlineType}
+      />
     </Sidebar>
   );
 }

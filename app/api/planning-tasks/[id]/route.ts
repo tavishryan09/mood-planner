@@ -50,6 +50,32 @@ export async function PUT(
     const body = await request.json();
     const { userId, projectId, taskDescription, taskType, taskDate, rowIndex, rowSpan = 1, internalTaskTypeId } = body;
 
+    // Get the existing task to check ownership
+    const existingTask = await sql`
+      SELECT user_id as "userId"
+      FROM planning_tasks
+      WHERE id = ${id}
+    `;
+
+    if (existingTask.length === 0) {
+      return NextResponse.json(
+        { error: 'Planning task not found' },
+        { status: 404 }
+      );
+    }
+
+    // Only allow users to modify their own tasks, unless they're Admin or Manager
+    if (
+      currentUser.role !== 'Admin' &&
+      currentUser.role !== 'Manager' &&
+      existingTask[0].userId !== currentUser.id
+    ) {
+      return NextResponse.json(
+        { error: 'You can only modify your own tasks' },
+        { status: 403 }
+      );
+    }
+
     if (!taskType || !taskDate) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -227,6 +253,32 @@ export async function PATCH(
     const body = await request.json();
     const { completed } = body;
 
+    // Get the existing task to check ownership
+    const existingTask = await sql`
+      SELECT user_id as "userId"
+      FROM planning_tasks
+      WHERE id = ${id}
+    `;
+
+    if (existingTask.length === 0) {
+      return NextResponse.json(
+        { error: 'Planning task not found' },
+        { status: 404 }
+      );
+    }
+
+    // Only allow users to modify their own tasks, unless they're Admin or Manager
+    if (
+      currentUser.role !== 'Admin' &&
+      currentUser.role !== 'Manager' &&
+      existingTask[0].userId !== currentUser.id
+    ) {
+      return NextResponse.json(
+        { error: 'You can only modify your own tasks' },
+        { status: 403 }
+      );
+    }
+
     if (typeof completed !== 'boolean') {
       return NextResponse.json(
         { error: 'completed must be a boolean' },
@@ -303,6 +355,18 @@ export async function DELETE(
     }
 
     const taskToDelete = task[0];
+
+    // Only allow users to delete their own tasks, unless they're Admin or Manager
+    if (
+      currentUser.role !== 'Admin' &&
+      currentUser.role !== 'Manager' &&
+      taskToDelete.userId !== currentUser.id
+    ) {
+      return NextResponse.json(
+        { error: 'You can only delete your own tasks' },
+        { status: 403 }
+      );
+    }
 
     // Delete from database
     await sql`

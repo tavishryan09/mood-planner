@@ -114,8 +114,8 @@ export async function GET(request: Request) {
     // Set the fresh auth token cookie to ensure the user stays logged in as themselves
     response.cookies.set('auth_token', newToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     });

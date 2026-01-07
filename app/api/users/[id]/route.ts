@@ -1,5 +1,5 @@
 import { sql } from '@/lib/db';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword, validatePasswordStrength } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
@@ -125,6 +125,15 @@ export async function PUT(
 
     let result;
     if (password) {
+      // Validate password strength
+      const passwordValidation = validatePasswordStrength(password);
+      if (!passwordValidation.valid) {
+        return NextResponse.json(
+          { error: passwordValidation.message },
+          { status: 400 }
+        );
+      }
+
       // Update with new password
       const passwordHash = await hashPassword(password);
       result = await sql`

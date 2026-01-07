@@ -11,8 +11,8 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days in seconds
 export async function createSession(token: string, res: NextResponse): Promise<void> {
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: true,
+    sameSite: 'strict',
     maxAge: COOKIE_MAX_AGE,
     path: '/',
   });
@@ -51,8 +51,8 @@ export async function getServerSession(): Promise<JWTPayload | null> {
 export async function destroySession(res: NextResponse): Promise<void> {
   res.cookies.set(COOKIE_NAME, '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: true,
+    sameSite: 'strict',
     maxAge: 0,
     path: '/',
   });

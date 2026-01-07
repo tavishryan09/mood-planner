@@ -14,19 +14,24 @@ export async function getMoodPlannerCalendar(accessToken: string) {
   try {
     // First, try to find existing "Mood Tracker" calendar
     const calendars = await client.api('/me/calendars').get();
+    console.log('[getMoodPlannerCalendar] Available calendars:', calendars.value.map((c: any) => ({ id: c.id, name: c.name })));
+
     const moodCalendar = calendars.value.find((cal: any) => cal.name === 'Mood Tracker');
 
     if (moodCalendar) {
+      console.log('[getMoodPlannerCalendar] Found existing Mood Tracker calendar:', moodCalendar.id);
       return moodCalendar.id;
     }
 
     // If it doesn't exist, create it
     try {
+      console.log('[getMoodPlannerCalendar] Creating new Mood Tracker calendar');
       const newCalendar = await client.api('/me/calendars').post({
         name: 'Mood Tracker',
         color: 'auto',
       });
 
+      console.log('[getMoodPlannerCalendar] Created new calendar:', newCalendar.id);
       return newCalendar.id;
     } catch (createError: any) {
       // If we get a 409 conflict, the calendar was created by another request

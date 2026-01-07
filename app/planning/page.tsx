@@ -426,7 +426,15 @@ export default function Planning() {
 
       if (response.ok) {
         const data = await response.json();
-        alert(`Successfully synced ${data.synced} of ${data.total} tasks to Outlook calendar!`);
+        console.log('[Outlook Sync Response]', data);
+
+        const failures = data.results?.filter((r: any) => !r.success) || [];
+        if (failures.length > 0) {
+          console.error('[Outlook Sync Failures]', failures);
+          alert(`Synced ${data.synced} of ${data.total} tasks to Outlook calendar.\n\n${failures.length} failed:\n${failures.map((f: any) => `- Task ${f.taskId}: ${f.error}`).slice(0, 5).join('\n')}${failures.length > 5 ? '\n...and more. Check console for details.' : ''}`);
+        } else {
+          alert(`Successfully synced ${data.synced} of ${data.total} tasks to Outlook calendar!`);
+        }
       } else {
         const error = await response.json();
         alert(`Failed to sync: ${error.error || 'Unknown error'}`);

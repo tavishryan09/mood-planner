@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     // Get or create the Mood Planner calendar
     const calendarId = await getMoodPlannerCalendar(accessToken);
 
-    // Get all incomplete tasks for the user (or filter by date if provided)
+    // Get all tasks for the user (or filter by date if provided)
     const tasks = date
       ? await sql`
           SELECT
@@ -103,15 +103,17 @@ export async function POST(request: Request) {
             t.task_date,
             t.project_id,
             t.outlook_event_id,
+            t.internal_task_type_id,
             p.project_name,
             p.project_number,
             p.common_name,
+            itt.name as internal_task_type_name,
             'planning' as source
           FROM planning_tasks t
           LEFT JOIN projects p ON t.project_id = p.id
+          LEFT JOIN internal_task_types itt ON t.internal_task_type_id = itt.id
           WHERE t.user_id = ${payload.userId}
             AND t.task_date = ${date}
-            AND t.completed = false
           ORDER BY t.row_index
         `
       : await sql`
@@ -122,14 +124,16 @@ export async function POST(request: Request) {
             t.task_date,
             t.project_id,
             t.outlook_event_id,
+            t.internal_task_type_id,
             p.project_name,
             p.project_number,
             p.common_name,
+            itt.name as internal_task_type_name,
             'planning' as source
           FROM planning_tasks t
           LEFT JOIN projects p ON t.project_id = p.id
+          LEFT JOIN internal_task_types itt ON t.internal_task_type_id = itt.id
           WHERE t.user_id = ${payload.userId}
-            AND t.completed = false
           ORDER BY t.task_date, t.row_index
         `;
 
@@ -212,17 +216,25 @@ export async function POST(request: Request) {
         : (item.task_description || item.task_type);
 
       // Map task type to Outlook category
-      const categoryMap: Record<string, string> = {
-        'Project Task': 'Project Task',
-        'Deadline': 'Deadline',
-        'Internal Deadline': 'Internal Deadline',
-        'Milestone': 'Project Milestone',
-        'Out of office': 'Out of office',
-        'Time off': 'Time off',
-        'Unavailable': 'Unavailable',
-      };
-      const category = categoryMap[item.task_type];
-      const categories = category ? [category] : [];
+      let categories: string[] = [];
+      if (item.task_type === 'Internal' && item.internal_task_type_name) {
+        // Use the internal task type name as the category
+        categories = [item.internal_task_type_name];
+      } else {
+        const categoryMap: Record<string, string> = {
+          'Project Task': 'Project Task',
+          'Deadline': 'Deadline',
+          'Internal Deadline': 'Internal Deadline',
+          'Milestone': 'Project Milestone',
+          'Out of office': 'Out of office',
+          'Out of Office': 'Out of office',
+          'Time off': 'Time off',
+          'Unavailable': 'Unavailable',
+          'PTO': 'PTO',
+        };
+        const category = categoryMap[item.task_type];
+        categories = category ? [category] : [];
+      }
 
       try {
         if (item.source === 'milestone') {

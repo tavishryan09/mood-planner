@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import TaskModal from '@/components/planning/TaskModal';
 import MilestoneModal from '@/components/planning/MilestoneModal';
 import UserSettingsModal from '@/components/planning/UserSettingsModal';
+import TaskContextMenu from '@/components/planning/TaskContextMenu';
+import TaskCell from '@/components/planning/TaskCell';
 import { usePlanningData } from '@/hooks/planning/usePlanningData';
 import { usePlanningTasks } from '@/hooks/planning/usePlanningTasks';
 import { useMilestones } from '@/hooks/planning/useMilestones';
@@ -242,6 +244,8 @@ export default function Planning() {
   const [showUserSettings, setShowUserSettings] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [contextMenuTask, setContextMenuTask] = useState<PlanningTask | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScroll = useRef(false);
   const pendingScrollTarget = useRef<Date | null>(null);
@@ -481,6 +485,27 @@ export default function Planning() {
 
     // Only open modal if not a paste operation (double-click or single click without copied task)
     // For now, we'll use double-click to create tasks and single-click to select cells for pasting
+  };
+
+  const handleTaskLongPress = (task: PlanningTask) => {
+    if (isMobile) {
+      setContextMenuTask(task);
+      setShowContextMenu(true);
+    }
+  };
+
+  const handleContextMenuCopy = () => {
+    if (contextMenuTask) {
+      setSelectedTask(contextMenuTask);
+      handleCopyTask();
+    }
+  };
+
+  const handleContextMenuCut = () => {
+    if (contextMenuTask) {
+      setSelectedTask(contextMenuTask);
+      handleCutTask();
+    }
   };
 
   const openUserSettings = () => {
@@ -1237,79 +1262,23 @@ export default function Planning() {
                               }}
                             >
                               {isTaskStartCell && task ? (
-                                <div
-                                  draggable
-                                  onDragStart={(e) => handleTaskDragStart(e, task)}
-                                  onDragEnd={handleTaskDragEnd}
-                                  onClick={(e) => handleTaskClick(e, task)}
-                                  onDoubleClick={(e) => {
-                                    e.stopPropagation();
-                                    handleTaskEdit(task);
-                                  }}
-                                  className={`absolute rounded px-2 py-1 text-xs font-medium cursor-move z-10 flex items-center ${
-                                    task.taskType === 'Project Task'
-                                      ? 'bg-primary text-primary-content'
-                                      : task.taskType === 'Out of Office'
-                                      ? 'bg-secondary text-secondary-content'
-                                      : task.taskType === 'PTO'
-                                      ? 'bg-info text-info-content'
-                                      : task.taskType === 'Internal'
-                                      ? 'bg-success text-success-content'
-                                       : task.taskType === 'Unavailable'
-                                      ? 'bg-accent text-accent-content'
-                                      : 'bg-error text-error-content'
-                                  } ${draggedTask?.id === task.id ? 'opacity-50' : ''} ${isResizing ? 'ring-2 ring-base-content/30' : ''} ${selectedTask?.id === task.id ? 'ring-4 ring-accent' : ''} ${isCutTask && copiedTask?.id === task.id ? 'opacity-50 ring-2 ring-dashed ring-accent' : ''}`}
-                                  style={{
-                                    top: `${(visualRowIndex - task.rowIndex) * 60 + 6}px`,
-                                    left: '4px',
-                                    right: '4px',
-                                    height: `${(visualRowSpan * 60) - 12}px`
-                                  }}
-                                >
-                                  {/* Top resize handle */}
-                                  <div
-                                    onMouseDown={(e) => handleResizeStart(e, task, 'top')}
-                                    className="absolute top-0 left-0 right-0 h-1 cursor-ns-resize hover:bg-base-content/20 z-10"
-                                    style={{ marginTop: '-2px' }}
-                                  />
-
-                                  <div className="flex flex-col gap-0.5 overflow-hidden w-full max-w-full h-full">
-                                    <div className="flex-1 overflow-hidden">
-                                      {/* Header line: Project name with task type in parentheses for non-Project tasks, or just project/task type */}
-                                      <div className={`font-semibold w-full overflow-hidden ${visualRowSpan === 1 ? 'truncate' : ''}`}
-                                        style={visualRowSpan > 1 ? {
-                                          display: '-webkit-box',
-                                          WebkitLineClamp: visualRowSpan,
-                                          WebkitBoxOrient: 'vertical'
-                                        } : undefined}>
-                                        {task.taskType === 'Internal'
-                                          ? task.internalTaskTypeName || 'Internal'
-                                          : (task.projectCommonName || task.projectName) && task.taskType !== 'Project Task'
-                                          ? `${task.projectCommonName || task.projectName} (${task.taskType})`
-                                          : task.projectCommonName || task.projectName || task.taskType
-                                        }
-                                      </div>
-                                      {/* Description line: Show custom description only if it's different from task type */}
-                                      {task.taskDescription && task.taskDescription !== task.taskType ? (
-                                        <div className={`opacity-90 w-full overflow-hidden ${visualRowSpan === 1 ? 'truncate' : ''}`}
-                                          style={visualRowSpan > 1 ? {
-                                            display: '-webkit-box',
-                                            WebkitLineClamp: Math.max(1, visualRowSpan * 2 - 1),
-                                            WebkitBoxOrient: 'vertical'
-                                          } : undefined}>
-                                          {task.taskDescription}
-                                        </div>
-                                      ) : null}
-                                    </div>
-                                  </div>
-
-                                  {/* Bottom resize handle */}
-                                  <div
-                                    onMouseDown={(e) => handleResizeStart(e, task, 'bottom')}
-                                    className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize hover:bg-base-content/20 z-10"
-                                    style={{ marginBottom: '-2px' }}
-                                  />
-                                </div>
+                                <TaskCell
+                                  task={task}
+                                  visualRowIndex={visualRowIndex}
+                                  visualRowSpan={visualRowSpan}
+                                  draggedTask={draggedTask}
+                                  isResizing={isResizing}
+                                  selectedTask={selectedTask}
+                                  isCutTask={isCutTask}
+                                  copiedTask={copiedTask}
+                                  isMobile={isMobile}
+                                  handleTaskDragStart={handleTaskDragStart}
+                                  handleTaskDragEnd={handleTaskDragEnd}
+                                  handleTaskClick={handleTaskClick}
+                                  handleTaskEdit={handleTaskEdit}
+                                  handleResizeStart={handleResizeStart}
+                                  handleTaskLongPress={handleTaskLongPress}
+                                />
                               ) : (
                                 <div className="h-full w-full"></div>
                               )}
@@ -1326,11 +1295,19 @@ export default function Planning() {
 
             {showInstructions && (
               <div className="mt-4 text-sm opacity-60">
-                <p>
-                  <strong>Double-click</strong> empty cells to create tasks or milestones. <strong>Click</strong> a task to select it, then <strong>Cmd+C</strong> to copy.
-                  Click an empty cell and <strong>Cmd+V</strong> to paste. Press <strong>Delete/Backspace</strong> to remove selected task or milestone.
-                  Drag tasks/milestones to move them. Drag task edges to resize vertically. Double-click tasks/milestones to edit.
-                </p>
+                {isMobile ? (
+                  <p>
+                    <strong>Double-tap</strong> empty cells to create tasks or milestones. <strong>Long-press</strong> a task to copy or cut it.
+                    Tap an empty cell to paste. Drag tasks/milestones to move them. <strong>Touch and drag</strong> the top or bottom edge of a task to resize it vertically.
+                    Double-tap tasks/milestones to edit.
+                  </p>
+                ) : (
+                  <p>
+                    <strong>Double-click</strong> empty cells to create tasks or milestones. <strong>Click</strong> a task to select it, then <strong>Cmd+C</strong> to copy.
+                    Click an empty cell and <strong>Cmd+V</strong> to paste. Press <strong>Delete/Backspace</strong> to remove selected task or milestone.
+                    Drag tasks/milestones to move them. Drag task edges to resize vertically. Double-click tasks/milestones to edit.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -1378,6 +1355,24 @@ export default function Planning() {
         projects={projects}
         formData={milestoneFormData}
         setFormData={setMilestoneFormData}
+      />
+
+      {/* Task Context Menu for Mobile */}
+      <TaskContextMenu
+        show={showContextMenu}
+        onClose={() => {
+          setShowContextMenu(false);
+          setContextMenuTask(null);
+        }}
+        onCopy={handleContextMenuCopy}
+        onCut={handleContextMenuCut}
+        taskName={
+          contextMenuTask
+            ? contextMenuTask.taskType === 'Internal'
+              ? contextMenuTask.internalTaskTypeName || 'Internal'
+              : contextMenuTask.projectCommonName || contextMenuTask.projectName || contextMenuTask.taskType
+            : ''
+        }
       />
     </Sidebar>
   );

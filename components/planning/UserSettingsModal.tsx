@@ -152,7 +152,6 @@ export default function UserSettingsModal({
 
         <div className="space-y-2">
           {tempUsers
-            .filter(user => user.role !== 'Admin' && user.role !== 'Accountant')
             .map((user) => (
               <div
                 key={user.id}

@@ -83,7 +83,7 @@ interface UsePlanningInteractionsReturn {
 
   // Task resize
   resizingTask: { task: PlanningTask; edge: 'top' | 'bottom'; startY: number; startRowIndex: number; startRowSpan: number } | null;
-  handleResizeStart: (e: React.MouseEvent, task: PlanningTask, edge: 'top' | 'bottom') => void;
+  handleResizeStart: (e: React.MouseEvent | React.TouchEvent, task: PlanningTask, edge: 'top' | 'bottom') => void;
 
   // User drag (reordering)
   draggedUser: number | null;
@@ -360,13 +360,16 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
   };
 
   // Resize handlers
-  const handleResizeStart = (e: React.MouseEvent, task: PlanningTask, edge: 'top' | 'bottom') => {
+  const handleResizeStart = (e: React.MouseEvent | React.TouchEvent, task: PlanningTask, edge: 'top' | 'bottom') => {
     e.preventDefault();
     e.stopPropagation();
+
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
     setResizingTask({
       task,
       edge,
-      startY: e.clientY,
+      startY: clientY,
       startRowIndex: task.rowIndex,
       startRowSpan: task.rowSpan
     });
@@ -376,8 +379,9 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
   useEffect(() => {
     if (!resizingTask) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaY = e.clientY - resizingTask.startY;
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      const deltaY = clientY - resizingTask.startY;
       const rowHeight = 60;
       const rowDelta = Math.round(deltaY / rowHeight);
 
@@ -412,7 +416,7 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
       }
     };
 
-    const handleMouseUp = async () => {
+    const handleEnd = async () => {
       if (!resizingTask) return;
 
       const task = resizingTask.task;
@@ -460,12 +464,16 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
       setResizingTask(null);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleMove);
+    document.addEventListener('touchend', handleEnd);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleEnd);
     };
   }, [resizingTask, tasks]);
 

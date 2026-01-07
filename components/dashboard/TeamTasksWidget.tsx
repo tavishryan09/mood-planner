@@ -148,12 +148,12 @@ export default function TeamTasksWidget({
                               task.taskType === 'Project Task'
                                 ? 'bg-primary text-primary-content'
                                 : task.taskType === 'Out of Office'
-                                ? 'bg-warning text-warning-content'
+                                ? 'bg-secondary text-secondary-content'
                                 : task.taskType === 'PTO'
                                 ? 'bg-info text-info-content'
                                 : task.taskType === 'Internal'
-                                ? 'bg-secondary text-secondary-content'
-                                : 'bg-error text-error-content'
+                                ? 'bg-success text-success-content'
+                                : 'bg-accent text-accent-content'
                             }`}
                             style={{
                               height: `${totalHeight}px`,

@@ -37,6 +37,7 @@ interface VisibleColumns {
   projectName: boolean;
   clientName: boolean;
   commonName: boolean;
+  status: boolean;
   projectValue: boolean;
   estimatedBillable: boolean;
   billablePercent: boolean;
@@ -79,6 +80,7 @@ export function useProjectsData(): UseProjectsDataReturn {
     projectName: true,
     clientName: true,
     commonName: true,
+    status: true,
     projectValue: true,
     estimatedBillable: true,
     billablePercent: true,
@@ -94,6 +96,7 @@ export function useProjectsData(): UseProjectsDataReturn {
     projectName: true,
     clientName: true,
     commonName: true,
+    status: true,
     projectValue: true,
     estimatedBillable: true,
     billablePercent: true,

@@ -7,6 +7,7 @@ interface VisibleColumns {
   projectName: boolean;
   clientName: boolean;
   commonName: boolean;
+  status: boolean;
   projectValue: boolean;
   estimatedBillable: boolean;
   billablePercent: boolean;
@@ -122,6 +123,22 @@ export default function ColumnVisibilityModal({
               className="toggle toggle-primary"
               checked={tempVisibleColumns.commonName}
               onChange={(e) => setTempVisibleColumns({ ...tempVisibleColumns, commonName: e.target.checked })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5 opacity-60">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              <span className="text-sm">Status</span>
+            </div>
+            <input
+              type="checkbox"
+              className="toggle toggle-primary"
+              checked={tempVisibleColumns.status}
+              onChange={(e) => setTempVisibleColumns({ ...tempVisibleColumns, status: e.target.checked })}
             />
           </div>
 

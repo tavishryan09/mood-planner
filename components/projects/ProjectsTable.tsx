@@ -25,6 +25,7 @@ interface VisibleColumns {
   projectName: boolean;
   clientName: boolean;
   commonName: boolean;
+  status: boolean;
   projectValue: boolean;
   estimatedBillable: boolean;
   billablePercent: boolean;
@@ -195,6 +196,9 @@ export default function ProjectsTable({
                 </button>
               </th>
             )}
+            {visibleColumns.status && (
+              <th>Status</th>
+            )}
             {visibleColumns.projectValue && (
               <th>
                 <button
@@ -339,6 +343,15 @@ export default function ProjectsTable({
                     />
                   ) : (
                     project.commonName || '—'
+                  )}
+                </td>
+              )}
+              {visibleColumns.status && (
+                <td>
+                  {project.archived ? (
+                    <span className="badge badge-warning badge-sm">Archived</span>
+                  ) : (
+                    <span className="badge badge-success badge-sm">Active</span>
                   )}
                 </td>
               )}

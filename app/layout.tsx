@@ -13,6 +13,14 @@ export const metadata: Metadata = {
   title: "New Mood - CRM and Project Management",
   description: "CRM and Project Management application built with Next.js, DaisyUI, and Neon Database",
   manifest: "/manifest.json",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

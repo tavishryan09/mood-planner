@@ -99,7 +99,7 @@ async function fetchMyProjects(userId: number, userRole: string, includeNoTasks:
     FROM projects p
     LEFT JOIN clients c ON p.client_id = c.id
     ${isManagerOrAdmin ? sql`` : sql`INNER JOIN project_team_members ptm ON ptm.project_id = p.id`}
-    LEFT JOIN planning_tasks pt ON pt.project_id = p.id AND pt.user_id = ${userId}
+    LEFT JOIN planning_tasks pt ON pt.project_id = p.id ${isManagerOrAdmin ? sql`` : sql`AND pt.user_id = ${userId}`}
     ${isManagerOrAdmin ? sql`` : sql`WHERE ptm.user_id = ${userId}`}
     GROUP BY p.id, p.project_number, p.project_name, p.common_name, c.name
     ${includeNoTasks ? sql`` : sql`HAVING COUNT(DISTINCT pt.id) > 0`}

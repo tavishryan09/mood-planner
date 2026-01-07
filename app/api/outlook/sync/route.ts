@@ -266,7 +266,13 @@ export async function POST(request: Request) {
               });
             } catch (updateError: any) {
               // If event not found, create a new one
-              if (updateError.code === 'ErrorItemNotFound' || updateError.statusCode === 404) {
+              const isNotFoundError =
+                updateError.code === 'ErrorItemNotFound' ||
+                updateError.statusCode === 404 ||
+                updateError.message?.includes('does not exist') ||
+                updateError.message?.includes('not found');
+
+              if (isNotFoundError) {
                 console.log(`Milestone event ${eventId} not found, creating new event for milestone ${item.id}`);
                 const event = await createCalendarEvent(accessToken, {
                   subject,
@@ -288,6 +294,7 @@ export async function POST(request: Request) {
                   WHERE id = ${item.id}
                 `;
               } else {
+                console.error(`Unexpected error updating milestone event ${eventId}:`, updateError);
                 throw updateError;
               }
             }
@@ -334,7 +341,13 @@ export async function POST(request: Request) {
               });
             } catch (updateError: any) {
               // If event not found, create a new one
-              if (updateError.code === 'ErrorItemNotFound' || updateError.statusCode === 404) {
+              const isNotFoundError =
+                updateError.code === 'ErrorItemNotFound' ||
+                updateError.statusCode === 404 ||
+                updateError.message?.includes('does not exist') ||
+                updateError.message?.includes('not found');
+
+              if (isNotFoundError) {
                 console.log(`Event ${eventId} not found, creating new event for task ${item.id}`);
                 const event = await createCalendarEvent(accessToken, {
                   subject,
@@ -354,6 +367,7 @@ export async function POST(request: Request) {
                   WHERE id = ${item.id}
                 `;
               } else {
+                console.error(`Unexpected error updating planning task event ${eventId}:`, updateError);
                 throw updateError;
               }
             }

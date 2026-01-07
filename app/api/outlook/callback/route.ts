@@ -25,14 +25,24 @@ export async function GET(request: Request) {
     const cookieStore = await cookies();
     const token = cookieStore.get('auth_token')?.value;
 
-    if (token) {
-      const { verifyToken } = await import('@/lib/auth');
-      const payload = verifyToken(token);
+    // User MUST be authenticated to connect Outlook
+    if (!token) {
+      console.error('No auth token found during Outlook callback - user not authenticated');
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=unauthenticated`);
+    }
 
-      if (payload && payload.userId !== userId) {
-        console.error(`OAuth session mismatch: cookie userId ${payload.userId} != state userId ${userId}`);
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_error=session_mismatch`);
-      }
+    const { verifyToken } = await import('@/lib/auth');
+    const payload = verifyToken(token);
+
+    // Verify token is valid and matches the OAuth state userId
+    if (!payload) {
+      console.error('Invalid auth token during Outlook callback');
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=invalid_token`);
+    }
+
+    if (payload.userId !== userId) {
+      console.error(`OAuth session mismatch: cookie userId ${payload.userId} != state userId ${userId}`);
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_error=session_mismatch`);
     }
 
     // Exchange code for tokens
@@ -98,7 +108,10 @@ export async function GET(request: Request) {
     // Create response with redirect
     const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_connected=true`);
 
-    // Set the auth token cookie to ensure the user stays logged in as themselves
+    // Delete the old cookie first to avoid conflicts
+    response.cookies.delete('auth_token');
+
+    // Set the fresh auth token cookie to ensure the user stays logged in as themselves
     response.cookies.set('auth_token', newToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

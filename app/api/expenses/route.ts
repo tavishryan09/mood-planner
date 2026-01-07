@@ -174,10 +174,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { expenseDate, category, description, amount, projectId, notes, status, receiptImage, receiptFilename } = body;
 
-    // Validate required fields
-    if (!expenseDate || !category || !description || amount === undefined) {
+    // Validate required fields (description is now optional)
+    if (!expenseDate || !category || amount === undefined) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: expenseDate, category, and amount are required' },
         { status: 400 }
       );
     }
@@ -189,6 +189,11 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // Only accountants can set status to anything other than Unsubmitted
+    // Regular users can only create expenses with Unsubmitted status
+    const isAccountant = currentUser.role === 'Accountant';
+    const finalStatus = isAccountant ? (status || 'Unsubmitted') : 'Unsubmitted';
 
     // Insert the new expense
     const result = await sql`
@@ -209,10 +214,10 @@ export async function POST(request: Request) {
         ${projectId || null},
         ${expenseDate},
         ${category},
-        ${description},
+        ${description || null},
         ${amount},
         ${notes || null},
-        ${status || 'Unsubmitted'},
+        ${finalStatus},
         ${receiptImage || null},
         ${receiptFilename || null}
       )

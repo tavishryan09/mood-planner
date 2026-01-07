@@ -58,10 +58,10 @@ export async function PUT(
     const body = await request.json();
     const { expenseDate, category, description, amount, projectId, notes, status, receiptImage, receiptFilename } = body;
 
-    // Validate required fields
-    if (!expenseDate || !category || !description || amount === undefined) {
+    // Validate required fields (description is now optional)
+    if (!expenseDate || !category || amount === undefined) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: expenseDate, category, and amount are required' },
         { status: 400 }
       );
     }
@@ -81,13 +81,13 @@ export async function PUT(
     if (isAccountant) {
       // Accountants can edit any expense
       existingExpense = await sql`
-        SELECT id FROM expenses
+        SELECT id, status FROM expenses
         WHERE id = ${expenseId}
       `;
     } else {
       // Regular users can only edit their own expenses
       existingExpense = await sql`
-        SELECT id FROM expenses
+        SELECT id, status FROM expenses
         WHERE id = ${expenseId} AND user_id = ${currentUser.id}
       `;
     }
@@ -99,17 +99,21 @@ export async function PUT(
       );
     }
 
+    // Only accountants can change status
+    // Regular users keep the existing status
+    const finalStatus = isAccountant ? (status || existingExpense[0].status) : existingExpense[0].status;
+
     // Update the expense
     await sql`
       UPDATE expenses
       SET
         expense_date = ${expenseDate},
         category = ${category},
-        description = ${description},
+        description = ${description || null},
         amount = ${amount},
         project_id = ${projectId || null},
         notes = ${notes || null},
-        status = ${status || 'Unsubmitted'},
+        status = ${finalStatus},
         receipt_image = ${receiptImage || null},
         receipt_filename = ${receiptFilename || null}
       WHERE id = ${expenseId}

@@ -68,6 +68,19 @@ export async function GET(request: NextRequest) {
       fetchDashboardWidgetSettings(currentUser.id)
     ]);
 
+    // Debug logging
+    console.log('[Dashboard Bundle] User:', currentUser.name, currentUser.role);
+    console.log('[Dashboard Bundle] Date range:', startDate, 'to', endDate);
+    console.log('[Dashboard Bundle] Projects count:', projects.length);
+    console.log('[Dashboard Bundle] Tasks count:', upcomingTasks.length);
+    console.log('[Dashboard Bundle] Milestones count:', milestones.length);
+    if (upcomingTasks.length > 0) {
+      console.log('[Dashboard Bundle] First task:', upcomingTasks[0]);
+    }
+    if (milestones.length > 0) {
+      console.log('[Dashboard Bundle] First milestone:', milestones[0]);
+    }
+
     return NextResponse.json({
       projects,
       upcomingTasks,

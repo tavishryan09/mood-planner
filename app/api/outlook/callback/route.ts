@@ -78,7 +78,36 @@ export async function GET(request: Request) {
       WHERE id = ${userId}
     `;
 
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_connected=true`);
+    // Get the user's details to create a fresh auth token
+    const users = await sql`
+      SELECT id, name, email, role
+      FROM users
+      WHERE id = ${userId}
+    `;
+
+    if (users.length === 0) {
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_error=user_not_found`);
+    }
+
+    const user = users[0];
+
+    // Generate a fresh auth token for this user
+    const { signToken } = await import('@/lib/auth');
+    const newToken = signToken({ userId: user.id, email: user.email, role: user.role });
+
+    // Create response with redirect
+    const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_connected=true`);
+
+    // Set the auth token cookie to ensure the user stays logged in as themselves
+    response.cookies.set('auth_token', newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     console.error('Error in Outlook callback:', error);
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_error=callback_failed`);

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import ExpenseModal from '@/components/accounting/ExpenseModal';
+import ExpenseReportModal from '@/components/accounting/ExpenseReportModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccountingData } from '@/hooks/accounting/useAccountingData';
 import { useExpenseManagement } from '@/hooks/accounting/useExpenseManagement';
@@ -15,6 +16,9 @@ export default function Billing() {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<{ image: string; description: string } | null>(null);
   const [loadingReceipt, setLoadingReceipt] = useState(false);
+  const [selectedExpenses, setSelectedExpenses] = useState<number[]>([]);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [submittingReport, setSubmittingReport] = useState(false);
 
   const handleViewReceipt = async (expenseId: number, description: string) => {
     setLoadingReceipt(true);
@@ -47,8 +51,96 @@ export default function Billing() {
     }
   };
 
+  const handleToggleExpense = (expenseId: number) => {
+    setSelectedExpenses(prev =>
+      prev.includes(expenseId)
+        ? prev.filter(id => id !== expenseId)
+        : [...prev, expenseId]
+    );
+  };
+
+  const handleToggleAll = () => {
+    const unsubmittedExpenses = expenses.filter(exp => exp.status === 'Unsubmitted');
+    if (selectedExpenses.length === unsubmittedExpenses.length && unsubmittedExpenses.length > 0) {
+      setSelectedExpenses([]);
+    } else {
+      setSelectedExpenses(unsubmittedExpenses.map(exp => exp.id));
+    }
+  };
+
+  const handleDownloadReport = async (reportId: number, reportName: string) => {
+    try {
+      const response = await fetch(`/api/expense-reports/${reportId}/download`);
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `expense-report-${reportId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        alert('Failed to download report');
+      }
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      alert('Failed to download report');
+    }
+  };
+
+  const handleCreateReport = async (reportName: string, notes: string) => {
+    setSubmittingReport(true);
+    try {
+      const response = await fetch('/api/expense-reports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportName,
+          expenseIds: selectedExpenses,
+          notes: notes.trim() || undefined,
+        }),
+      });
+
+      if (response.ok) {
+        const report = await response.json();
+
+        // Update the expenses in the local state to reflect their new status
+        setExpenses(prevExpenses =>
+          prevExpenses.map(exp =>
+            selectedExpenses.includes(exp.id)
+              ? { ...exp, status: 'Submitted' }
+              : exp
+          )
+        );
+
+        // Add the new report to the expense reports list
+        setExpenseReports(prevReports => [
+          { ...report, expenseCount: selectedExpenses.length },
+          ...prevReports
+        ]);
+
+        setSelectedExpenses([]);
+        setShowReportModal(false);
+        alert(`Expense report "${reportName}" created successfully!`);
+      } else {
+        const error = await response.json();
+        alert(`Failed to create report: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error creating expense report:', error);
+      alert('Failed to create expense report');
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
+
   // Accounting data
-  const { projects, expenses, setExpenses, loading } = useAccountingData();
+  const { projects, expenses, setExpenses, expenseReports, setExpenseReports, loading } = useAccountingData();
 
   // Expense management
   const {
@@ -148,6 +240,86 @@ export default function Billing() {
             </div>
 
             <div className="grid grid-cols-1 gap-4">
+              {/* Expense Reports Section */}
+              <div className="card bg-base-100 border border-base-300">
+                <div className="card-body">
+                  <h2 className="card-title">Expense Reports</h2>
+                  {loading ? (
+                    <div className="space-y-2">
+                      <div className="skeleton h-12"></div>
+                      <div className="skeleton h-12"></div>
+                    </div>
+                  ) : expenseReports.length === 0 ? (
+                    <p className="text-sm text-base-content/70">No expense reports yet</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Report Name</th>
+                            {isAccountant && <th>Submitted By</th>}
+                            <th>Submission Date</th>
+                            <th>Status</th>
+                            <th className="text-right">Total Amount</th>
+                            <th className="text-center">Expenses</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {expenseReports.map((report) => (
+                            <tr key={report.id} className="hover">
+                              <td>
+                                <div className="font-medium">{report.reportName}</div>
+                                {report.notes && (
+                                  <div className="text-xs text-base-content/60">{report.notes}</div>
+                                )}
+                              </td>
+                              {isAccountant && (
+                                <td>
+                                  <div className="text-sm">{report.userName || 'Unknown'}</div>
+                                </td>
+                              )}
+                              <td>{formatDate(report.submissionDate)}</td>
+                              <td>
+                                <span className={`badge badge-sm ${
+                                  report.status === 'Paid' ? 'badge-success' :
+                                  report.status === 'Approved' ? 'badge-info' :
+                                  report.status === 'Rejected' ? 'badge-error' :
+                                  report.status === 'In Review' ? 'badge-warning' :
+                                  'badge-ghost'
+                                }`}>
+                                  {report.status}
+                                </span>
+                              </td>
+                              <td className="text-right font-medium">
+                                {formatCurrency(report.totalAmount)}
+                              </td>
+                              <td className="text-center">
+                                <span className="badge badge-sm badge-ghost">
+                                  {report.expenseCount}
+                                </span>
+                              </td>
+                              <td>
+                                <button
+                                  className="btn btn-ghost btn-xs gap-1"
+                                  onClick={() => handleDownloadReport(report.id, report.reportName)}
+                                  title="Download PDF"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  PDF
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="card bg-base-100 border border-base-300">
                 <div className="card-body">
                   <h2 className="card-title">Recent Invoices</h2>
@@ -157,7 +329,20 @@ export default function Billing() {
 
               <div className="card bg-base-100 border border-base-300">
                 <div className="card-body">
-                  <h2 className="card-title">Recent Expenses</h2>
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="card-title">Recent Expenses</h2>
+                    {selectedExpenses.length > 0 && (
+                      <button
+                        className="btn btn-primary btn-sm gap-2"
+                        onClick={() => setShowReportModal(true)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Create Report ({selectedExpenses.length})
+                      </button>
+                    )}
+                  </div>
               {loading ? (
                 <div className="space-y-2">
                   <div className="skeleton h-12"></div>
@@ -170,6 +355,17 @@ export default function Billing() {
                   <table className="table table-sm">
                     <thead>
                       <tr>
+                        <th>
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-sm"
+                            checked={
+                              expenses.filter(exp => exp.status === 'Unsubmitted').length > 0 &&
+                              selectedExpenses.length === expenses.filter(exp => exp.status === 'Unsubmitted').length
+                            }
+                            onChange={handleToggleAll}
+                          />
+                        </th>
                         <th>Date</th>
                         {isAccountant && <th>User</th>}
                         <th>Description</th>
@@ -184,6 +380,15 @@ export default function Billing() {
                     <tbody>
                       {expenses.map((expense) => (
                         <tr key={expense.id} className="hover">
+                          <td>
+                            <input
+                              type="checkbox"
+                              className="checkbox checkbox-sm"
+                              checked={selectedExpenses.includes(expense.id)}
+                              onChange={() => handleToggleExpense(expense.id)}
+                              disabled={expense.status !== 'Unsubmitted'}
+                            />
+                          </td>
                           <td>{formatDate(expense.expenseDate)}</td>
                           {isAccountant && (
                             <td>
@@ -279,6 +484,14 @@ export default function Billing() {
         onRemoveReceipt={removeReceipt}
         onShowNewCategory={setShowNewCategory}
         onNewCategoryChange={setNewCategory}
+      />
+
+      <ExpenseReportModal
+        show={showReportModal}
+        selectedExpenseCount={selectedExpenses.length}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={handleCreateReport}
+        submitting={submittingReport}
       />
 
       {/* Create Invoice Modal - Placeholder */}

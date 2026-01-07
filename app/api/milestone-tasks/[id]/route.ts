@@ -57,9 +57,10 @@ export async function PUT(
       );
     }
 
-    if (rowIndex !== undefined && ![0, 1].includes(rowIndex)) {
+    // Validate rowIndex is a non-negative number (allow dynamic row counts)
+    if (rowIndex !== undefined && rowIndex < 0) {
       return NextResponse.json(
-        { error: 'Row index must be 0 or 1' },
+        { error: 'Row index must be 0 or greater' },
         { status: 400 }
       );
     }

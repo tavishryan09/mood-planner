@@ -74,6 +74,8 @@ export default function Planning() {
   const [selectedQuarterOffset, setSelectedQuarterOffset] = useState(0); // 0 = current, 1 = next, -1 = previous
   const [loadedQuarterOffsets, setLoadedQuarterOffsets] = useState<number[]>([0]); // Track which quarters are loaded
   const [currentWeekNumber, setCurrentWeekNumber] = useState(1);
+  const [milestoneRowCount, setMilestoneRowCount] = useState(2); // Number of rows for deadlines/milestones
+  const [userRowCounts, setUserRowCounts] = useState<Record<number, number>>({}); // Track row count per user
 
   // Use planning data hook for data fetching and state management
   const {
@@ -219,6 +221,8 @@ export default function Planning() {
     copiedTask,
     showTaskModal,
     showMilestoneModal,
+    userRowCounts,
+    milestoneRowCount,
     setSelectedTask,
     setSelectedMilestone,
     setSelectedCell,
@@ -488,6 +492,57 @@ export default function Planning() {
       .filter(user => user.visible)
       .sort((a, b) => a.order - b.order);
   };
+
+  // Calculate minimum required rows based on tasks
+  const getMinimumRequiredRows = (userId: number) => {
+    const userTasks = tasks.filter(task => task.userId === userId);
+    if (userTasks.length === 0) return 4; // Default minimum
+
+    const maxRowNeeded = Math.max(
+      ...userTasks.map(task => task.rowIndex + task.rowSpan)
+    );
+    return Math.max(4, maxRowNeeded); // At least 4 rows
+  };
+
+  const getMinimumRequiredMilestoneRows = () => {
+    if (milestoneTasks.length === 0) return 2; // Default minimum
+
+    const maxRowNeeded = Math.max(
+      ...milestoneTasks.map(task => task.rowIndex + 1)
+    );
+    return Math.max(2, maxRowNeeded); // At least 2 rows
+  };
+
+  // Initialize user row counts based on tasks
+  useEffect(() => {
+    const newRowCounts: Record<number, number> = {};
+    let hasChanges = false;
+
+    users.forEach(user => {
+      const minRequired = getMinimumRequiredRows(user.id);
+      const currentCount = userRowCounts[user.id];
+      const newCount = currentCount !== undefined ? Math.max(currentCount, minRequired) : minRequired;
+
+      newRowCounts[user.id] = newCount;
+      if (currentCount !== newCount) {
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      setUserRowCounts(newRowCounts);
+    }
+  }, [users, tasks]);
+
+  // Initialize milestone row count based on milestone tasks
+  useEffect(() => {
+    const minRequired = getMinimumRequiredMilestoneRows();
+    setMilestoneRowCount(prev => {
+      const newCount = Math.max(prev, minRequired);
+      // Only update if the value actually changes
+      return prev === newCount ? prev : newCount;
+    });
+  }, [milestoneTasks]);
 
   useEffect(() => {
     // Scroll to current week's Monday after data is loaded (only on initial load)
@@ -956,17 +1011,30 @@ export default function Planning() {
                   />
                   <tbody>
                   {/* Deadlines/Milestones Section */}
-                  {Array.from({ length: 2 }).map((_, rowIndex) => (
+                  {Array.from({ length: milestoneRowCount }).map((_, rowIndex) => (
                     <tr key={`milestone-${rowIndex}`} className="border-b-2 border-base-300 bg-base-200">
                       {rowIndex === 0 ? (
                         <th
-                          rowSpan={2}
-                          className="bg-base-200 font-semibold text-sm text-center align-middle sticky left-0 z-20"
+                          rowSpan={milestoneRowCount}
+                          className="bg-base-200 font-semibold text-sm text-center align-middle sticky left-0 z-20 relative"
                           style={{ minWidth: '120px', width: '120px' }}
                         >
-                          Deadlines/
-                          <br />
-                          Milestones
+                          <div className="flex flex-col items-center justify-center h-full">
+                            <div>
+                              Deadlines/
+                              <br />
+                              Milestones
+                            </div>
+                            <button
+                              onClick={() => setMilestoneRowCount(prev => prev + 1)}
+                              className="absolute bottom-2 btn btn-xs btn-circle btn-ghost opacity-50 hover:opacity-100"
+                              title="Add row"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                              </svg>
+                            </button>
+                          </div>
                         </th>
                       ) : null}
                       {quarterDays.map((day, colIndex) => {
@@ -1078,21 +1146,33 @@ export default function Planning() {
                   {/* Team Members Section */}
                   {getVisibleUsers().flatMap((user) => {
                     const firstName = user.name.split(' ')[0];
-                    return Array.from({ length: 4 }).map((_, rowIndex) => (
+                    const rowCount = userRowCounts[user.id] || 4;
+                    return Array.from({ length: rowCount }).map((_, rowIndex) => (
                       <tr key={`${user.id}-${rowIndex}`}>
                         {rowIndex === 0 ? (
                           <th
-                            rowSpan={4}
+                            rowSpan={rowCount}
                             draggable
                             onDragStart={() => handleDragStart(user.id)}
                             onDragOver={(e) => handleDragOver(e, user.id)}
                             onDragEnd={handleDragEnd}
-                            className={`bg-base-100 font-medium text-sm text-center align-middle cursor-move sticky left-0 z-20 ${
+                            className={`bg-base-100 font-medium text-sm text-center align-middle cursor-move sticky left-0 z-20 relative ${
                               draggedUser === user.id ? 'opacity-50' : ''
                             }`}
                             style={{ minWidth: '120px', width: '120px' }}
                           >
-                            {firstName}
+                            <div className="flex flex-col items-center justify-center h-full">
+                              <div>{firstName}</div>
+                              <button
+                                onClick={() => setUserRowCounts(prev => ({ ...prev, [user.id]: (prev[user.id] || 4) + 1 }))}
+                                className="absolute bottom-2 btn btn-xs btn-circle btn-ghost opacity-50 hover:opacity-100"
+                                title="Add row"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                              </button>
+                            </div>
                           </th>
                         ) : null}
                         {quarterDays.map((day, colIndex) => {

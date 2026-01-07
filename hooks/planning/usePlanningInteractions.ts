@@ -46,6 +46,8 @@ interface UsePlanningInteractionsProps {
   copiedTask: PlanningTask | null;
   showTaskModal: boolean;
   showMilestoneModal: boolean;
+  userRowCounts: Record<number, number>;
+  milestoneRowCount: number;
   setSelectedTask: (task: PlanningTask | null) => void;
   setSelectedMilestone: (milestone: MilestoneTask | null) => void;
   setSelectedCell: (cell: { userId: number; date: Date; rowIndex: number } | null) => void;
@@ -111,6 +113,8 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
     copiedTask,
     showTaskModal,
     showMilestoneModal,
+    userRowCounts,
+    milestoneRowCount,
     setSelectedTask,
     setSelectedMilestone,
     setSelectedCell,
@@ -161,9 +165,12 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
 
   const isCellOccupied = (userId: number, date: Date, rowIndex: number, rowSpan: number, excludeTaskId?: number) => {
     const dateStr = date.toISOString().split('T')[0];
+    const maxRows = userRowCounts[userId] || 4;
+
     for (let i = 0; i < rowSpan; i++) {
       const checkRow = rowIndex + i;
-      if (checkRow >= 4) return true;
+      // Check if row exceeds the user's current row count
+      if (checkRow >= maxRows) return true;
 
       const occupyingTask = tasks.find(task => {
         if (excludeTaskId && task.id === excludeTaskId) return false;
@@ -377,20 +384,22 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
       let newRowIndex = resizingTask.task.rowIndex;
       let newRowSpan = resizingTask.task.rowSpan;
 
+      const maxRows = userRowCounts[resizingTask.task.userId] || 4;
+
       if (resizingTask.edge === 'top') {
         const proposedRowIndex = resizingTask.task.rowIndex + rowDelta;
-        newRowIndex = Math.max(0, Math.min(3, proposedRowIndex));
+        newRowIndex = Math.max(0, Math.min(maxRows - 1, proposedRowIndex));
         newRowSpan = resizingTask.task.rowSpan - (newRowIndex - resizingTask.task.rowIndex);
       } else {
         newRowSpan = resizingTask.task.rowSpan + rowDelta;
       }
 
-      newRowSpan = Math.max(1, Math.min(4, newRowSpan));
-      if (newRowIndex + newRowSpan > 4) {
+      newRowSpan = Math.max(1, Math.min(maxRows, newRowSpan));
+      if (newRowIndex + newRowSpan > maxRows) {
         if (resizingTask.edge === 'top') {
-          newRowIndex = 4 - newRowSpan;
+          newRowIndex = maxRows - newRowSpan;
         } else {
-          newRowSpan = 4 - newRowIndex;
+          newRowSpan = maxRows - newRowIndex;
         }
       }
 

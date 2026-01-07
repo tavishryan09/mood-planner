@@ -132,17 +132,18 @@ export async function POST(request: Request) {
       );
     }
 
-    if (rowSpan < 1 || rowSpan > 4) {
+    // Validate rowSpan is reasonable (allow dynamic row counts, max 20)
+    if (rowSpan < 1 || rowSpan > 20) {
       return NextResponse.json(
-        { error: 'Row span must be between 1 and 4' },
+        { error: 'Row span must be between 1 and 20' },
         { status: 400 }
       );
     }
 
-    // Check if row span would exceed available rows (0-3)
-    if (rowIndex + rowSpan > 4) {
+    // Check if row span would exceed reasonable limit
+    if (rowIndex + rowSpan > 20) {
       return NextResponse.json(
-        { error: 'Task would span beyond available rows' },
+        { error: 'Task would span beyond reasonable row limit (20)' },
         { status: 400 }
       );
     }
@@ -154,9 +155,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (rowIndex < 0 || rowIndex > 3) {
+    // Validate rowIndex is a non-negative number (allow dynamic row counts)
+    if (rowIndex < 0) {
       return NextResponse.json(
-        { error: 'Row index must be between 0 and 3' },
+        { error: 'Row index must be 0 or greater' },
         { status: 400 }
       );
     }

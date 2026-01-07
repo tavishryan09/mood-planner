@@ -83,17 +83,18 @@ export async function PUT(
       );
     }
 
-    if (rowSpan !== undefined && (rowSpan < 1 || rowSpan > 4)) {
+    // Validate rowSpan is reasonable (allow dynamic row counts, max 20)
+    if (rowSpan !== undefined && (rowSpan < 1 || rowSpan > 20)) {
       return NextResponse.json(
-        { error: 'Row span must be between 1 and 4' },
+        { error: 'Row span must be between 1 and 20' },
         { status: 400 }
       );
     }
 
-    // Check if row span would exceed available rows (0-3)
-    if (rowIndex !== undefined && rowSpan !== undefined && rowIndex + rowSpan > 4) {
+    // Check if row span would exceed reasonable limit
+    if (rowIndex !== undefined && rowSpan !== undefined && rowIndex + rowSpan > 20) {
       return NextResponse.json(
-        { error: 'Task would span beyond available rows' },
+        { error: 'Task would span beyond reasonable row limit (20)' },
         { status: 400 }
       );
     }

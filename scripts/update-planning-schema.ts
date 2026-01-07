@@ -23,7 +23,7 @@ async function updatePlanningSchema() {
         task_description TEXT NOT NULL,
         task_type VARCHAR(50) NOT NULL CHECK (task_type IN ('Project Task', 'Out of Office', 'Unavailable')),
         task_date DATE NOT NULL,
-        row_index INTEGER NOT NULL CHECK (row_index >= 0 AND row_index <= 3),
+        row_index INTEGER NOT NULL CHECK (row_index >= 0 AND row_index < 20),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, task_date, row_index)

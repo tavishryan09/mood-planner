@@ -10,6 +10,7 @@ import { useTaskManagement } from '@/hooks/projects/useTaskManagement';
 import { useMilestoneManagement } from '@/hooks/projects/useMilestoneManagement';
 import { useParams, useRouter } from 'next/navigation';
 
+// Project interface with all fields including archived status
 interface Project {
   id: number;
   projectNumber?: string;

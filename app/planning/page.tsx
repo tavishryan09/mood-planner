@@ -1205,7 +1205,7 @@ export default function Planning() {
                           let task = getTaskForCell(user.id, day, rowIndex);
 
                           // Check if this task is currently being resized
-                          let isResizing = resizingTask && task && resizingTask.task.id === task.id;
+                          let isResizing = !!(resizingTask && task && resizingTask.task.id === task.id);
 
                           // Special case: if we're resizing and moved the top edge up, the task may now start at a different row
                           // Check if the resizing task should be rendered at this row instead

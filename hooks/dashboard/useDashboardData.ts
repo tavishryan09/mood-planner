@@ -32,6 +32,7 @@ interface Project {
   projectName: string;
   commonName?: string;
   clientName?: string;
+  archived?: boolean;
   taskCount: number;
 }
 

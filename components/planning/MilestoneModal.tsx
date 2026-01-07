@@ -7,6 +7,7 @@ interface Project {
   projectNumber?: string;
   projectName: string;
   commonName?: string;
+  archived?: boolean;
 }
 
 interface MilestoneTask {

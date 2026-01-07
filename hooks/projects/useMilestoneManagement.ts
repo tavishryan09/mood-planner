@@ -27,6 +27,7 @@ interface Project {
   projectValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
+  archived?: boolean;
   deadline?: string;
   deadlineTitle?: string;
   deadlineDescription?: string;

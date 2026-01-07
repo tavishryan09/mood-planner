@@ -9,6 +9,7 @@ interface Project {
   hoursThisQuarter?: number;
   billingRate?: number;
   useTeamRates?: boolean;
+  archived?: boolean;
   clientName?: string;
   commonName?: string;
   createdAt: string;

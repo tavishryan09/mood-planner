@@ -10,6 +10,7 @@ interface Project {
   projectValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
+  archived?: boolean;
   estimatedBillable?: number;
   totalHours?: number;
   hoursThisWeek?: number;

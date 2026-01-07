@@ -31,6 +31,7 @@ interface Project {
   internalDeadline?: string;
   internalDeadlineTitle?: string;
   internalDeadlineDescription?: string;
+  archived?: boolean;
 }
 
 interface GanttChartProps {

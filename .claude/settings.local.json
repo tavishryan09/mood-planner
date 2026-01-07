@@ -33,7 +33,13 @@
       "Bash(then node --env-file=.env.local node_modules/.bin/tsx /Users/tavishkeegan/Desktop/app-dev/mood-planner/scripts/clear-mood-tracker-events.ts)",
       "Bash(then node --env-file=.env.local -e \"const { sql } = require\\(''@neondatabase/serverless''\\); \\(async \\(\\) => { const db = sql\\(process.env.DATABASE_URL\\); await db\\\\`ALTER TABLE projects ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE\\\\`; console.log\\(''Migration successful: Added archived column to projects table''\\); process.exit\\(0\\); }\\)\\(\\).catch\\(e => { console.error\\(''Migration failed:'', e\\); process.exit\\(1\\); }\\)\")",
       "Bash(then node --env-file=.env.local node_modules/.bin/tsx /Users/tavishkeegan/Desktop/app-dev/mood-planner/scripts/add-archived-column.ts)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(for file in hooks/planning/usePlanningData.ts hooks/dashboard/useDashboardData.ts hooks/projects/useInlineCellEditing.ts hooks/projects/useProjectsSorting.ts hooks/projects/useProjectDetailData.ts app/projects/[slug]/page.tsx app/planning/page.tsx app/projects/page.tsx components/projects/ProjectsTable.tsx hooks/projects/useProjectsData.ts hooks/projects/useProjectManagement.ts components/planning/TaskModal.tsx components/accounting/ExpenseModal.tsx components/projects/GanttChart.tsx hooks/projects/useMilestoneManagement.ts app/clients/page.tsx components/projects/ProjectStats.tsx hooks/accounting/useAccountingData.ts app/page.tsx components/dashboard/ProjectsWidget.tsx components/planning/MilestoneModal.tsx)",
+      "Bash(do)",
+      "Bash(if grep -A 10 \"^interface Project {\" \"$file\")",
+      "Bash(then)",
+      "Bash(echo:*)",
+      "Bash(else)"
     ]
   }
 }

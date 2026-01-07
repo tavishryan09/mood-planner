@@ -13,6 +13,7 @@ interface Project {
   projectName: string;
   commonName?: string;
   projectValue?: number;
+  archived?: boolean;
 }
 
 interface Client {

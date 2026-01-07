@@ -78,7 +78,7 @@ export function useExpenseManagement(
     setReceiptPreview(null);
   };
 
-  const handleEditExpense = (expense: Expense) => {
+  const handleEditExpense = async (expense: Expense) => {
     setEditingExpenseId(expense.id);
 
     // Normalize the expense date to YYYY-MM-DD format
@@ -96,9 +96,22 @@ export function useExpenseManagement(
       notes: expense.notes || '',
       status: expense.status
     });
-    if (expense.receiptImage) {
-      setReceiptPreview(expense.receiptImage);
+
+    // Fetch receipt image on-demand if one exists
+    if (expense.receiptFilename) {
+      try {
+        const response = await fetch(`/api/expenses/${expense.id}/receipt`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.receiptImage) {
+            setReceiptPreview(data.receiptImage);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching receipt:', error);
+      }
     }
+
     setShowExpenseModal(true);
   };
 

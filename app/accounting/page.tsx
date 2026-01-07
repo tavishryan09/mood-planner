@@ -14,6 +14,38 @@ export default function Billing() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<{ image: string; description: string } | null>(null);
+  const [loadingReceipt, setLoadingReceipt] = useState(false);
+
+  const handleViewReceipt = async (expenseId: number, description: string) => {
+    setLoadingReceipt(true);
+    setShowReceiptModal(true);
+    setSelectedReceipt({ image: '', description });
+
+    try {
+      const response = await fetch(`/api/expenses/${expenseId}/receipt`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.receiptImage) {
+          setSelectedReceipt({ image: data.receiptImage, description });
+        } else {
+          setSelectedReceipt(null);
+          setShowReceiptModal(false);
+          alert('No receipt image found');
+        }
+      } else {
+        setSelectedReceipt(null);
+        setShowReceiptModal(false);
+        alert('Failed to load receipt');
+      }
+    } catch (error) {
+      console.error('Error loading receipt:', error);
+      setSelectedReceipt(null);
+      setShowReceiptModal(false);
+      alert('Failed to load receipt');
+    } finally {
+      setLoadingReceipt(false);
+    }
+  };
 
   // Accounting data
   const { projects, expenses, setExpenses, loading } = useAccountingData();
@@ -195,16 +227,10 @@ export default function Billing() {
                             {formatCurrency(expense.amount)}
                           </td>
                           <td>
-                            {expense.receiptImage && (
+                            {expense.receiptFilename && (
                               <button
                                 className="btn btn-ghost btn-xs"
-                                onClick={() => {
-                                  setSelectedReceipt({
-                                    image: expense.receiptImage!,
-                                    description: expense.description
-                                  });
-                                  setShowReceiptModal(true);
-                                }}
+                                onClick={() => handleViewReceipt(expense.id, expense.description)}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -287,12 +313,16 @@ export default function Billing() {
               ✕
             </button>
             <h3 className="font-bold text-lg mb-4">Receipt - {selectedReceipt.description}</h3>
-            <div className="flex justify-center items-center bg-base-300 rounded-lg p-4">
-              <img
-                src={selectedReceipt.image}
-                alt={`Receipt for ${selectedReceipt.description}`}
-                className="max-w-full max-h-[70vh] object-contain"
-              />
+            <div className="flex justify-center items-center bg-base-300 rounded-lg p-4 min-h-[200px]">
+              {loadingReceipt ? (
+                <span className="loading loading-spinner loading-lg"></span>
+              ) : selectedReceipt.image ? (
+                <img
+                  src={selectedReceipt.image}
+                  alt={`Receipt for ${selectedReceipt.description}`}
+                  className="max-w-full max-h-[70vh] object-contain"
+                />
+              ) : null}
             </div>
           </div>
           <form method="dialog" className="modal-backdrop">

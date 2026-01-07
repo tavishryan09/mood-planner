@@ -68,7 +68,6 @@ export async function GET(request: Request) {
             e.project_id as "projectId",
             p.project_name as "projectName",
             p.project_number as "projectNumber",
-            e.receipt_image as "receiptImage",
             e.receipt_filename as "receiptFilename",
             e.created_at as "createdAt"
           FROM expenses e
@@ -91,7 +90,6 @@ export async function GET(request: Request) {
             e.project_id as "projectId",
             p.project_name as "projectName",
             p.project_number as "projectNumber",
-            e.receipt_image as "receiptImage",
             e.receipt_filename as "receiptFilename",
             e.created_at as "createdAt"
           FROM expenses e
@@ -119,7 +117,6 @@ export async function GET(request: Request) {
             e.project_id as "projectId",
             p.project_name as "projectName",
             p.project_number as "projectNumber",
-            e.receipt_image as "receiptImage",
             e.receipt_filename as "receiptFilename",
             e.created_at as "createdAt"
           FROM expenses e
@@ -141,7 +138,6 @@ export async function GET(request: Request) {
             e.project_id as "projectId",
             p.project_name as "projectName",
             p.project_number as "projectNumber",
-            e.receipt_image as "receiptImage",
             e.receipt_filename as "receiptFilename",
             e.created_at as "createdAt"
           FROM expenses e

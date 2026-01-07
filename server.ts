@@ -1,6 +1,7 @@
-const { createServer } = require('http');
-const { parse } = require('url');
-const next = require('next');
+import { createServer } from 'http';
+import { parse } from 'url';
+import next from 'next';
+import { planningWebSocket } from './lib/planning-websocket';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
@@ -12,7 +13,7 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const server = createServer(async (req, res) => {
     try {
-      const parsedUrl = parse(req.url, true);
+      const parsedUrl = parse(req.url!, true);
       await handle(req, res, parsedUrl);
     } catch (err) {
       console.error('Error occurred handling', req.url, err);
@@ -21,25 +22,21 @@ app.prepare().then(() => {
     }
   });
 
+  // Initialize WebSocket server
+  planningWebSocket.initialize(server);
+
   // Handle WebSocket upgrades
   server.on('upgrade', (request, socket, head) => {
-    const { pathname } = parse(request.url, true);
+    const { pathname } = parse(request.url || '', true);
 
     if (pathname === '/api/planning/ws') {
-      // Dynamically import the WebSocket manager
-      import('./lib/planning-websocket.js').then(({ planningWebSocket }) => {
-        planningWebSocket.handleUpgrade(request, socket, head);
-      }).catch((err) => {
-        console.error('[Server] Error loading WebSocket manager:', err);
-        socket.destroy();
-      });
+      planningWebSocket.handleUpgrade(request, socket, head);
     } else {
       socket.destroy();
     }
   });
 
-  server.listen(port, (err) => {
-    if (err) throw err;
+  server.listen(port, () => {
     console.log(`> Ready on http://${hostname}:${port}`);
     console.log(`> WebSocket server ready on ws://${hostname}:${port}/api/planning/ws`);
   });

@@ -234,8 +234,8 @@ export async function POST(request: Request) {
       console.error('Error syncing milestone to Outlook:', error);
     }
 
-    // Broadcast milestone creation to SSE listeners
-    planningEvents.broadcastMilestoneUpdate('created', createdMilestone.id, createdMilestone);
+    // Broadcast milestone creation to Pusher
+    await planningEvents.broadcastMilestoneUpdate('created', createdMilestone.id, createdMilestone);
 
     return NextResponse.json(result[0], { status: 201 });
   } catch (error: any) {

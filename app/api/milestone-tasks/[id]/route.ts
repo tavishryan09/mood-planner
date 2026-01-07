@@ -186,8 +186,8 @@ export async function PUT(
       console.error('Error syncing milestone to Outlook:', error);
     }
 
-    // Broadcast milestone update to SSE listeners
-    planningEvents.broadcastMilestoneUpdate('updated', updatedMilestone.id, updatedMilestone);
+    // Broadcast milestone update to Pusher
+    await planningEvents.broadcastMilestoneUpdate('updated', updatedMilestone.id, updatedMilestone);
 
     return NextResponse.json(result[0]);
   } catch (error) {
@@ -284,8 +284,8 @@ export async function DELETE(
       }
     }
 
-    // Broadcast milestone deletion to SSE listeners
-    planningEvents.broadcastMilestoneUpdate('deleted', parseInt(id), null);
+    // Broadcast milestone deletion to Pusher
+    await planningEvents.broadcastMilestoneUpdate('deleted', parseInt(id), null);
 
     return NextResponse.json({ success: true });
   } catch (error) {

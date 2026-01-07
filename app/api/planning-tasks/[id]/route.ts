@@ -223,8 +223,8 @@ export async function PUT(
       console.error('Error syncing task to Outlook:', error);
     }
 
-    // Broadcast task update to SSE listeners
-    planningEvents.broadcastTaskUpdate('updated', parseInt(id), result[0]);
+    // Broadcast task update to Pusher
+    await planningEvents.broadcastTaskUpdate('updated', parseInt(id), result[0]);
 
     return NextResponse.json(result[0]);
   } catch (error) {
@@ -312,8 +312,8 @@ export async function PATCH(
       );
     }
 
-    // Broadcast task completion update to SSE listeners
-    planningEvents.broadcastTaskUpdate('updated', parseInt(id), result[0]);
+    // Broadcast task completion update to Pusher
+    await planningEvents.broadcastTaskUpdate('updated', parseInt(id), result[0]);
 
     return NextResponse.json(result[0]);
   } catch (error) {
@@ -385,8 +385,8 @@ export async function DELETE(
       }
     }
 
-    // Broadcast task deletion to SSE listeners
-    planningEvents.broadcastTaskUpdate('deleted', parseInt(id), null);
+    // Broadcast task deletion to Pusher
+    await planningEvents.broadcastTaskUpdate('deleted', parseInt(id), null);
 
     return NextResponse.json({ success: true });
   } catch (error) {

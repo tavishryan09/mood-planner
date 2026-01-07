@@ -286,8 +286,8 @@ export async function POST(request: Request) {
       }
     })();
 
-    // Broadcast task creation to SSE listeners
-    planningEvents.broadcastTaskUpdate('created', createdTask.id, createdTask);
+    // Broadcast task creation to Pusher
+    await planningEvents.broadcastTaskUpdate('created', createdTask.id, createdTask);
 
     return response;
   } catch (error: any) {

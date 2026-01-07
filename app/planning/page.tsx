@@ -12,7 +12,7 @@ import { usePlanningData } from '@/hooks/planning/usePlanningData';
 import { usePlanningTasks } from '@/hooks/planning/usePlanningTasks';
 import { useMilestones } from '@/hooks/planning/useMilestones';
 import { usePlanningInteractions } from '@/hooks/planning/usePlanningInteractions';
-import { usePlanningSSE } from '@/hooks/planning/usePlanningSSE';
+import { usePlanningWebSocket } from '@/hooks/planning/usePlanningWebSocket';
 import { formatMonthDay, getDayName, isToday, isWeekend } from '@/lib/date-utils';
 
 interface User {
@@ -115,7 +115,7 @@ export default function Planning() {
     }
   }, [refetchTasks, refetchMilestones]);
 
-  usePlanningSSE({
+  usePlanningWebSocket({
     enabled: !!currentUser,
     onUpdate: handlePlanningUpdate
   });

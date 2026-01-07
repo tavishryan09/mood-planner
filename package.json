@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node server.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -50,6 +50,7 @@
     "react-day-picker": "^9.13.0",
     "react-dom": "19.2.3",
     "react-grid-layout": "^2.2.2",
+    "ws": "^8.19.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -62,6 +63,7 @@
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "daisyui": "^5.5.14",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",

@@ -239,18 +239,32 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
     // Get all users who have Outlook connected OR who already have an event
     // Exclude admin users from milestone sync
     const userIdsWithEvents = Object.keys(existingEventIdMap).map(Number);
-    const connectedUsers = await sql`
-      SELECT id, outlook_connected
-      FROM users
-      WHERE (outlook_connected = true OR id = ANY(${userIdsWithEvents}))
-        AND role != 'Admin'
-    `;
+    console.log(`[syncMilestoneToAllTeamMembers] userIdsWithEvents:`, userIdsWithEvents);
+
+    let connectedUsers;
+    if (userIdsWithEvents.length > 0) {
+      connectedUsers = await sql`
+        SELECT id, outlook_connected
+        FROM users
+        WHERE (outlook_connected = true OR id = ANY(${userIdsWithEvents}))
+          AND role != 'Admin'
+      `;
+    } else {
+      // No existing events, just get users with Outlook connected
+      connectedUsers = await sql`
+        SELECT id, outlook_connected
+        FROM users
+        WHERE outlook_connected = true
+          AND role != 'Admin'
+      `;
+    }
 
     console.log(`[syncMilestoneToAllTeamMembers] Found ${connectedUsers.length} connected users to sync to:`, connectedUsers.map((u: any) => u.id));
 
     if (connectedUsers.length === 0) {
       console.log(`[syncMilestoneToAllTeamMembers] No connected users found - skipping sync`);
-      return;
+      console.log(`[syncMilestoneToAllTeamMembers] userIdsWithEvents:`, userIdsWithEvents);
+      return null;
     }
 
     // Ensure task_date is in YYYY-MM-DD format

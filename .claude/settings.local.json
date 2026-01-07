@@ -39,7 +39,10 @@
       "Bash(if grep -A 10 \"^interface Project {\" \"$file\")",
       "Bash(then)",
       "Bash(echo:*)",
-      "Bash(else)"
+      "Bash(else)",
+      "Bash(timeout 120 vercel logs:*)",
+      "Bash(vercel logs:*)",
+      "Bash(pkill:*)"
     ]
   }
 }

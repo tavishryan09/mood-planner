@@ -19,8 +19,10 @@ export function usePlanningSSE({ enabled = true, onUpdate }: UsePlanningSSEOptio
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
-  const maxReconnectAttempts = 5;
+  const lastSuccessfulConnectionRef = useRef<number>(Date.now());
+  const maxReconnectAttempts = 10;
   const baseReconnectDelay = 1000; // 1 second
+  const connectionResetThreshold = 60000; // 1 minute of successful connection resets retry count
 
   useEffect(() => {
     // Only run on client-side (EventSource is not available during SSR)
@@ -40,6 +42,7 @@ export function usePlanningSSE({ enabled = true, onUpdate }: UsePlanningSSEOptio
 
         eventSource.onopen = () => {
           console.log('SSE connection established');
+          lastSuccessfulConnectionRef.current = Date.now();
           reconnectAttemptsRef.current = 0; // Reset reconnect counter on successful connection
         };
 
@@ -56,6 +59,14 @@ export function usePlanningSSE({ enabled = true, onUpdate }: UsePlanningSSEOptio
           console.error('SSE connection error:', error);
           eventSource.close();
           eventSourceRef.current = null;
+
+          // Check if we had a successful connection for more than the threshold
+          // If so, reset the reconnect counter (this was likely a timeout, not a failure)
+          const timeSinceLastSuccess = Date.now() - lastSuccessfulConnectionRef.current;
+          if (timeSinceLastSuccess > connectionResetThreshold) {
+            console.log('Connection was stable, resetting reconnect counter');
+            reconnectAttemptsRef.current = 0;
+          }
 
           // Attempt to reconnect with exponential backoff
           if (reconnectAttemptsRef.current < maxReconnectAttempts) {

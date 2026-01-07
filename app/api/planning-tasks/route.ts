@@ -255,6 +255,17 @@ export async function POST(request: Request) {
           projectDetails = project[0];
         }
 
+        // Get internal task type name if needed
+        let internalTaskTypeName = null;
+        if (taskType === 'Internal' && internalTaskTypeId) {
+          const internalTaskType = await sql`
+            SELECT name
+            FROM internal_task_types
+            WHERE id = ${internalTaskTypeId}
+          `;
+          internalTaskTypeName = internalTaskType[0]?.name;
+        }
+
         await syncTaskToOutlook({
           id: createdTask.id,
           userId: createdTask.userId,
@@ -264,6 +275,7 @@ export async function POST(request: Request) {
           projectName: projectDetails?.project_name,
           projectNumber: projectDetails?.project_number,
           projectCommonName: projectDetails?.common_name,
+          internalTaskTypeName,
         });
       } catch (error) {
         // Log error but don't fail task creation

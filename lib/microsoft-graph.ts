@@ -12,9 +12,9 @@ export async function getMoodPlannerCalendar(accessToken: string) {
   const client = getGraphClient(accessToken);
 
   try {
-    // First, try to find existing "Mood Planner" calendar
+    // First, try to find existing "Mood Tracker" calendar
     const calendars = await client.api('/me/calendars').get();
-    const moodCalendar = calendars.value.find((cal: any) => cal.name === 'Mood Planner');
+    const moodCalendar = calendars.value.find((cal: any) => cal.name === 'Mood Tracker');
 
     if (moodCalendar) {
       return moodCalendar.id;
@@ -23,7 +23,7 @@ export async function getMoodPlannerCalendar(accessToken: string) {
     // If it doesn't exist, create it
     try {
       const newCalendar = await client.api('/me/calendars').post({
-        name: 'Mood Planner',
+        name: 'Mood Tracker',
         color: 'auto',
       });
 
@@ -34,7 +34,7 @@ export async function getMoodPlannerCalendar(accessToken: string) {
       if (createError.statusCode === 409 || createError.code === 'ErrorFolderExists') {
         console.log('Calendar already exists, re-fetching to find it...');
         const calendarsRetry = await client.api('/me/calendars').get();
-        const moodCalendarRetry = calendarsRetry.value.find((cal: any) => cal.name === 'Mood Planner');
+        const moodCalendarRetry = calendarsRetry.value.find((cal: any) => cal.name === 'Mood Tracker');
 
         if (moodCalendarRetry) {
           return moodCalendarRetry.id;
@@ -45,7 +45,7 @@ export async function getMoodPlannerCalendar(accessToken: string) {
       throw createError;
     }
   } catch (error) {
-    console.error('Error getting/creating Mood Planner calendar:', error);
+    console.error('Error getting/creating Mood Tracker calendar:', error);
     throw error;
   }
 }

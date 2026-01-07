@@ -167,6 +167,17 @@ export async function PUT(
         projectDetails = project[0];
       }
 
+      // Get internal task type name if needed
+      let internalTaskTypeName = null;
+      if (taskType === 'Internal' && updatedTask.internalTaskTypeId) {
+        const internalTaskType = await sql`
+          SELECT name
+          FROM internal_task_types
+          WHERE id = ${updatedTask.internalTaskTypeId}
+        `;
+        internalTaskTypeName = internalTaskType[0]?.name;
+      }
+
       await syncTaskToOutlook({
         id: updatedTask.id,
         userId: updatedTask.userId,
@@ -177,6 +188,7 @@ export async function PUT(
         projectNumber: projectDetails?.project_number,
         projectCommonName: projectDetails?.common_name,
         outlookEventId: updatedTask.outlookEventId,
+        internalTaskTypeName,
       });
     } catch (error) {
       // Log error but don't fail task update

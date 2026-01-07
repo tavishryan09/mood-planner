@@ -2,15 +2,22 @@ import { sql } from '@/lib/db';
 import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, getMoodPlannerCalendar } from '@/lib/microsoft-graph';
 
 // Helper to map task types to Outlook categories
-function getOutlookCategory(taskType: string): string[] {
+function getOutlookCategory(taskType: string, internalTaskTypeName?: string): string[] {
+  // If it's an internal task, use the internal task type name as the category
+  if (taskType === 'Internal' && internalTaskTypeName) {
+    return [internalTaskTypeName];
+  }
+
   const categoryMap: Record<string, string> = {
     'Project Task': 'Project Task',
     'Deadline': 'Deadline',
     'Internal Deadline': 'Internal Deadline',
     'Milestone': 'Project Milestone',
     'Out of office': 'Out of office',
+    'Out of Office': 'Out of office',
     'Time off': 'Time off',
     'Unavailable': 'Unavailable',
+    'PTO': 'PTO',
   };
 
   const category = categoryMap[taskType];
@@ -101,6 +108,7 @@ export async function syncTaskToOutlook(task: {
   projectNumber?: string;
   projectCommonName?: string;
   outlookEventId?: string;
+  internalTaskTypeName?: string;
 }) {
   try {
     const accessToken = await getValidAccessToken(task.userId);
@@ -141,7 +149,7 @@ export async function syncTaskToOutlook(task: {
       ? `Project: ${task.projectName}\nTask: ${task.taskDescription || task.taskType}`
       : (task.taskDescription || task.taskType);
 
-    const categories = getOutlookCategory(task.taskType);
+    const categories = getOutlookCategory(task.taskType, task.internalTaskTypeName);
 
     if (task.outlookEventId) {
       // Update existing event

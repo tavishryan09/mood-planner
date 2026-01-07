@@ -478,7 +478,13 @@ export default function Planning() {
     }
   };
 
-  const handleCellClick = (userId: number, date: Date, rowIndex: number, event?: React.MouseEvent) => {
+  const handleCellClick = async (userId: number, date: Date, rowIndex: number, event?: React.MouseEvent) => {
+    // On mobile, if there's a copied task, paste it immediately
+    if (isMobile && copiedTask) {
+      await handlePasteTask(userId, date, rowIndex);
+      return;
+    }
+
     setSelectedCell({ userId, date, rowIndex });
     setSelectedTask(null); // Deselect any selected task when clicking a cell
     setSelectedMilestone(null); // Deselect any selected milestone when clicking a cell

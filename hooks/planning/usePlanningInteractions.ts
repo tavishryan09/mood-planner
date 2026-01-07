@@ -380,6 +380,11 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
     if (!resizingTask) return;
 
     const handleMove = (e: MouseEvent | TouchEvent) => {
+      // Prevent scrolling on touch devices while resizing
+      if ('touches' in e) {
+        e.preventDefault();
+      }
+
       const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
       const deltaY = clientY - resizingTask.startY;
       const rowHeight = 60;
@@ -466,7 +471,7 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
 
     document.addEventListener('mousemove', handleMove);
     document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchmove', handleMove);
+    document.addEventListener('touchmove', handleMove, { passive: false });
     document.addEventListener('touchend', handleEnd);
 
     return () => {

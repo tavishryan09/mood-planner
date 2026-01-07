@@ -42,7 +42,11 @@
       "Bash(else)",
       "Bash(timeout 120 vercel logs:*)",
       "Bash(vercel logs:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(git log:*)",
+      "Bash(cat:*)",
+      "Bash(node --env-file=.env.local node_modules/.bin/tsx:*)",
+      "Bash(chmod:*)"
     ]
   }
 }

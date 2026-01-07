@@ -869,26 +869,6 @@ export default function Planning() {
                   Settings
                 </button>
                 <div className="divider divider-horizontal mx-0"></div>
-                {outlookConnected && (
-                  <>
-                    <button
-                      className="btn btn-sm btn-ghost gap-2"
-                      onClick={handleSyncToOutlook}
-                      disabled={isSyncing}
-                      aria-label="Sync to Outlook"
-                    >
-                      {isSyncing ? (
-                        <span className="loading loading-spinner loading-xs"></span>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
-                          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                        </svg>
-                      )}
-                      Sync to Outlook
-                    </button>
-                    <div className="divider divider-horizontal mx-0"></div>
-                  </>
-                )}
                 <button
                   className="btn btn-sm btn-circle btn-ghost"
                   onClick={() => navigateWeek('prev')}
@@ -1258,6 +1238,9 @@ export default function Planning() {
         users={users}
         showInstructions={showInstructions}
         onUpdateShowInstructions={updateShowInstructions}
+        outlookConnected={outlookConnected}
+        onSyncToOutlook={handleSyncToOutlook}
+        isSyncing={isSyncing}
       />
 
       {/* Task Modal */}

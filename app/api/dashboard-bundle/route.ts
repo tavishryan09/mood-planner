@@ -56,13 +56,13 @@ export async function GET(request: NextRequest) {
       widgetSettings
     ] = await Promise.all([
       // My projects
-      fetchMyProjects(currentUser.id, includeNoTasks),
+      fetchMyProjects(currentUser.id, currentUser.role, includeNoTasks),
 
       // My upcoming tasks
       fetchMyUpcomingTasks(currentUser.id, taskLimit),
 
       // Upcoming milestones (if date range provided)
-      startDate && endDate ? fetchMilestones(startDate, endDate) : Promise.resolve([]),
+      startDate && endDate ? fetchMilestones(currentUser.id, currentUser.role, startDate, endDate) : Promise.resolve([]),
 
       // Dashboard widget settings
       fetchDashboardWidgetSettings(currentUser.id)
@@ -84,7 +84,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function fetchMyProjects(userId: number, includeNoTasks: boolean) {
+async function fetchMyProjects(userId: number, userRole: string, includeNoTasks: boolean) {
+  // Managers and Admins see all projects, Designers see only their assigned projects
+  const isManagerOrAdmin = userRole === 'Manager' || userRole === 'Admin';
+
   const result = await sql`
     SELECT DISTINCT
       p.id,
@@ -95,9 +98,9 @@ async function fetchMyProjects(userId: number, includeNoTasks: boolean) {
       COUNT(DISTINCT pt.id) as "taskCount"
     FROM projects p
     LEFT JOIN clients c ON p.client_id = c.id
-    INNER JOIN project_team_members ptm ON ptm.project_id = p.id
+    ${isManagerOrAdmin ? sql`` : sql`INNER JOIN project_team_members ptm ON ptm.project_id = p.id`}
     LEFT JOIN planning_tasks pt ON pt.project_id = p.id AND pt.user_id = ${userId}
-    WHERE ptm.user_id = ${userId}
+    ${isManagerOrAdmin ? sql`` : sql`WHERE ptm.user_id = ${userId}`}
     GROUP BY p.id, p.project_number, p.project_name, p.common_name, c.name
     ${includeNoTasks ? sql`` : sql`HAVING COUNT(DISTINCT pt.id) > 0`}
     ORDER BY p.project_number
@@ -140,7 +143,10 @@ async function fetchMyUpcomingTasks(userId: number, limit: number) {
   return result;
 }
 
-async function fetchMilestones(startDate: string, endDate: string) {
+async function fetchMilestones(userId: number, userRole: string, startDate: string, endDate: string) {
+  // Milestones are shared across all users, but Designers only see milestones for projects they're on
+  const isManagerOrAdmin = userRole === 'Manager' || userRole === 'Admin';
+
   const result = await sql`
     SELECT
       mt.id,
@@ -153,6 +159,7 @@ async function fetchMilestones(startDate: string, endDate: string) {
       p.project_name as "projectName"
     FROM milestone_tasks mt
     LEFT JOIN projects p ON mt.project_id = p.id
+    ${isManagerOrAdmin ? sql`` : sql`INNER JOIN project_team_members ptm ON ptm.project_id = mt.project_id AND ptm.user_id = ${userId}`}
     WHERE mt.task_date >= ${startDate}
       AND mt.task_date <= ${endDate}
     ORDER BY mt.task_date ASC

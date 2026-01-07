@@ -20,6 +20,9 @@ interface UserSettingsModalProps {
   users: UserDisplay[];
   showInstructions: boolean;
   onUpdateShowInstructions: (value: boolean) => Promise<void>;
+  outlookConnected: boolean;
+  onSyncToOutlook: () => void;
+  isSyncing: boolean;
 }
 
 export default function UserSettingsModal({
@@ -28,7 +31,10 @@ export default function UserSettingsModal({
   onSave,
   users,
   showInstructions,
-  onUpdateShowInstructions
+  onUpdateShowInstructions,
+  outlookConnected,
+  onSyncToOutlook,
+  isSyncing
 }: UserSettingsModalProps) {
   const [tempUsers, setTempUsers] = useState<UserDisplay[]>(users);
   const [draggedUser, setDraggedUser] = useState<number | null>(null);
@@ -115,39 +121,70 @@ export default function UserSettingsModal({
           </label>
         </div>
 
-        <div className="space-y-2">
-          {tempUsers.map((user) => (
-            <div
-              key={user.id}
-              draggable
-              onDragStart={() => handleDragStart(user.id)}
-              onDragOver={(e) => handleDragOver(e, user.id)}
-              onDragEnd={handleDragEnd}
-              className={`flex items-center justify-between p-3 rounded-lg border border-base-300 bg-base-100 cursor-move ${
-                draggedUser === user.id ? 'opacity-50' : ''
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-5 opacity-50">
-                  <line x1="3" y1="9" x2="21" y2="9"></line>
-                  <line x1="3" y1="15" x2="21" y2="15"></line>
-                </svg>
-                <div>
-                  <div className="font-medium">{user.name}</div>
-                  <div className="text-xs opacity-60">{user.email}</div>
-                </div>
-              </div>
-              <label className="cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="toggle toggle-primary"
-                  checked={user.visible}
-                  onChange={() => toggleUserVisibility(user.id)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </label>
+        {/* Outlook Sync Button */}
+        {outlookConnected && (
+          <div className="flex items-center justify-between p-3 rounded-lg border border-base-300 bg-base-100 mb-4">
+            <div>
+              <div className="font-medium">Outlook Calendar Sync</div>
+              <div className="text-xs opacity-60">Sync all tasks to your Outlook calendar</div>
             </div>
-          ))}
+            <button
+              className="btn btn-sm btn-primary gap-2"
+              onClick={onSyncToOutlook}
+              disabled={isSyncing}
+            >
+              {isSyncing ? (
+                <>
+                  <span className="loading loading-spinner loading-xs"></span>
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                  </svg>
+                  Sync Now
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          {tempUsers
+            .filter(user => user.role !== 'Admin' && user.role !== 'Accountant')
+            .map((user) => (
+              <div
+                key={user.id}
+                draggable
+                onDragStart={() => handleDragStart(user.id)}
+                onDragOver={(e) => handleDragOver(e, user.id)}
+                onDragEnd={handleDragEnd}
+                className={`flex items-center justify-between p-3 rounded-lg border border-base-300 bg-base-100 cursor-move ${
+                  draggedUser === user.id ? 'opacity-50' : ''
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-5 opacity-50">
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="3" y1="15" x2="21" y2="15"></line>
+                  </svg>
+                  <div>
+                    <div className="font-medium">{user.name}</div>
+                    <div className="text-xs opacity-60">{user.email}</div>
+                  </div>
+                </div>
+                <label className="cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={user.visible}
+                    onChange={() => toggleUserVisibility(user.id)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </label>
+              </div>
+            ))}
         </div>
 
         <div className="modal-action">

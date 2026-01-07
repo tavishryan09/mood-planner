@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUserInfo } from '@/lib/microsoft-graph';
+import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
   try {
@@ -19,6 +20,20 @@ export async function GET(request: Request) {
     }
 
     const userId = parseInt(state);
+
+    // Verify the current session matches the OAuth state
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (token) {
+      const { verifyToken } = await import('@/lib/auth');
+      const payload = verifyToken(token);
+
+      if (payload && payload.userId !== userId) {
+        console.error(`OAuth session mismatch: cookie userId ${payload.userId} != state userId ${userId}`);
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_error=session_mismatch`);
+      }
+    }
 
     // Exchange code for tokens
     const tokenResponse = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {

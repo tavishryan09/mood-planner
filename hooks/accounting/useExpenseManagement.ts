@@ -80,8 +80,15 @@ export function useExpenseManagement(
 
   const handleEditExpense = (expense: Expense) => {
     setEditingExpenseId(expense.id);
+
+    // Normalize the expense date to YYYY-MM-DD format
+    let normalizedDate = expense.expenseDate;
+    if (normalizedDate && normalizedDate.includes('T')) {
+      normalizedDate = normalizedDate.split('T')[0];
+    }
+
     setFormData({
-      expenseDate: expense.expenseDate,
+      expenseDate: normalizedDate,
       category: expense.category,
       description: expense.description,
       amount: expense.amount.toString(),

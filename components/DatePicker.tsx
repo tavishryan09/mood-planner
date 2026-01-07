@@ -11,15 +11,44 @@ interface DatePickerProps {
   className?: string;
 }
 
+// Helper to normalize date strings to YYYY-MM-DD format
+function normalizeDate(dateStr: string): string {
+  if (!dateStr) return '';
+
+  // If it's already in YYYY-MM-DD format, return as-is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+
+  // Handle ISO timestamps (e.g., "2026-01-29T00:00:00.000Z")
+  if (dateStr.includes('T')) {
+    return dateStr.split('T')[0];
+  }
+
+  // Try parsing as a date and formatting
+  const date = new Date(dateStr);
+  if (!isNaN(date.getTime())) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  return dateStr;
+}
+
 export default function DatePicker({ value, onChange, label, required, className = '' }: DatePickerProps) {
+  // Normalize the incoming value to YYYY-MM-DD format
+  const normalizedValue = normalizeDate(value);
+
   const [showCalendar, setShowCalendar] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(value);
+  const [selectedDate, setSelectedDate] = useState(normalizedValue);
   const [calendarPosition, setCalendarPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setSelectedDate(value);
+    setSelectedDate(normalizeDate(value));
   }, [value]);
 
   useEffect(() => {

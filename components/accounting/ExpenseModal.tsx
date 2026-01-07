@@ -1,6 +1,6 @@
 'use client';
 
-import CalendarDatePicker from '@/components/CalendarDatePicker';
+import DatePicker from '@/components/DatePicker';
 
 interface Project {
   id: number;
@@ -69,18 +69,12 @@ export default function ExpenseModal({
         </h3>
         <form onSubmit={onSubmit}>
           <div className="space-y-4">
-            <div>
-              <label className="label">
-                <span className="label-text">Expense Date</span>
-              </label>
-              <CalendarDatePicker
-                value={formData.expenseDate}
-                onChange={(value) => onFormDataChange({ ...formData, expenseDate: value })}
-                id="expense-date"
-                placeholder="Select expense date"
-                required
-              />
-            </div>
+            <DatePicker
+              value={formData.expenseDate}
+              onChange={(date) => onFormDataChange({ ...formData, expenseDate: date })}
+              label="Expense Date"
+              required
+            />
 
             <div>
               <label className="label">

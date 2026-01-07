@@ -1,11 +1,49 @@
 import { sql } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth';
+
+// Helper to get current user from token
+async function getCurrentUser() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const payload = verifyToken(token);
+
+    if (!payload) {
+      return null;
+    }
+
+    const users = await sql`
+      SELECT id, name, email, role
+      FROM users
+      WHERE id = ${payload.userId}
+    `;
+    return users[0] || null;
+  } catch (error) {
+    return null;
+  }
+}
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
 
     const result = await sql`
@@ -71,6 +109,23 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
+
+    // Only Admins and Managers can update projects
+    if (currentUser.role !== 'Admin' && currentUser.role !== 'Manager') {
+      return NextResponse.json(
+        { error: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const body = await request.json();
     const { projectNumber, projectName, clientId, commonName, projectValue, billingRate, useTeamRates, deadline, internalDeadline, deadlineTitle, deadlineDescription, internalDeadlineTitle, internalDeadlineDescription, archived } = body;
@@ -222,6 +277,23 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
+
+    // Only Admins can delete projects
+    if (currentUser.role !== 'Admin') {
+      return NextResponse.json(
+        { error: 'Insufficient permissions - Admin role required' },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
 
     await sql`

@@ -189,31 +189,28 @@ export async function GET(
         const imgData = exp.receiptImage;
         const imgFormat = exp.receiptFilename?.toLowerCase().endsWith('.png') ? 'PNG' : 'JPEG';
 
-        // Get image properties to maintain aspect ratio
-        const img = new Image();
-        img.src = imgData;
-
         // Calculate image dimensions to fit on page while maintaining aspect ratio
         const maxWidth = 170;
         const maxHeight = 220;
 
-        // Use the image's natural dimensions if available
-        let imgWidth = img.width || maxWidth;
-        let imgHeight = img.height || maxHeight;
+        // Get image properties from jsPDF
+        const imgProps = doc.getImageProperties(imgData);
+        const imgWidth = imgProps.width;
+        const imgHeight = imgProps.height;
 
         // Calculate scale to fit within max dimensions while maintaining aspect ratio
         const widthRatio = maxWidth / imgWidth;
         const heightRatio = maxHeight / imgHeight;
         const scale = Math.min(widthRatio, heightRatio, 1); // Don't upscale
 
-        imgWidth = imgWidth * scale;
-        imgHeight = imgHeight * scale;
+        const scaledWidth = imgWidth * scale;
+        const scaledHeight = imgHeight * scale;
 
         // Add image centered
-        const xPos = (doc.internal.pageSize.width - imgWidth) / 2;
+        const xPos = (doc.internal.pageSize.width - scaledWidth) / 2;
         const yPos = 50;
 
-        doc.addImage(imgData, imgFormat, xPos, yPos, imgWidth, imgHeight);
+        doc.addImage(imgData, imgFormat, xPos, yPos, scaledWidth, scaledHeight);
       } catch (error) {
         console.error('Error adding receipt image:', error);
         doc.text('Error loading receipt image', 20, 60);

@@ -1024,14 +1024,14 @@ export default function Planning() {
                                   ? 'bg-error'
                                   : milestone.taskType === 'Internal Deadline'
                                   ? 'bg-warning'
-                                  : 'bg-neutral';
+                                  : 'bg-success';
 
                               const textColor =
                                 milestone.taskType === 'Deadline'
                                   ? 'text-error-content'
                                   : milestone.taskType === 'Internal Deadline'
                                   ? 'text-warning-content'
-                                  : 'text-neutral-content';
+                                  : 'text-success-content';
 
                               return (
                                 <div

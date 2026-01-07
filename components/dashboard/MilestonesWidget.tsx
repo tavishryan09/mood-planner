@@ -52,7 +52,7 @@ export default function MilestonesWidget({
                       ? 'bg-error text-error-content'
                       : milestone.taskType === 'Internal Deadline'
                       ? 'bg-warning text-warning-content'
-                      : 'bg-neutral text-neutral-content'
+                      : 'bg-success text-success-content'
                   }`}
                 >
                   <div className="flex justify-between items-start mb-1">

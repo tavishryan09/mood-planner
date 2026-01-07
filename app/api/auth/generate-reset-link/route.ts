@@ -67,8 +67,9 @@ export async function POST(request: Request) {
       WHERE id = ${userId}
     `;
 
-    // Generate reset link
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
+    // Generate reset link (remove trailing slash from APP_URL if present)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || '';
+    const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
 
     return NextResponse.json({
       success: true,

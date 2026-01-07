@@ -176,12 +176,15 @@ export async function POST(request: Request) {
     // Combine tasks and milestones
     const allItems = [...tasks, ...milestones];
 
+    console.log(`[Outlook Sync] Found ${tasks.length} planning tasks and ${milestones.length} milestones for user ${payload.userId}`);
+
     if (allItems.length === 0) {
       return NextResponse.json({ message: 'No tasks to sync', synced: 0 });
     }
 
     // Create or update calendar events for each task/milestone
     const results = [];
+    console.log(`[Outlook Sync] Starting sync of ${allItems.length} items to calendar ${calendarId}`);
 
     for (const item of allItems) {
       // Ensure task_date is in YYYY-MM-DD format
@@ -401,6 +404,12 @@ export async function POST(request: Request) {
     }
 
     const successCount = results.filter(r => r.success).length;
+    const failureCount = results.filter(r => !r.success).length;
+
+    console.log(`[Outlook Sync] Completed: ${successCount} successful, ${failureCount} failed`);
+    if (failureCount > 0) {
+      console.error('[Outlook Sync] Failed items:', results.filter(r => !r.success));
+    }
 
     return NextResponse.json({
       message: `Synced ${successCount} of ${allItems.length} items`,

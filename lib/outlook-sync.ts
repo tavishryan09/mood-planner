@@ -237,7 +237,6 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
     }
 
     // Get all users who have Outlook connected OR who already have an event
-    // Exclude admin users from milestone sync
     const userIdsWithEvents = Object.keys(existingEventIdMap).map(Number);
     console.log(`[syncMilestoneToAllTeamMembers] userIdsWithEvents:`, userIdsWithEvents);
 
@@ -247,7 +246,6 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
         SELECT id, outlook_connected
         FROM users
         WHERE (outlook_connected = true OR id = ANY(${userIdsWithEvents}))
-          AND role != 'Admin'
       `;
     } else {
       // No existing events, just get users with Outlook connected
@@ -255,7 +253,6 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
         SELECT id, outlook_connected
         FROM users
         WHERE outlook_connected = true
-          AND role != 'Admin'
       `;
     }
 
@@ -289,14 +286,19 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
     // Create or update event for each user
     const syncPromises = connectedUsers.map(async (user: any) => {
       try {
+        console.log(`[syncMilestoneToAllTeamMembers] Processing user ${user.id}...`);
         const accessToken = await getValidAccessToken(user.id);
 
         if (!accessToken) {
+          console.log(`[syncMilestoneToAllTeamMembers] No valid access token for user ${user.id} - skipping`);
           return null;
         }
 
+        console.log(`[syncMilestoneToAllTeamMembers] Got valid access token for user ${user.id}`);
+
         // Get or create the Mood Planner calendar for this user
         const calendarId = await getMoodPlannerCalendar(accessToken);
+        console.log(`[syncMilestoneToAllTeamMembers] Got calendar ID ${calendarId} for user ${user.id}`);
 
         const existingEventId = existingEventIdMap[user.id];
 

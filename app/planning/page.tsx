@@ -936,14 +936,6 @@ export default function Planning() {
     return acc;
   }, {} as Record<string, Date[]>);
 
-  // Calculate future tasks count (tasks from today onwards)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const futureTasks = tasks.filter(task => {
-    const taskDate = new Date(task.taskDate.split('T')[0]);
-    return taskDate >= today;
-  });
-
   // Show loading state while auth is being verified OR while quarters are being initialized
   if (authLoading || (quarterDays.length === 0 && isLoading)) {
     return (
@@ -971,7 +963,6 @@ export default function Planning() {
             <div className="flex justify-between items-center w-full mb-4">
               <div className="flex items-center gap-2">
                 <h2 className="card-title">{currentQuarter} Calendar</h2>
-                <span className="text-xs opacity-60 hidden lg:inline">({futureTasks.length} tasks)</span>
               </div>
               <div className="flex items-center gap-2">
                 <button

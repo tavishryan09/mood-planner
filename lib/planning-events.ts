@@ -15,8 +15,6 @@ class PlanningEventEmitter extends EventEmitter {
       task,
       timestamp: new Date().toISOString()
     };
-    console.log('[PlanningEvents] Broadcasting task update:', event);
-    console.log('[PlanningEvents] Current listeners:', this.listenerCount('planning-update'));
     this.emit('planning-update', event);
   }
 
@@ -28,20 +26,9 @@ class PlanningEventEmitter extends EventEmitter {
       milestone,
       timestamp: new Date().toISOString()
     };
-    console.log('[PlanningEvents] Broadcasting milestone update:', event);
-    console.log('[PlanningEvents] Current listeners:', this.listenerCount('planning-update'));
     this.emit('planning-update', event);
   }
 }
 
-// Use global to preserve singleton across hot reloads in development
-const globalForPlanningEvents = global as typeof globalThis & {
-  planningEventsInstance?: PlanningEventEmitter;
-};
-
-// Export singleton instance - preserved across hot reloads
-export const planningEvents = globalForPlanningEvents.planningEventsInstance ?? new PlanningEventEmitter();
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPlanningEvents.planningEventsInstance = planningEvents;
-}
+// Export singleton instance
+export const planningEvents = new PlanningEventEmitter();

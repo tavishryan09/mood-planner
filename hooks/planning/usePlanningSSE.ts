@@ -23,7 +23,8 @@ export function usePlanningSSE({ enabled = true, onUpdate }: UsePlanningSSEOptio
   const baseReconnectDelay = 1000; // 1 second
 
   useEffect(() => {
-    if (!enabled || !onUpdate) {
+    // Only run on client-side (EventSource is not available during SSR)
+    if (typeof window === 'undefined' || !enabled || !onUpdate) {
       return;
     }
 
@@ -94,6 +95,6 @@ export function usePlanningSSE({ enabled = true, onUpdate }: UsePlanningSSEOptio
   }, [enabled, onUpdate]);
 
   return {
-    isConnected: eventSourceRef.current?.readyState === EventSource.OPEN
+    isConnected: typeof window !== 'undefined' && eventSourceRef.current?.readyState === EventSource.OPEN
   };
 }

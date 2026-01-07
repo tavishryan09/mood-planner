@@ -243,7 +243,7 @@ export default function DatePicker({ value, onChange, label, required, className
         {showCalendar && typeof window !== 'undefined' && createPortal(
           <div
             ref={dropdownRef}
-            className="fixed z-[1000] p-4 bg-base-100 border border-base-300 rounded-lg shadow-xl w-80"
+            className="fixed z-[9999] p-4 bg-base-100 border border-base-300 rounded-lg shadow-xl w-80"
             style={{
               top: `${calendarPosition.top}px`,
               left: `${calendarPosition.left}px`

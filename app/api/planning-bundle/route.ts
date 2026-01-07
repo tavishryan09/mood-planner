@@ -97,33 +97,63 @@ export async function GET(request: NextRequest) {
 }
 
 async function fetchUserDisplaySettings(userId: number) {
-  const result = await sql`
-    SELECT
-      u.id,
-      u.name,
-      u.email,
-      u.role,
-      COALESCE(puds.visible, true) as visible,
-      COALESCE(puds.display_order, 999) as "order",
-      COALESCE(u.billing_rate, 0) as "billingRate"
-    FROM users u
-    LEFT JOIN planning_user_display_settings puds
-      ON u.id = puds.target_user_id AND puds.user_id = ${userId}
-    WHERE u.role != 'Accountant'
-    ORDER BY COALESCE(puds.display_order, 999), u.id
+  // First get the current user's role
+  const currentUserResult = await sql`
+    SELECT role FROM users WHERE id = ${userId}
   `;
+
+  const currentUserRole = currentUserResult[0]?.role;
+
+  // Admins can see all users, non-admins can't see Admins or Accountants
+  let result;
+  if (currentUserRole === 'Admin') {
+    result = await sql`
+      SELECT
+        u.id,
+        u.name,
+        u.email,
+        u.role,
+        COALESCE(puds.visible, true) as visible,
+        COALESCE(puds.display_order, 999) as "order",
+        COALESCE(u.billing_rate, 0) as "billingRate"
+      FROM users u
+      LEFT JOIN planning_user_display_settings puds
+        ON u.id = puds.target_user_id AND puds.user_id = ${userId}
+      ORDER BY COALESCE(puds.display_order, 999), u.id
+    `;
+  } else {
+    result = await sql`
+      SELECT
+        u.id,
+        u.name,
+        u.email,
+        u.role,
+        COALESCE(puds.visible, true) as visible,
+        COALESCE(puds.display_order, 999) as "order",
+        COALESCE(u.billing_rate, 0) as "billingRate"
+      FROM users u
+      LEFT JOIN planning_user_display_settings puds
+        ON u.id = puds.target_user_id AND puds.user_id = ${userId}
+      WHERE u.role NOT IN ('Admin', 'Accountant')
+      ORDER BY COALESCE(puds.display_order, 999), u.id
+    `;
+  }
+
   return result;
 }
 
 async function fetchProjects(currentUser: { id: number; role: string }) {
-  if (currentUser.role === 'Admin') {
+  // Managers and Admins see all projects
+  if (currentUser.role === 'Admin' || currentUser.role === 'Manager') {
     const result = await sql`
       SELECT id, project_number as "projectNumber", project_name as "projectName", common_name as "commonName"
       FROM projects
       ORDER BY project_number
     `;
+    console.log('[fetchProjects] Manager/Admin - returning all', result.length, 'projects');
     return result;
   } else {
+    // Designers see only projects they're assigned to
     const result = await sql`
       SELECT DISTINCT
         p.id,
@@ -135,6 +165,7 @@ async function fetchProjects(currentUser: { id: number; role: string }) {
       WHERE ptm.user_id = ${currentUser.id}
       ORDER BY p.project_number
     `;
+    console.log('[fetchProjects] Designer - returning', result.length, 'assigned projects');
     return result;
   }
 }
@@ -207,19 +238,17 @@ async function fetchMilestoneTasks(userId: number, startDate: string, endDate: s
 async function fetchOutlookStatus(userId: number) {
   try {
     const result = await sql`
-      SELECT * FROM outlook_tokens
-      WHERE user_id = ${userId}
+      SELECT outlook_connected
+      FROM users
+      WHERE id = ${userId}
     `;
 
     if (result.length === 0) {
       return { connected: false };
     }
 
-    const token = result[0];
-    const expiresAt = new Date(token.expires_at);
-
     return {
-      connected: expiresAt > new Date()
+      connected: result[0].outlook_connected || false
     };
   } catch (error) {
     console.error('Error checking Outlook status:', error);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import CalendarDatePicker from '@/components/CalendarDatePicker';
+import DatePicker from '@/components/DatePicker';
 import { CloseIcon, PlusIcon } from '@/components/shared/Icons';
 
 interface Project {
@@ -311,19 +311,13 @@ export default function TaskModal({
                 )}
 
                 {/* Repeat End Date */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Repeat until (optional)</span>
-                  </label>
-                  <CalendarDatePicker
-                    value={formData.repeatEndDate}
-                    onChange={(date) =>
-                      setFormData({ ...formData, repeatEndDate: date })
-                    }
-                    id="repeat-end-date"
-                    placeholder="Select end date"
-                  />
-                </div>
+                <DatePicker
+                  label="Repeat until (optional)"
+                  value={formData.repeatEndDate}
+                  onChange={(date) =>
+                    setFormData({ ...formData, repeatEndDate: date })
+                  }
+                />
               </>
             )}
           </div>

@@ -92,6 +92,10 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { widgets, showAllProjects } = body;
 
+    console.log('[Dashboard Widget Settings PUT] User:', currentUser.name);
+    console.log('[Dashboard Widget Settings PUT] showAllProjects:', showAllProjects);
+    console.log('[Dashboard Widget Settings PUT] widgets:', widgets);
+
     if (!widgets || !Array.isArray(widgets)) {
       return NextResponse.json(
         { error: 'Invalid request body' },
@@ -106,6 +110,8 @@ export async function PUT(request: Request) {
       const showAllValue = isProjectsWidget && showAllProjects !== undefined ? showAllProjects : false;
       const visibleValue = widget.visible !== undefined ? widget.visible : true;
 
+      console.log(`[Dashboard Widget Settings PUT] Widget ${widget.id}: showAllValue=${showAllValue}`);
+
       await sql`
         INSERT INTO dashboard_widget_settings (user_id, widget_id, widget_name, width, display_order, show_all_projects, visible)
         VALUES (${currentUser.id}, ${widget.id}, ${widget.name}, ${widget.width}, ${widget.order}, ${showAllValue}, ${visibleValue})
@@ -119,6 +125,7 @@ export async function PUT(request: Request) {
       `;
     }
 
+    console.log('[Dashboard Widget Settings PUT] Save complete');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error saving dashboard widget settings:', error);

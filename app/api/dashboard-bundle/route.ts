@@ -47,6 +47,8 @@ export async function GET(request: NextRequest) {
   const endDate = searchParams.get('endDate');
   const taskLimit = parseInt(searchParams.get('taskLimit') || '10', 10);
 
+  console.log('[Dashboard Bundle API] Raw includeNoTasks param:', searchParams.get('includeNoTasks'), 'Parsed:', includeNoTasks);
+
   try {
     // Execute all queries in parallel
     const [
@@ -102,23 +104,30 @@ async function fetchMyProjects(userId: number, userRole: string, includeNoTasks:
   // Managers/Admins see all projects, Designers see only their assigned projects
   const isManagerOrAdmin = userRole === 'Manager' || userRole === 'Admin';
 
+  console.log('[fetchMyProjects] userId:', userId, 'role:', userRole, 'includeNoTasks:', includeNoTasks);
+
   const result = await sql`
     SELECT DISTINCT
       p.id,
       p.project_number as "projectNumber",
       p.project_name as "projectName",
       p.common_name as "commonName",
-      c.name as "clientName",
+      c.business_name as "clientName",
       COUNT(DISTINCT pt.id) as "taskCount"
     FROM projects p
     LEFT JOIN clients c ON p.client_id = c.id
     ${isManagerOrAdmin ? sql`` : sql`INNER JOIN project_team_members ptm ON ptm.project_id = p.id`}
-    LEFT JOIN planning_tasks pt ON pt.project_id = p.id AND pt.user_id = ${userId} AND pt.task_date >= CURRENT_DATE AND pt.completed = false
+    LEFT JOIN planning_tasks pt ON pt.project_id = p.id AND pt.user_id = ${userId} AND pt.task_date >= CURRENT_DATE
     ${isManagerOrAdmin ? sql`` : sql`WHERE ptm.user_id = ${userId}`}
-    GROUP BY p.id, p.project_number, p.project_name, p.common_name, c.name
+    GROUP BY p.id, p.project_number, p.project_name, p.common_name, c.business_name
     ${includeNoTasks ? sql`` : sql`HAVING COUNT(DISTINCT pt.id) > 0`}
     ORDER BY p.project_number
   `;
+
+  console.log('[fetchMyProjects] Found', result.length, 'projects');
+  if (result.length > 0 && result.length <= 3) {
+    console.log('[fetchMyProjects] Projects:', result);
+  }
 
   return result.map((row: any) => ({
     ...row,
@@ -140,7 +149,7 @@ async function fetchMyUpcomingTasks(userId: number, limit: number) {
       pt.completed,
       p.common_name as "projectCommonName",
       p.project_name as "projectName",
-      c.name as "clientName",
+      c.business_name as "clientName",
       pt.internal_task_type_id as "internalTaskTypeId",
       itt.name as "internalTaskTypeName"
     FROM planning_tasks pt
@@ -149,7 +158,6 @@ async function fetchMyUpcomingTasks(userId: number, limit: number) {
     LEFT JOIN internal_task_types itt ON pt.internal_task_type_id = itt.id
     WHERE pt.user_id = ${userId}
       AND pt.task_date >= CURRENT_DATE
-      AND pt.completed = false
     ORDER BY pt.task_date ASC
     LIMIT ${limit}
   `;
@@ -184,13 +192,25 @@ async function fetchMilestones(userId: number, userRole: string, startDate: stri
 
 async function fetchDashboardWidgetSettings(userId: number) {
   try {
-    const result = await sql`
-      SELECT widgets, show_all_projects as "showAllProjects"
+    // Fetch widget settings
+    const widgetResult = await sql`
+      SELECT
+        widget_id as "id",
+        widget_name as "name",
+        width,
+        display_order as "order",
+        show_all_projects as "showAllProjects",
+        true as "visible"
       FROM dashboard_widget_settings
       WHERE user_id = ${userId}
+      ORDER BY display_order ASC
     `;
 
-    if (result.length === 0) {
+    // Get show_all_projects from the 'projects' widget if it exists
+    const projectsWidget = widgetResult.find((w: any) => w.id === 'projects');
+    const showAllProjects = projectsWidget?.showAllProjects || false;
+
+    if (widgetResult.length === 0) {
       // Default widget configuration
       return {
         widgets: [
@@ -199,13 +219,13 @@ async function fetchDashboardWidgetSettings(userId: number) {
           { id: 'milestones', name: 'Upcoming Deadlines/Milestones', width: '1/3', order: 2, visible: true },
           { id: 'team-tasks', name: 'Tasks by Team Member', width: 'full', order: 3, visible: true }
         ],
-        showAllProjects: false
+        showAllProjects
       };
     }
 
     return {
-      widgets: result[0].widgets || [],
-      showAllProjects: result[0].showAllProjects || false
+      widgets: widgetResult,
+      showAllProjects
     };
   } catch (error) {
     console.error('Error fetching dashboard widget settings:', error);

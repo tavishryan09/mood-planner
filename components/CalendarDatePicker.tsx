@@ -186,7 +186,7 @@ export default function CalendarDatePicker({
       {isOpen && callyLoaded && typeof window !== 'undefined' && createPortal(
         <div
           ref={dropdownRef}
-          className="fixed z-[1000] bg-base-100 border border-base-300 shadow-xl rounded-box p-2"
+          className="fixed z-[9999] bg-base-100 border border-base-300 shadow-xl rounded-box p-2"
           style={{
             top: `${calendarPosition.top}px`,
             left: `${calendarPosition.left}px`

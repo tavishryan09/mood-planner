@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { formatDateLocal } from '@/lib/date-utils';
 
 interface PlanningTask {
@@ -69,6 +69,7 @@ export function useDashboardData(
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(true);
   const [milestonesLoading, setMilestonesLoading] = useState(true);
+  const isInitialLoad = useRef(true);
 
   // Fetch tasks for selected date and users
   useEffect(() => {
@@ -103,9 +104,16 @@ export function useDashboardData(
   // Fetch all dashboard data in a single bundled request
   useEffect(() => {
     const fetchAllDashboardData = async () => {
-      setProjectsLoading(true);
-      setTasksLoading(true);
-      setMilestonesLoading(true);
+      // Only show loading for projects widget when toggling show all
+      // On initial load, show loading for all widgets
+      // On subsequent loads (toggle), only show loading for projects
+      if (isInitialLoad.current) {
+        setProjectsLoading(true);
+        setTasksLoading(true);
+        setMilestonesLoading(true);
+      } else {
+        setProjectsLoading(true);
+      }
 
       try {
         // Calculate date range
@@ -151,6 +159,7 @@ export function useDashboardData(
         setProjectsLoading(false);
         setTasksLoading(false);
         setMilestonesLoading(false);
+        isInitialLoad.current = false;
       }
     };
 

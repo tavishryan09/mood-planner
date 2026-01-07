@@ -6,9 +6,10 @@ import { verifyToken } from './lib/auth';
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow access to login page, auth API routes, and health check
+  // Allow access to login page, reset password page, auth API routes, and health check
   if (
     pathname.startsWith('/login') ||
+    pathname.startsWith('/reset-password') ||
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/api/health')
   ) {

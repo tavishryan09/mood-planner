@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface DatePickerProps {
   value: string; // YYYY-MM-DD format
@@ -13,7 +14,9 @@ interface DatePickerProps {
 export default function DatePicker({ value, onChange, label, required, className = '' }: DatePickerProps) {
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState(value);
+  const [calendarPosition, setCalendarPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setSelectedDate(value);
@@ -21,7 +24,8 @@ export default function DatePicker({ value, onChange, label, required, className
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+          buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
         setShowCalendar(false);
       }
     };
@@ -33,6 +37,16 @@ export default function DatePicker({ value, onChange, label, required, className
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, [showCalendar]);
+
+  useEffect(() => {
+    if (showCalendar && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setCalendarPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX
+      });
+    }
   }, [showCalendar]);
 
   const formatDisplayDate = (dateStr: string) => {
@@ -134,8 +148,9 @@ export default function DatePicker({ value, onChange, label, required, className
         </div>
       )}
 
-      <div className="relative" ref={dropdownRef}>
+      <div className="relative">
         <button
+          ref={buttonRef}
           type="button"
           className="input input-bordered w-full text-left flex items-center justify-between"
           onClick={() => setShowCalendar(!showCalendar)}
@@ -159,8 +174,15 @@ export default function DatePicker({ value, onChange, label, required, className
           </svg>
         </button>
 
-        {showCalendar && (
-          <div className="absolute z-[100] mt-2 p-4 bg-base-100 border border-base-300 rounded-lg shadow-xl w-80 left-0">
+        {showCalendar && typeof window !== 'undefined' && createPortal(
+          <div
+            ref={dropdownRef}
+            className="fixed z-[1000] p-4 bg-base-100 border border-base-300 rounded-lg shadow-xl w-80"
+            style={{
+              top: `${calendarPosition.top}px`,
+              left: `${calendarPosition.left}px`
+            }}
+          >
             {/* Month navigation */}
             <div className="flex items-center justify-between mb-4">
               <button
@@ -246,7 +268,8 @@ export default function DatePicker({ value, onChange, label, required, className
                 Today
               </button>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>

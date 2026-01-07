@@ -55,8 +55,14 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
     );
   }
 
+  // Parse date without timezone conversion
+  const parseDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   // Calculate date range
-  const allDates = tasks.flatMap(t => [new Date(t.startDate), new Date(t.endDate)]);
+  const allDates = tasks.flatMap(t => [parseDate(t.startDate), parseDate(t.endDate)]);
   const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
   const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
   const totalDays = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -78,8 +84,7 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
 
   // Calculate deadline positions
   const getDeadlinePercent = (deadlineStr: string) => {
-    const deadlineDate = new Date(deadlineStr);
-    deadlineDate.setHours(0, 0, 0, 0);
+    const deadlineDate = parseDate(deadlineStr);
     const deadlineOffset = Math.ceil((deadlineDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
     return (deadlineOffset / totalDays) * 100;
   };
@@ -175,8 +180,8 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
 
             {/* Task Rows */}
             {tasks.map((task, index) => {
-            const taskStart = new Date(task.startDate);
-            const taskEnd = new Date(task.endDate);
+            const taskStart = parseDate(task.startDate);
+            const taskEnd = parseDate(task.endDate);
             const startOffset = Math.ceil((taskStart.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
             const taskDuration = Math.ceil((taskEnd.getTime() - taskStart.getTime()) / (1000 * 60 * 60 * 24));
 

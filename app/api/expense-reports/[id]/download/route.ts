@@ -189,11 +189,25 @@ export async function GET(
         const imgData = exp.receiptImage;
         const imgFormat = exp.receiptFilename?.toLowerCase().endsWith('.png') ? 'PNG' : 'JPEG';
 
-        // Calculate image dimensions to fit on page (max width 170mm, max height 220mm)
+        // Get image properties to maintain aspect ratio
+        const img = new Image();
+        img.src = imgData;
+
+        // Calculate image dimensions to fit on page while maintaining aspect ratio
         const maxWidth = 170;
         const maxHeight = 220;
-        let imgWidth = maxWidth;
-        let imgHeight = maxHeight;
+
+        // Use the image's natural dimensions if available
+        let imgWidth = img.width || maxWidth;
+        let imgHeight = img.height || maxHeight;
+
+        // Calculate scale to fit within max dimensions while maintaining aspect ratio
+        const widthRatio = maxWidth / imgWidth;
+        const heightRatio = maxHeight / imgHeight;
+        const scale = Math.min(widthRatio, heightRatio, 1); // Don't upscale
+
+        imgWidth = imgWidth * scale;
+        imgHeight = imgHeight * scale;
 
         // Add image centered
         const xPos = (doc.internal.pageSize.width - imgWidth) / 2;

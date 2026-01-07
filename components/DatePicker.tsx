@@ -44,9 +44,10 @@ export default function DatePicker({ value, onChange, label, required, className
       if (showCalendar && buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect();
 
-        // Calculate position
-        let top = rect.bottom + window.scrollY + 8;
-        let left = rect.left + window.scrollX;
+        // Use getBoundingClientRect directly for fixed positioning
+        // This works correctly even when parent containers are scrolled
+        let top = rect.bottom + 8;
+        let left = rect.left;
 
         // Ensure calendar doesn't go off screen
         const calendarWidth = 320; // 80 * 4 (w-80 in pixels)
@@ -58,12 +59,13 @@ export default function DatePicker({ value, onChange, label, required, className
         }
 
         // Check if calendar would go off bottom edge, show above if needed
-        if (top + calendarHeight > window.innerHeight + window.scrollY) {
-          top = rect.top + window.scrollY - calendarHeight - 8;
+        if (top + calendarHeight > window.innerHeight) {
+          top = rect.top - calendarHeight - 8;
         }
 
-        // Ensure minimum left position
+        // Ensure minimum positions
         left = Math.max(16, left);
+        top = Math.max(8, top);
 
         setCalendarPosition({ top, left });
       }
@@ -71,14 +73,17 @@ export default function DatePicker({ value, onChange, label, required, className
 
     if (showCalendar) {
       updatePosition();
+      // Use requestAnimationFrame for smoother updates
+      const rafId = requestAnimationFrame(updatePosition);
       window.addEventListener('scroll', updatePosition, true);
       window.addEventListener('resize', updatePosition);
-    }
 
-    return () => {
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
-    };
+      return () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+      };
+    }
   }, [showCalendar]);
 
   const formatDisplayDate = (dateStr: string) => {

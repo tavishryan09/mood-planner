@@ -57,7 +57,9 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
 
   // Parse date without timezone conversion
   const parseDate = (dateStr: string) => {
-    const [year, month, day] = dateStr.split('-').map(Number);
+    // Handle ISO timestamps by extracting just the date part
+    const datePart = dateStr.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
     return new Date(year, month - 1, day);
   };
 

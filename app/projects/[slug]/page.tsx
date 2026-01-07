@@ -164,8 +164,12 @@ export default function ProjectDetails() {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
+
+    // Handle ISO timestamps by extracting just the date part
+    const datePart = dateString.split('T')[0];
+
     // Parse YYYY-MM-DD without timezone conversion
-    const parts = dateString.split('-');
+    const parts = datePart.split('-');
     if (parts.length !== 3) return 'Invalid date';
     const [year, month, day] = parts.map(Number);
     if (isNaN(year) || isNaN(month) || isNaN(day)) return 'Invalid date';

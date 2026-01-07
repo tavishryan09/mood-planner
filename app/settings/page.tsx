@@ -36,6 +36,13 @@ function SettingsContent() {
     userEmail: string;
   } | null>(null);
   const [resetLinkLoading, setResetLinkLoading] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: '',
+    email: ''
+  });
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState(false);
 
   // User management
   const {
@@ -177,6 +184,67 @@ function SettingsContent() {
     }
   };
 
+  const handleProfileUpdate = async () => {
+    setProfileError('');
+    setProfileSuccess(false);
+
+    // Validation
+    if (!profileData.name.trim() || !profileData.email.trim()) {
+      setProfileError('Name and email are required');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(profileData.email)) {
+      setProfileError('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      setProfileLoading(true);
+      const response = await fetch('/api/auth/update-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: profileData.name,
+          email: profileData.email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setProfileError(data.error || 'Failed to update profile');
+        return;
+      }
+
+      setProfileSuccess(true);
+
+      // Refresh the page to show updated data
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setProfileError('An error occurred. Please try again.');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // Initialize profile data when user is loaded
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name,
+        email: user.email,
+      });
+    }
+  }, [user]);
+
   return (
     <Sidebar title="Settings">
       <div className="p-4 space-y-4">
@@ -246,146 +314,229 @@ function SettingsContent() {
             <h2 className="card-title">Account Settings</h2>
 
             {user && (
-              <div className="space-y-4 mt-4">
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Name</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={user.name}
-                    disabled
-                    className="input input-bordered"
-                  />
-                </div>
-
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Email</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={user.email}
-                    disabled
-                    className="input input-bordered"
-                  />
-                </div>
-
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Role</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={user.role}
-                    disabled
-                    className="input input-bordered"
-                  />
-                </div>
-
-                <div className="divider">Password</div>
-
-                {!showPasswordChange ? (
-                  <button
-                    onClick={() => setShowPasswordChange(true)}
-                    className="btn btn-outline btn-sm"
-                  >
-                    Change Password
-                  </button>
-                ) : (
-                  <div className="space-y-4">
+              <div className="space-y-6 mt-4">
+                {/* Profile Information */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text">Current Password</span>
+                        <span className="label-text font-medium">Name</span>
                       </label>
                       <input
-                        type="password"
-                        value={passwordData.currentPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                        type="text"
+                        value={profileData.name}
+                        onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                         className="input input-bordered"
-                        placeholder="Enter current password"
+                        placeholder="Enter your name"
                       />
                     </div>
 
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text">New Password</span>
+                        <span className="label-text font-medium">Role</span>
                       </label>
                       <input
-                        type="password"
-                        value={passwordData.newPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                        className="input input-bordered"
-                        placeholder="Enter new password"
+                        type="text"
+                        value={user.role}
+                        disabled
+                        className="input input-bordered bg-base-200"
                       />
                       <label className="label">
                         <span className="label-text-alt text-base-content/60">
-                          Must be 8+ characters with uppercase, lowercase, number, and special character
+                          Role cannot be changed
                         </span>
                       </label>
                     </div>
 
-                    <div className="form-control">
+                    <div className="form-control md:col-span-2">
                       <label className="label">
-                        <span className="label-text">Confirm New Password</span>
+                        <span className="label-text font-medium">Email</span>
                       </label>
                       <input
-                        type="password"
-                        value={passwordData.confirmPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                        type="email"
+                        value={profileData.email}
+                        onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                         className="input input-bordered"
-                        placeholder="Confirm new password"
+                        placeholder="Enter your email"
                       />
                     </div>
+                  </div>
 
-                    {passwordError && (
-                      <div className="alert alert-error">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>{passwordError}</span>
-                      </div>
-                    )}
+                  {profileError && (
+                    <div className="alert alert-error">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>{profileError}</span>
+                    </div>
+                  )}
 
-                    {passwordSuccess && (
-                      <div className="alert alert-success">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>Password changed successfully!</span>
-                      </div>
-                    )}
+                  {profileSuccess && (
+                    <div className="alert alert-success">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Profile updated successfully!</span>
+                    </div>
+                  )}
 
+                  {(profileData.name !== user.name || profileData.email !== user.email) && (
                     <div className="flex gap-2">
                       <button
-                        onClick={handlePasswordChange}
-                        disabled={passwordLoading}
-                        className="btn btn-primary btn-sm"
+                        onClick={handleProfileUpdate}
+                        disabled={profileLoading}
+                        className="btn btn-primary"
                       >
-                        {passwordLoading ? (
+                        {profileLoading ? (
                           <>
                             <span className="loading loading-spinner loading-sm"></span>
-                            Updating...
+                            Saving...
                           </>
                         ) : (
-                          'Update Password'
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="w-4 h-4 mr-1">
+                              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                              <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            Save Changes
+                          </>
                         )}
                       </button>
                       <button
                         onClick={() => {
-                          setShowPasswordChange(false);
-                          setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-                          setPasswordError('');
-                          setPasswordSuccess(false);
+                          setProfileData({ name: user.name, email: user.email });
+                          setProfileError('');
+                          setProfileSuccess(false);
                         }}
-                        disabled={passwordLoading}
-                        className="btn btn-ghost btn-sm"
+                        disabled={profileLoading}
+                        className="btn btn-ghost"
                       >
                         Cancel
                       </button>
                     </div>
+                  )}
+                </div>
+
+                {/* Password Section */}
+                <div className="border-t border-base-300 pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-base">Password</h3>
+                      <p className="text-sm text-base-content/60">
+                        {showPasswordChange ? 'Update your account password' : 'Change your password to keep your account secure'}
+                      </p>
+                    </div>
+                    {!showPasswordChange && (
+                      <button
+                        onClick={() => setShowPasswordChange(true)}
+                        className="btn btn-outline btn-sm"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="w-4 h-4 mr-1">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Change Password
+                      </button>
+                    )}
                   </div>
-                )}
+
+                  {showPasswordChange && (
+                    <div className="space-y-4 bg-base-200/50 p-4 rounded-lg">
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text font-medium">Current Password</span>
+                        </label>
+                        <input
+                          type="password"
+                          value={passwordData.currentPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                          className="input input-bordered"
+                          placeholder="Enter current password"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text font-medium">New Password</span>
+                          </label>
+                          <input
+                            type="password"
+                            value={passwordData.newPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                            className="input input-bordered"
+                            placeholder="Enter new password"
+                          />
+                        </div>
+
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text font-medium">Confirm New Password</span>
+                          </label>
+                          <input
+                            type="password"
+                            value={passwordData.confirmPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                            className="input input-bordered"
+                            placeholder="Confirm new password"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="text-xs text-base-content/60 bg-base-300/50 p-3 rounded">
+                        <span className="font-semibold">Password requirements:</span> At least 8 characters with uppercase, lowercase, number, and special character
+                      </div>
+
+                      {passwordError && (
+                        <div className="alert alert-error">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>{passwordError}</span>
+                        </div>
+                      )}
+
+                      {passwordSuccess && (
+                        <div className="alert alert-success">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Password changed successfully!</span>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          onClick={handlePasswordChange}
+                          disabled={passwordLoading}
+                          className="btn btn-primary"
+                        >
+                          {passwordLoading ? (
+                            <>
+                              <span className="loading loading-spinner loading-sm"></span>
+                              Updating...
+                            </>
+                          ) : (
+                            'Update Password'
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowPasswordChange(false);
+                            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                            setPasswordError('');
+                            setPasswordSuccess(false);
+                          }}
+                          disabled={passwordLoading}
+                          className="btn btn-ghost"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

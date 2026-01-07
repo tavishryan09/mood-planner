@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
 import { syncTaskToOutlook } from '@/lib/outlook-sync';
+import { planningEvents } from '@/lib/planning-events';
 
 // Helper to get current user from token
 async function getCurrentUser() {
@@ -282,6 +283,9 @@ export async function POST(request: Request) {
         console.error('Error syncing task to Outlook (background):', error);
       }
     })();
+
+    // Broadcast task creation to SSE listeners
+    planningEvents.broadcastTaskUpdate('created', createdTask.id, createdTask);
 
     return response;
   } catch (error: any) {

@@ -13,6 +13,7 @@ export async function GET() {
         p.project_value as "projectValue",
         p.billing_rate as "billingRate",
         p.use_team_rates as "useTeamRates",
+        p.archived,
         p.created_at as "createdAt",
         p.updated_at as "updatedAt",
         c.business_name as "clientName"
@@ -20,6 +21,11 @@ export async function GET() {
       LEFT JOIN clients c ON p.client_id = c.id
       ORDER BY p.created_at DESC
     `;
+
+    console.log('[Projects API] Returning', projects.length, 'projects');
+    if (projects.length > 0 && projects.length <= 5) {
+      console.log('[Projects API] Projects:', projects.map((p: any) => ({ id: p.id, number: p.projectNumber, name: p.commonName || p.projectName })));
+    }
 
     return NextResponse.json(projects);
   } catch (error) {

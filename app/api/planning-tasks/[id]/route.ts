@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
 import { syncTaskToOutlook, deleteTaskFromOutlook } from '@/lib/outlook-sync';
+import { planningEvents } from '@/lib/planning-events';
 
 // Helper to get current user from token
 async function getCurrentUser() {
@@ -195,6 +196,9 @@ export async function PUT(
       console.error('Error syncing task to Outlook:', error);
     }
 
+    // Broadcast task update to SSE listeners
+    planningEvents.broadcastTaskUpdate('updated', parseInt(id), result[0]);
+
     return NextResponse.json(result[0]);
   } catch (error) {
     console.error('Error updating planning task:', error);
@@ -255,6 +259,9 @@ export async function PATCH(
       );
     }
 
+    // Broadcast task completion update to SSE listeners
+    planningEvents.broadcastTaskUpdate('updated', parseInt(id), result[0]);
+
     return NextResponse.json(result[0]);
   } catch (error) {
     console.error('Error updating task completion:', error);
@@ -312,6 +319,9 @@ export async function DELETE(
         console.error('Error deleting task from Outlook:', error);
       }
     }
+
+    // Broadcast task deletion to SSE listeners
+    planningEvents.broadcastTaskUpdate('deleted', parseInt(id), null);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -17,7 +17,13 @@ interface UserFormData {
   billingRate: number;
 }
 
-export function useUserManagement(users: User[], setUsers: (users: User[]) => void) {
+interface UseUserManagementProps {
+  users: User[];
+  setUsers: (users: User[]) => void;
+  isManager?: boolean;
+}
+
+export function useUserManagement({ users, setUsers, isManager = false }: UseUserManagementProps) {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<number | null>(null);
   const [formData, setFormData] = useState<UserFormData>({
@@ -59,12 +65,16 @@ export function useUserManagement(users: User[], setUsers: (users: User[]) => vo
     try {
       if (editingUser) {
         // Update existing user
+        const payload = isManager
+          ? { billingRate: formData.billingRate } // Manager can only update billing rate
+          : formData; // Admin can update all fields
+
         const response = await fetch(`/api/users/${editingUser}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
@@ -76,7 +86,7 @@ export function useUserManagement(users: User[], setUsers: (users: User[]) => vo
         const updatedUser = await response.json();
         setUsers(users.map(u => u.id === editingUser ? updatedUser : u));
       } else {
-        // Add new user
+        // Add new user (only admins can do this)
         const response = await fetch('/api/users', {
           method: 'POST',
           headers: {

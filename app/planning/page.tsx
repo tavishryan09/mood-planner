@@ -3,7 +3,7 @@
 import Sidebar from '@/components/Sidebar';
 import CalendarDatePicker from '@/components/CalendarDatePicker';
 import CalendarHeader from '@/components/planning/CalendarHeader';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import TaskModal from '@/components/planning/TaskModal';
 import MilestoneModal from '@/components/planning/MilestoneModal';
@@ -12,6 +12,7 @@ import { usePlanningData } from '@/hooks/planning/usePlanningData';
 import { usePlanningTasks } from '@/hooks/planning/usePlanningTasks';
 import { useMilestones } from '@/hooks/planning/useMilestones';
 import { usePlanningInteractions } from '@/hooks/planning/usePlanningInteractions';
+import { usePlanningSSE } from '@/hooks/planning/usePlanningSSE';
 import { formatMonthDay, getDayName, isToday, isWeekend } from '@/lib/date-utils';
 
 interface User {
@@ -94,6 +95,27 @@ export default function Planning() {
     refetchTasks,
     refetchMilestones
   } = usePlanningData({ quarterDays, enabled: !!currentUser });
+
+  // Real-time updates via SSE
+  const handlePlanningUpdate = useCallback((update: any) => {
+    if (update.type === 'connected') {
+      console.log('Connected to planning updates');
+      return;
+    }
+
+    if (update.type === 'task') {
+      // Refetch tasks when any task is created, updated, or deleted
+      refetchTasks();
+    } else if (update.type === 'milestone') {
+      // Refetch milestones when any milestone is created, updated, or deleted
+      refetchMilestones();
+    }
+  }, [refetchTasks, refetchMilestones]);
+
+  usePlanningSSE({
+    enabled: !!currentUser,
+    onUpdate: handlePlanningUpdate
+  });
 
   // Use planning tasks hook for task CRUD operations
   const {

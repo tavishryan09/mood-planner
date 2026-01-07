@@ -10,6 +10,7 @@ interface Project {
   projectValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
+  archived?: boolean;
   estimatedBillable?: number;
   totalHours?: number;
   hoursThisWeek?: number;
@@ -39,6 +40,7 @@ interface ProjectFormData {
   projectValue: string;
   billingRate: string;
   useTeamRates: boolean;
+  archived: boolean;
 }
 
 interface UseProjectManagementProps {
@@ -95,7 +97,8 @@ export function useProjectManagement({
     commonName: '',
     projectValue: '',
     billingRate: '',
-    useTeamRates: true
+    useTeamRates: true,
+    archived: false
   });
 
   const [selectedTeamMembers, setSelectedTeamMembers] = useState<number[]>([]);
@@ -139,7 +142,8 @@ export function useProjectManagement({
         commonName: project.commonName || '',
         projectValue: project.projectValue?.toString() || '',
         billingRate: project.billingRate?.toString() || '',
-        useTeamRates: project.useTeamRates || false
+        useTeamRates: project.useTeamRates || false,
+        archived: project.archived || false
       });
       setEditingProject(projectId);
       setShowNewClientInput(false);
@@ -160,7 +164,8 @@ export function useProjectManagement({
       commonName: '',
       projectValue: '',
       billingRate: '',
-      useTeamRates: true
+      useTeamRates: true,
+      archived: false
     });
     setEditingProject(null);
     setSelectedTeamMembers([]);
@@ -237,7 +242,8 @@ export function useProjectManagement({
         commonName: formData.commonName || null,
         projectValue: formData.projectValue ? parseFloat(formData.projectValue) : null,
         billingRate: formData.billingRate ? parseFloat(formData.billingRate) : null,
-        useTeamRates: formData.useTeamRates
+        useTeamRates: formData.useTeamRates,
+        archived: formData.archived || false
       };
 
       let projectId: number;

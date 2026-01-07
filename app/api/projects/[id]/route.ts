@@ -21,6 +21,7 @@ export async function GET(
         p.use_team_rates as "useTeamRates",
         p.deadline,
         p.internal_deadline as "internalDeadline",
+        p.archived,
         p.created_at as "createdAt",
         p.updated_at as "updatedAt"
       FROM projects p
@@ -72,7 +73,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { projectNumber, projectName, clientId, commonName, projectValue, billingRate, useTeamRates, deadline, internalDeadline, deadlineTitle, deadlineDescription, internalDeadlineTitle, internalDeadlineDescription } = body;
+    const { projectNumber, projectName, clientId, commonName, projectValue, billingRate, useTeamRates, deadline, internalDeadline, deadlineTitle, deadlineDescription, internalDeadlineTitle, internalDeadlineDescription, archived } = body;
 
     // Get the old deadline values before updating
     const oldProject = await sql`
@@ -92,7 +93,8 @@ export async function PUT(
         billing_rate = ${billingRate || null},
         use_team_rates = ${useTeamRates || false},
         deadline = ${deadline || null},
-        internal_deadline = ${internalDeadline || null}
+        internal_deadline = ${internalDeadline || null},
+        archived = ${archived !== undefined ? archived : false}
       WHERE id = ${id}
       RETURNING
         id,
@@ -105,6 +107,7 @@ export async function PUT(
         use_team_rates as "useTeamRates",
         deadline,
         internal_deadline as "internalDeadline",
+        archived,
         created_at as "createdAt",
         updated_at as "updatedAt"
     `;

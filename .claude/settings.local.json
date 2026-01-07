@@ -24,7 +24,15 @@
       "Bash(find:*)",
       "Bash(while read file)",
       "Bash(done)",
-      "Bash(node -r dotenv/config node_modules/.bin/tsx:*)"
+      "Bash(node -r dotenv/config node_modules/.bin/tsx:*)",
+      "Bash(npm install:*)",
+      "Bash(if [ -f /Users/tavishkeegan/Desktop/app-dev/mood-planner/.env.local ])",
+      "Bash(then node --env-file=.env.local node_modules/.bin/tsx /Users/tavishkeegan/Desktop/app-dev/mood-planner/scripts/clear-outlook-event-ids.ts)",
+      "Bash(else echo \"No .env.local file found\")",
+      "Bash(fi)",
+      "Bash(then node --env-file=.env.local node_modules/.bin/tsx /Users/tavishkeegan/Desktop/app-dev/mood-planner/scripts/clear-mood-tracker-events.ts)",
+      "Bash(then node --env-file=.env.local -e \"const { sql } = require\\(''@neondatabase/serverless''\\); \\(async \\(\\) => { const db = sql\\(process.env.DATABASE_URL\\); await db\\\\`ALTER TABLE projects ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE\\\\`; console.log\\(''Migration successful: Added archived column to projects table''\\); process.exit\\(0\\); }\\)\\(\\).catch\\(e => { console.error\\(''Migration failed:'', e\\); process.exit\\(1\\); }\\)\")",
+      "Bash(then node --env-file=.env.local node_modules/.bin/tsx /Users/tavishkeegan/Desktop/app-dev/mood-planner/scripts/add-archived-column.ts)"
     ]
   }
 }

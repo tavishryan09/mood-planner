@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
 import { syncMilestoneToAllTeamMembers } from '@/lib/outlook-sync';
+import { planningEvents } from '@/lib/planning-events';
 
 // Helper to get current user from token
 async function getCurrentUser() {
@@ -228,6 +229,9 @@ export async function POST(request: Request) {
       // Log error but don't fail milestone creation
       console.error('Error syncing milestone to Outlook:', error);
     }
+
+    // Broadcast milestone creation to SSE listeners
+    planningEvents.broadcastMilestoneUpdate('created', createdMilestone.id, createdMilestone);
 
     return NextResponse.json(result[0], { status: 201 });
   } catch (error: any) {

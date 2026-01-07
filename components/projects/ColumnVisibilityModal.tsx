@@ -14,6 +14,7 @@ interface VisibleColumns {
   hoursThisWeek: boolean;
   hoursThisMonth: boolean;
   hoursThisQuarter: boolean;
+  showArchived: boolean;
 }
 
 interface ColumnVisibilityModalProps {
@@ -240,6 +241,25 @@ export default function ColumnVisibilityModal({
               className="toggle toggle-primary"
               checked={tempVisibleColumns.hoursThisQuarter}
               onChange={(e) => setTempVisibleColumns({ ...tempVisibleColumns, hoursThisQuarter: e.target.checked })}
+            />
+          </div>
+
+          <div className="divider">Filters</div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5 opacity-60">
+                <rect x="2" y="3" width="20" height="5" rx="1"/>
+                <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/>
+                <path d="M10 12h4"/>
+              </svg>
+              <span className="text-sm">Show Archived Projects</span>
+            </div>
+            <input
+              type="checkbox"
+              className="toggle toggle-warning"
+              checked={tempVisibleColumns.showArchived}
+              onChange={(e) => setTempVisibleColumns({ ...tempVisibleColumns, showArchived: e.target.checked })}
             />
           </div>
         </div>

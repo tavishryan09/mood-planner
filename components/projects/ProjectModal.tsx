@@ -28,6 +28,7 @@ interface ProjectFormData {
   projectValue: string;
   billingRate: string;
   useTeamRates: boolean;
+  archived: boolean;
 }
 
 interface ProjectModalProps {
@@ -324,6 +325,23 @@ export default function ProjectModal({
             )}
           </div>
         </div>
+
+        {editingProject && (
+          <div className="form-control w-full mb-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <span className="label-text font-medium block mb-1">Archive Project</span>
+                <p className="text-xs opacity-60">Archived projects will be hidden from the main project list unless you toggle their visibility</p>
+              </div>
+              <input
+                type="checkbox"
+                className="toggle toggle-warning flex-shrink-0 mt-1"
+                checked={formData.archived}
+                onChange={(e) => setFormData({ ...formData, archived: e.target.checked })}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="modal-action">
           {editingProject && onDelete && (

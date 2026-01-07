@@ -32,7 +32,7 @@ function SettingsContent() {
     handleSave,
     handleDelete,
     closeModal
-  } = useUserManagement(users, setUsers);
+  } = useUserManagement({ users, setUsers, isManager: user?.role === 'Manager' });
 
   // Outlook integration
   const {
@@ -44,7 +44,7 @@ function SettingsContent() {
   } = useOutlookIntegration();
 
   useEffect(() => {
-    if (user?.role === 'Admin') {
+    if (user?.role === 'Admin' || user?.role === 'Manager') {
       fetchUsers();
     }
   }, [user]);
@@ -243,6 +243,68 @@ function SettingsContent() {
             </div>
           </div>
         )}
+
+        {/* Team Billing Rates (Manager only) */}
+        {user?.role === 'Manager' && (
+          <div className="card bg-base-100">
+            <div className="card-body">
+              <div className="mb-4">
+                <h2 className="card-title">Team Billing Rates</h2>
+                <p className="text-sm text-base-content/70 mt-1">
+                  Manage billing rates for Managers and Designers
+                </p>
+              </div>
+
+              {loading ? (
+                <div className="flex justify-center p-8">
+                  <span className="loading loading-spinner loading-lg"></span>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="table table-zebra">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Billing Rate</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users
+                        .filter(u => u.role === 'Manager' || u.role === 'Designer')
+                        .map((u) => (
+                        <tr key={u.id}>
+                          <td>{u.name}</td>
+                          <td>
+                            <span className={`badge ${
+                              u.role === 'Manager' ? 'badge-warning' :
+                              'badge-info'
+                            }`}>
+                              {u.role}
+                            </span>
+                          </td>
+                          <td>${Number(u.billingRate || 0).toFixed(2)}/hr</td>
+                          <td>
+                            <button
+                              className="btn btn-ghost btn-sm btn-square"
+                              onClick={() => handleEdit(u.id)}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <UserModal
@@ -253,6 +315,7 @@ function SettingsContent() {
         onSave={handleSave}
         onDelete={handleDelete}
         onFormDataChange={setFormData}
+        isManager={user?.role === 'Manager'}
       />
     </Sidebar>
   );

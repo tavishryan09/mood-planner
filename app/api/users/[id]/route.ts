@@ -38,7 +38,7 @@ export async function PUT(
   try {
     const currentUser = await getCurrentUser();
 
-    if (!currentUser || currentUser.role !== 'Admin') {
+    if (!currentUser || (currentUser.role !== 'Admin' && currentUser.role !== 'Manager')) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }
@@ -48,6 +48,54 @@ export async function PUT(
     const { id } = await context.params;
     const body = await request.json();
     const { name, email, password, role, billingRate } = body;
+
+    // Check if this is a Manager trying to update billing rate only
+    const isManagerBillingRateUpdate = currentUser.role === 'Manager' && billingRate !== undefined && !name && !email && !password && !role;
+
+    if (isManagerBillingRateUpdate) {
+      // Manager is updating billing rate only - verify target user is Manager or Designer
+      const targetUser = await sql`
+        SELECT id, role FROM users WHERE id = ${id}
+      `;
+
+      if (targetUser.length === 0) {
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        );
+      }
+
+      if (targetUser[0].role !== 'Manager' && targetUser[0].role !== 'Designer') {
+        return NextResponse.json(
+          { error: 'Managers can only update billing rates for Managers and Designers' },
+          { status: 403 }
+        );
+      }
+
+      // Update only billing rate
+      const result = await sql`
+        UPDATE users
+        SET billing_rate = ${billingRate || 0}
+        WHERE id = ${id}
+        RETURNING
+          id,
+          name,
+          email,
+          role,
+          created_at as "createdAt",
+          billing_rate as "billingRate"
+      `;
+
+      return NextResponse.json(result[0]);
+    }
+
+    // Admin full update
+    if (currentUser.role !== 'Admin') {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
 
     if (!name || !email || !role) {
       return NextResponse.json(

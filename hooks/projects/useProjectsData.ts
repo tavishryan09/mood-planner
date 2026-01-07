@@ -10,6 +10,7 @@ interface Project {
   projectValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
+  archived?: boolean;
   estimatedBillable?: number;
   totalHours?: number;
   hoursThisWeek?: number;
@@ -43,6 +44,7 @@ interface VisibleColumns {
   hoursThisWeek: boolean;
   hoursThisMonth: boolean;
   hoursThisQuarter: boolean;
+  showArchived: boolean;
 }
 
 interface UseProjectsDataReturn {
@@ -83,7 +85,8 @@ export function useProjectsData(): UseProjectsDataReturn {
     totalHours: true,
     hoursThisWeek: true,
     hoursThisMonth: true,
-    hoursThisQuarter: true
+    hoursThisQuarter: true,
+    showArchived: false
   });
 
   const [tempVisibleColumns, setTempVisibleColumns] = useState<VisibleColumns>({
@@ -97,7 +100,8 @@ export function useProjectsData(): UseProjectsDataReturn {
     totalHours: true,
     hoursThisWeek: true,
     hoursThisMonth: true,
-    hoursThisQuarter: true
+    hoursThisQuarter: true,
+    showArchived: false
   });
 
   const fetchProjects = async () => {

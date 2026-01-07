@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
 import { syncMilestoneToAllTeamMembers, deleteMilestoneFromAllTeamMembers } from '@/lib/outlook-sync';
+import { planningEvents } from '@/lib/planning-events';
 
 // Helper to get current user from token
 async function getCurrentUser() {
@@ -179,6 +180,9 @@ export async function PUT(
       console.error('Error syncing milestone to Outlook:', error);
     }
 
+    // Broadcast milestone update to SSE listeners
+    planningEvents.broadcastMilestoneUpdate('updated', updatedMilestone.id, updatedMilestone);
+
     return NextResponse.json(result[0]);
   } catch (error) {
     console.error('Error updating milestone task:', error);
@@ -273,6 +277,9 @@ export async function DELETE(
         console.error('Error deleting milestone from Outlook:', error);
       }
     }
+
+    // Broadcast milestone deletion to SSE listeners
+    planningEvents.broadcastMilestoneUpdate('deleted', parseInt(id), null);
 
     return NextResponse.json({ success: true });
   } catch (error) {

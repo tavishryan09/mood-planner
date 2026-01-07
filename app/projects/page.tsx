@@ -22,6 +22,7 @@ interface Project {
   projectValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
+  archived?: boolean;
   estimatedBillable?: number;
   totalHours?: number;
   hoursThisWeek?: number;
@@ -95,6 +96,11 @@ export default function Projects() {
     fetchClients
   });
 
+  // Filter projects based on archived status
+  const filteredProjects = visibleColumns.showArchived
+    ? projects
+    : projects.filter(p => !p.archived);
+
   // Inline cell editing
   const {
     editingCell,
@@ -103,7 +109,7 @@ export default function Projects() {
     cancelCellEdit,
     saveCellEdit,
     setEditValue
-  } = useInlineCellEditing(projects, fetchProjects);
+  } = useInlineCellEditing(filteredProjects, fetchProjects);
 
   // Sorting
   const {
@@ -111,7 +117,7 @@ export default function Projects() {
     sortDirection,
     handleSort,
     getSortedProjects
-  } = useProjectsSorting(projects);
+  } = useProjectsSorting(filteredProjects);
 
   // Import/Export
   const {
@@ -199,7 +205,7 @@ export default function Projects() {
             </div>
 
             <ProjectsTable
-              projects={projects}
+              projects={filteredProjects}
               loading={loading}
               visibleColumns={visibleColumns}
               sortConfig={{ field: sortField, direction: sortDirection }}
@@ -250,7 +256,8 @@ export default function Projects() {
               commonName: formData.commonName || null,
               projectValue: formData.projectValue ? parseFloat(formData.projectValue) : null,
               billingRate: formData.billingRate ? parseFloat(formData.billingRate) : null,
-              useTeamRates: formData.useTeamRates
+              useTeamRates: formData.useTeamRates,
+              archived: formData.archived || false
             };
 
             let projectId: number;

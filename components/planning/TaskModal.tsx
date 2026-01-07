@@ -192,7 +192,7 @@ export default function TaskModal({
                   required={formData.taskType === 'Project Task'}
                 >
                   <option value="">Select a project</option>
-                  {projects.map((project) => (
+                  {projects.filter(p => !p.archived).map((project) => (
                     <option key={project.id} value={project.id}>
                       {project.commonName || project.projectName}
                     </option>

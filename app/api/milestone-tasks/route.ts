@@ -216,7 +216,8 @@ export async function POST(request: Request) {
         projectDetails = project[0];
       }
 
-      await syncMilestoneToAllTeamMembers({
+      console.log(`[Milestone Create ${createdMilestone.id}] Starting sync with taskDate: ${createdMilestone.taskDate}, taskType: ${createdMilestone.taskType}`);
+      const eventIds = await syncMilestoneToAllTeamMembers({
         id: createdMilestone.id,
         projectId: createdMilestone.projectId,
         taskDescription: createdMilestone.taskDescription,
@@ -224,7 +225,9 @@ export async function POST(request: Request) {
         taskDate: createdMilestone.taskDate,
         projectName: projectDetails?.project_name,
         projectNumber: projectDetails?.project_number,
+        projectCommonName: projectDetails?.common_name,
       });
+      console.log(`[Milestone Create ${createdMilestone.id}] Synced milestone to ${eventIds ? Object.keys(eventIds).length : 0} team members' Outlook calendars. Event IDs:`, eventIds);
     } catch (error) {
       // Log error but don't fail milestone creation
       console.error('Error syncing milestone to Outlook:', error);

@@ -92,8 +92,8 @@ export async function GET(request: Request) {
     const user = users[0];
 
     // Generate a fresh auth token for this user
-    const { signToken } = await import('@/lib/auth');
-    const newToken = signToken({ userId: user.id, email: user.email, role: user.role });
+    const { generateToken } = await import('@/lib/auth');
+    const newToken = generateToken({ userId: user.id, email: user.email, role: user.role });
 
     // Create response with redirect
     const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_connected=true`);

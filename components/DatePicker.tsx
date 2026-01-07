@@ -40,13 +40,45 @@ export default function DatePicker({ value, onChange, label, required, className
   }, [showCalendar]);
 
   useEffect(() => {
-    if (showCalendar && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setCalendarPosition({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX
-      });
+    const updatePosition = () => {
+      if (showCalendar && buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+
+        // Calculate position
+        let top = rect.bottom + window.scrollY + 8;
+        let left = rect.left + window.scrollX;
+
+        // Ensure calendar doesn't go off screen
+        const calendarWidth = 320; // 80 * 4 (w-80 in pixels)
+        const calendarHeight = 400; // approximate height
+
+        // Check if calendar would go off right edge
+        if (left + calendarWidth > window.innerWidth) {
+          left = window.innerWidth - calendarWidth - 16;
+        }
+
+        // Check if calendar would go off bottom edge, show above if needed
+        if (top + calendarHeight > window.innerHeight + window.scrollY) {
+          top = rect.top + window.scrollY - calendarHeight - 8;
+        }
+
+        // Ensure minimum left position
+        left = Math.max(16, left);
+
+        setCalendarPosition({ top, left });
+      }
+    };
+
+    if (showCalendar) {
+      updatePosition();
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
     }
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
   }, [showCalendar]);
 
   const formatDisplayDate = (dateStr: string) => {

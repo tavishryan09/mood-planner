@@ -163,8 +163,12 @@ export default function ProjectDetails() {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
     // Parse YYYY-MM-DD without timezone conversion
-    const [year, month, day] = dateString.split('-').map(Number);
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return 'Invalid date';
+    const [year, month, day] = parts.map(Number);
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return 'Invalid date';
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',

@@ -127,6 +127,16 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
                 </div>
               ))}
 
+              {/* Today indicator above timeline */}
+              {showTodayMarker && (
+                <div
+                  className="absolute -top-6 h-6 flex items-center justify-center"
+                  style={{ left: `${todayPercent}%`, transform: 'translateX(-50%)' }}
+                >
+                  <span className="text-[10px] font-bold text-primary whitespace-nowrap">Today</span>
+                </div>
+              )}
+
               {/* Deadline indicators above timeline */}
               {showProjectDeadline && (
                 <div
@@ -155,6 +165,15 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
 
           {/* Task Rows Container with continuous lines */}
           <div className="relative">
+            {/* Continuous today marker line */}
+            {showTodayMarker && (
+              <div
+                className="absolute top-0 bottom-0 w-px bg-primary pointer-events-none z-10"
+                style={{ left: `calc(12rem + (100% - 12rem) * ${todayPercent} / 100)` }}
+                title="Today"
+              />
+            )}
+
             {/* Continuous milestone lines that span all rows */}
             {milestonePositions.map(milestone => (
               <div
@@ -200,26 +219,6 @@ export default function GanttChart({ tasks, milestones, project, formatDate }: G
                   )}
                 </div>
                 <div className="flex-1 relative h-8">
-                  {/* Today marker - only show on first row */}
-                  {index === 0 && showTodayMarker && (
-                    <div
-                      className="absolute top-0 bottom-0 w-0.5 bg-primary z-10"
-                      style={{ left: `${todayPercent}%` }}
-                      title="Today"
-                    >
-                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary whitespace-nowrap">
-                        Today
-                      </div>
-                    </div>
-                  )}
-                  {/* Show line for all rows after first */}
-                  {index > 0 && showTodayMarker && (
-                    <div
-                      className="absolute top-0 bottom-0 w-0.5 bg-primary opacity-50"
-                      style={{ left: `${todayPercent}%` }}
-                    />
-                  )}
-
                   <div
                     className={`absolute h-6 rounded flex items-center px-2 text-xs font-medium text-white ${
                       task.status === 'completed' ? 'bg-success' :

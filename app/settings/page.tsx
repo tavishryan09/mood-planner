@@ -29,6 +29,13 @@ function SettingsContent() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showResetLinkModal, setShowResetLinkModal] = useState(false);
+  const [resetLinkData, setResetLinkData] = useState<{
+    link: string;
+    userName: string;
+    userEmail: string;
+  } | null>(null);
+  const [resetLinkLoading, setResetLinkLoading] = useState(false);
 
   // User management
   const {
@@ -132,6 +139,44 @@ function SettingsContent() {
     }
   };
 
+  const handleGenerateResetLink = async (userId: number) => {
+    try {
+      setResetLinkLoading(true);
+      const response = await fetch('/api/auth/generate-reset-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || 'Failed to generate reset link');
+        return;
+      }
+
+      setResetLinkData({
+        link: data.resetLink,
+        userName: data.userName,
+        userEmail: data.userEmail,
+      });
+      setShowResetLinkModal(true);
+    } catch (error) {
+      console.error('Error generating reset link:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      setResetLinkLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (resetLinkData) {
+      navigator.clipboard.writeText(resetLinkData.link);
+    }
+  };
+
   return (
     <Sidebar title="Settings">
       <div className="p-4 space-y-4">
@@ -172,8 +217,8 @@ function SettingsContent() {
 
                 <div className="divider">How to Sync</div>
                 <div className="text-sm">
-                  <p className="mb-2">Go to the Planning page and click the "Sync to Outlook" button to sync your tasks for a specific day.</p>
-                  <p className="text-base-content/60">Tasks will be created as 1-hour calendar events starting at 9 AM UTC.</p>
+                  <p className="mb-2">Go to the Planning page and click the "Sync to Outlook" button to sync your tasks with your outlook calendar.</p>
+                  
                 </div>
               </div>
             ) : (
@@ -397,15 +442,29 @@ function SettingsContent() {
                           </td>
                           <td>${Number(u.billingRate || 0).toFixed(2)}/hr</td>
                           <td>
-                            <button
-                              className="btn btn-ghost btn-sm btn-square"
-                              onClick={() => handleEdit(u.id)}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                              </svg>
-                            </button>
+                            <div className="flex gap-1">
+                              <button
+                                className="btn btn-ghost btn-sm btn-square"
+                                onClick={() => handleEdit(u.id)}
+                                title="Edit user"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                              </button>
+                              <button
+                                className="btn btn-ghost btn-sm btn-square"
+                                onClick={() => handleGenerateResetLink(u.id)}
+                                disabled={resetLinkLoading}
+                                title="Generate password reset link"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
+                                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -490,6 +549,69 @@ function SettingsContent() {
         onFormDataChange={setFormData}
         isManager={user?.role === 'Manager'}
       />
+
+      {/* Password Reset Link Modal */}
+      {showResetLinkModal && resetLinkData && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">Password Reset Link Generated</h3>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-base-content/70 mb-2">
+                  Send this link to <strong>{resetLinkData.userName}</strong> ({resetLinkData.userEmail})
+                </p>
+                <p className="text-sm text-base-content/70">
+                  The link will expire in 24 hours.
+                </p>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Reset Link</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={resetLinkData.link}
+                    readOnly
+                    className="input input-bordered flex-1 text-sm"
+                  />
+                  <button
+                    onClick={copyToClipboard}
+                    className="btn btn-square btn-primary"
+                    title="Copy to clipboard"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-5">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className="alert alert-warning">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span className="text-sm">Keep this link secure. Anyone with this link can reset the user's password.</span>
+              </div>
+            </div>
+
+            <div className="modal-action">
+              <button
+                onClick={() => {
+                  setShowResetLinkModal(false);
+                  setResetLinkData(null);
+                }}
+                className="btn"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Sidebar>
   );
 }

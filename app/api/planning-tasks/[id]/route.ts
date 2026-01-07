@@ -50,9 +50,9 @@ export async function PUT(
     const body = await request.json();
     const { userId, projectId, taskDescription, taskType, taskDate, rowIndex, rowSpan = 1, internalTaskTypeId } = body;
 
-    // Get the existing task to check ownership
+    // Get the existing task to check ownership and track user changes
     const existingTask = await sql`
-      SELECT user_id as "userId"
+      SELECT user_id as "userId", outlook_event_id as "outlookEventId"
       FROM planning_tasks
       WHERE id = ${id}
     `;
@@ -75,6 +75,11 @@ export async function PUT(
         { status: 403 }
       );
     }
+
+    // Track if user is being changed for Outlook sync cleanup
+    const previousUserId = existingTask[0].userId;
+    const previousOutlookEventId = existingTask[0].outlookEventId;
+    const isUserChanging = userId && userId !== previousUserId;
 
     if (!taskType || !taskDate) {
       return NextResponse.json(
@@ -125,6 +130,17 @@ export async function PUT(
     // If no description provided, use task type as default
     const finalDescription = taskDescription?.trim() || taskType;
 
+    // If user is changing, delete event from previous user's calendar
+    if (isUserChanging && previousOutlookEventId) {
+      try {
+        await deleteTaskFromOutlook(previousUserId, previousOutlookEventId);
+        console.log(`Deleted task ${id} from previous user ${previousUserId}'s Outlook calendar`);
+      } catch (error) {
+        console.error('Error deleting task from previous user\'s Outlook:', error);
+        // Don't fail the update if Outlook deletion fails
+      }
+    }
+
     const result = await sql`
       UPDATE planning_tasks
       SET
@@ -135,7 +151,8 @@ export async function PUT(
         task_date = ${taskDate},
         row_index = COALESCE(${rowIndex}, row_index),
         row_span = COALESCE(${rowSpan}, row_span),
-        internal_task_type_id = ${internalTaskTypeId || null}
+        internal_task_type_id = ${internalTaskTypeId || null},
+        outlook_event_id = ${isUserChanging ? null : sql`outlook_event_id`}
       WHERE id = ${id}
       RETURNING
         id,

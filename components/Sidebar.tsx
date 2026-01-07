@@ -14,7 +14,7 @@ interface SidebarProps {
   hideNavbar?: boolean;
 }
 
-export default function Sidebar({ children, title = "New Mood", action, hideNavbar = false }: SidebarProps) {
+export default function Sidebar({ children, title = "Mood Tracker", action, hideNavbar = false }: SidebarProps) {
   const { user, logout, updateSidebarPreference, loading } = useAuth();
   const pathname = usePathname();
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);

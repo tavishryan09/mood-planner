@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "New Mood - CRM and Project Management",
-  "short_name": "New Mood",
-  "description": "CRM and Project Management application for managing clients, projects, planning, and accounting",
+  "name": "Mood Tracker - Project Planner",
+  "short_name": "Mood Tracker",
+  "description": "Project planning and tracking application for managing clients, projects, milestones, and tasks",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

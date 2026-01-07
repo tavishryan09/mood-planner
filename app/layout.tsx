@@ -10,8 +10,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "New Mood - CRM and Project Management",
-  description: "CRM and Project Management application built with Next.js, DaisyUI, and Neon Database",
+  title: "Mood Tracker - Project Planner",
+  description: "Project planning and tracking application built with Next.js, DaisyUI, and Neon Database",
   manifest: "/manifest.json",
   robots: {
     index: false,
@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "New Mood",
+    title: "Mood Tracker",
   },
-  applicationName: "New Mood",
+  applicationName: "Mood Tracker",
   icons: {
     icon: "/icon-192.png",
     apple: "/icon-192.png",

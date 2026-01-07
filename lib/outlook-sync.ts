@@ -221,14 +221,19 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
   existingEventIds?: string; // JSON string of existing event IDs
 }) {
   try {
+    console.log(`[syncMilestoneToAllTeamMembers] Starting sync for milestone ${milestone.id} with taskDate: ${milestone.taskDate}`);
+
     // Parse existing event IDs if provided
     let existingEventIdMap: Record<number, string> = {};
     if (milestone.existingEventIds) {
       try {
         existingEventIdMap = JSON.parse(milestone.existingEventIds);
+        console.log(`[syncMilestoneToAllTeamMembers] Parsed existing event IDs:`, existingEventIdMap);
       } catch (e) {
         console.error('Error parsing existing event IDs:', e);
       }
+    } else {
+      console.log(`[syncMilestoneToAllTeamMembers] No existing event IDs found - will create new events`);
     }
 
     // Get all users who have Outlook connected OR who already have an event
@@ -241,7 +246,10 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
         AND role != 'Admin'
     `;
 
+    console.log(`[syncMilestoneToAllTeamMembers] Found ${connectedUsers.length} connected users to sync to:`, connectedUsers.map((u: any) => u.id));
+
     if (connectedUsers.length === 0) {
+      console.log(`[syncMilestoneToAllTeamMembers] No connected users found - skipping sync`);
       return;
     }
 
@@ -280,6 +288,7 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
 
         if (existingEventId) {
           // Try to update existing event
+          console.log(`[syncMilestoneToAllTeamMembers] Updating existing event ${existingEventId} for user ${user.id} with new date ${taskDate}`);
           try {
             await updateCalendarEvent(accessToken, existingEventId, {
               subject,
@@ -290,6 +299,7 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
               calendarId,
               categories,
             });
+            console.log(`[syncMilestoneToAllTeamMembers] Successfully updated event ${existingEventId} for user ${user.id}`);
             return { userId: user.id, eventId: existingEventId };
           } catch (updateError: any) {
             // If event not found, create a new one
@@ -304,6 +314,7 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
                 calendarId,
                 categories,
               });
+              console.log(`[syncMilestoneToAllTeamMembers] Created new event ${event.id} for user ${user.id}`);
               return { userId: user.id, eventId: event.id };
             } else {
               throw updateError;
@@ -311,6 +322,7 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
           }
         } else {
           // Create new event
+          console.log(`[syncMilestoneToAllTeamMembers] No existing event for user ${user.id}, creating new event`);
           const event = await createCalendarEvent(accessToken, {
             subject,
             start: eventStart.toISOString(),
@@ -320,6 +332,7 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
             calendarId,
             categories,
           });
+          console.log(`[syncMilestoneToAllTeamMembers] Created new event ${event.id} for user ${user.id}`);
           return { userId: user.id, eventId: event.id };
         }
       } catch (error) {

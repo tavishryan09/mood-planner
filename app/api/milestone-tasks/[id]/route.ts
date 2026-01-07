@@ -79,6 +79,7 @@ export async function PUT(
     `;
 
     const existingEventIds = oldMilestone.length > 0 ? oldMilestone[0].outlookEventId : null;
+    console.log(`[Milestone Update ${id}] Existing event IDs before update:`, existingEventIds);
 
     const result = await sql`
       UPDATE milestone_tasks
@@ -165,7 +166,9 @@ export async function PUT(
         projectDetails = project[0];
       }
 
-      await syncMilestoneToAllTeamMembers({
+      // Sync to all team members
+      console.log(`[Milestone Update ${updatedMilestone.id}] Starting sync with taskDate: ${updatedMilestone.taskDate}, taskType: ${updatedMilestone.taskType}`);
+      const updatedEventIds = await syncMilestoneToAllTeamMembers({
         id: updatedMilestone.id,
         projectId: updatedMilestone.projectId,
         taskDescription: updatedMilestone.taskDescription,
@@ -176,6 +179,8 @@ export async function PUT(
         projectCommonName: projectDetails?.common_name,
         existingEventIds: existingEventIds,
       });
+
+      console.log(`[Milestone Update ${updatedMilestone.id}] Synced milestone to ${updatedEventIds ? Object.keys(updatedEventIds).length : 0} team members' Outlook calendars. Event IDs:`, updatedEventIds);
     } catch (error) {
       console.error('Error syncing milestone to Outlook:', error);
     }

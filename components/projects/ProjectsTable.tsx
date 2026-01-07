@@ -357,7 +357,7 @@ export default function ProjectsTable({
               )}
               {visibleColumns.projectValue && (
                 <td
-                  className="font-semibold text-success cursor-pointer"
+                  className="font-semibold cursor-pointer"
                   onDoubleClick={() => onCellEdit(project, 'projectValue')}
                 >
                   {editingCell?.id === project.id && editingCell?.field === 'projectValue' ? (
@@ -381,7 +381,7 @@ export default function ProjectsTable({
                 </td>
               )}
               {visibleColumns.estimatedBillable && (
-                <td className="font-semibold text-info">
+                <td className="font-semibold">
                   {project.estimatedBillable ? formatCurrency(project.estimatedBillable) : '—'}
                 </td>
               )}

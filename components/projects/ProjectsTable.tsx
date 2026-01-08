@@ -1,5 +1,7 @@
 'use client';
 
+import DatePicker from '@/components/DatePicker';
+
 interface Project {
   id: number;
   projectNumber?: string;
@@ -450,18 +452,26 @@ export default function ProjectsTable({
                   onDoubleClick={() => onCellEdit(project, 'adjustmentDate')}
                 >
                   {editingCell?.id === project.id && editingCell?.field === 'adjustmentDate' ? (
-                    <input
-                      type="date"
-                      className="input input-sm input-bordered w-full"
-                      value={editValue}
-                      onChange={(e) => onEditValueChange(e.target.value)}
-                      onBlur={() => onCellSave(project.id, 'adjustmentDate')}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') onCellSave(project.id, 'adjustmentDate');
-                        if (e.key === 'Escape') onCellCancel();
+                    <div
+                      onBlur={(e) => {
+                        // Only save if we're clicking outside the date picker entirely
+                        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                          onCellSave(project.id, 'adjustmentDate');
+                        }
                       }}
-                      autoFocus
-                    />
+                      tabIndex={-1}
+                    >
+                      <DatePicker
+                        value={editValue}
+                        onChange={(date) => {
+                          onEditValueChange(date);
+                          // Auto-save when a date is selected
+                          setTimeout(() => {
+                            onCellSave(project.id, 'adjustmentDate');
+                          }, 100);
+                        }}
+                      />
+                    </div>
                   ) : (
                     project.adjustmentDate ? new Date(project.adjustmentDate).toLocaleDateString() : '—'
                   )}

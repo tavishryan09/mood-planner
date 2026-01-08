@@ -112,16 +112,9 @@ export async function PUT(
     const currentUser = await getCurrentUser();
 
     if (!currentUser) {
+      console.error('[PUT /api/projects/[id]] No current user');
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 403 }
-      );
-    }
-
-    // Only Admins and Managers can update projects
-    if (currentUser.role !== 'Admin' && currentUser.role !== 'Manager') {
-      return NextResponse.json(
-        { error: 'Insufficient permissions' },
         { status: 403 }
       );
     }
@@ -129,6 +122,17 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const { projectNumber, projectName, clientId, commonName, projectValue, currentlyBilled, adjustmentDate, billingRate, useTeamRates, deadline, internalDeadline, deadlineTitle, deadlineDescription, internalDeadlineTitle, internalDeadlineDescription, archived } = body;
+
+    console.log(`[PUT /api/projects/${id}] User: ${currentUser.name} (${currentUser.role})`);
+
+    // Only Admins and Managers can update projects
+    if (currentUser.role !== 'Admin' && currentUser.role !== 'Manager') {
+      console.error(`[PUT /api/projects/${id}] Insufficient permissions for role: ${currentUser.role}`);
+      return NextResponse.json(
+        { error: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
 
     // Get the old deadline values before updating
     const oldProject = await sql`

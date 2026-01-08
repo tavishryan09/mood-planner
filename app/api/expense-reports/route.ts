@@ -47,6 +47,8 @@ export async function GET(request: Request) {
 
     const isAccountant = currentUser.role === 'Accountant';
 
+    console.log('[Expense Reports GET] User:', currentUser.name, 'Role:', currentUser.role, 'isAccountant:', isAccountant);
+
     let reports;
 
     if (isAccountant) {
@@ -90,6 +92,8 @@ export async function GET(request: Request) {
         LIMIT ${limit}
       `;
     }
+
+    console.log('[Expense Reports GET] Returning', reports.length, 'reports for', currentUser.name);
 
     return NextResponse.json(reports);
   } catch (error) {

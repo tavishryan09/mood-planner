@@ -62,6 +62,7 @@ interface UsePlanningDataReturn {
   milestoneTasks: MilestoneTask[];
   outlookConnected: boolean;
   showInstructions: boolean;
+  compactView: boolean;
   loading: boolean;
   setUsers: (users: UserDisplay[]) => void;
   setProjects: (projects: Project[]) => void;
@@ -70,6 +71,7 @@ interface UsePlanningDataReturn {
   setMilestoneTasks: (milestones: MilestoneTask[]) => void;
   setOutlookConnected: (connected: boolean) => void;
   setShowInstructions: (show: boolean) => void;
+  setCompactView: (compact: boolean) => void;
   refetchAll: () => Promise<void>;
   refetchTasks: () => Promise<void>;
   refetchMilestones: () => Promise<void>;
@@ -83,6 +85,7 @@ export function usePlanningData({ quarterDays, enabled = true }: UsePlanningData
   const [milestoneTasks, setMilestoneTasks] = useState<MilestoneTask[]>([]);
   const [outlookConnected, setOutlookConnected] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [compactView, setCompactView] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const sortProjects = (projectsToSort: Project[]) => {
@@ -107,6 +110,7 @@ export function usePlanningData({ quarterDays, enabled = true }: UsePlanningData
           setInternalTaskTypes(data.internalTaskTypes);
           setOutlookConnected(data.outlookConnected);
           setShowInstructions(data.planningPreferences.showInstructions);
+          setCompactView(data.planningPreferences.compactView ?? false);
         }
       } catch (error) {
         console.error('Error fetching planning data:', error);
@@ -132,6 +136,7 @@ export function usePlanningData({ quarterDays, enabled = true }: UsePlanningData
         setMilestoneTasks(data.milestoneTasks || []);
         setOutlookConnected(data.outlookConnected);
         setShowInstructions(data.planningPreferences.showInstructions);
+        setCompactView(data.planningPreferences.compactView ?? false);
       }
     } catch (error) {
       console.error('Error fetching planning data:', error);
@@ -186,6 +191,7 @@ export function usePlanningData({ quarterDays, enabled = true }: UsePlanningData
     milestoneTasks,
     outlookConnected,
     showInstructions,
+    compactView,
     loading,
     setUsers,
     setProjects,
@@ -194,6 +200,7 @@ export function usePlanningData({ quarterDays, enabled = true }: UsePlanningData
     setMilestoneTasks,
     setOutlookConnected,
     setShowInstructions,
+    setCompactView,
     refetchAll: fetchAllPlanningData,
     refetchTasks,
     refetchMilestones

@@ -22,6 +22,7 @@ interface CalendarHeaderProps {
   handleMilestoneEdit: (milestone: any) => void;
   handleMilestoneDragStart: (e: React.DragEvent, milestone: any) => void;
   handleMilestoneDragEnd: () => void;
+  milestoneCellHeight: number;
 }
 
 export default function CalendarHeader({
@@ -45,7 +46,8 @@ export default function CalendarHeader({
   handleMilestoneClick,
   handleMilestoneEdit,
   handleMilestoneDragStart,
-  handleMilestoneDragEnd
+  handleMilestoneDragEnd,
+  milestoneCellHeight
 }: CalendarHeaderProps) {
   return (
     <thead className="bg-base-100 sticky top-0 z-30">
@@ -148,8 +150,8 @@ export default function CalendarHeader({
                   minWidth: '140px',
                   maxWidth: '140px',
                   width: '140px',
-                  minHeight: '60px',
-                  height: '60px'
+                  minHeight: `${milestoneCellHeight}px`,
+                  height: `${milestoneCellHeight}px`
                 }}
               >
                 {(() => {

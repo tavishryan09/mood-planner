@@ -27,6 +27,8 @@ interface TaskCellProps {
   isCutTask: boolean;
   copiedTask: PlanningTask | null;
   isMobile: boolean;
+  compactView: boolean;
+  cellHeight: number;
   handleTaskDragStart: (e: React.DragEvent, task: PlanningTask) => void;
   handleTaskDragEnd: () => void;
   handleTaskClick: (e: React.MouseEvent, task: PlanningTask) => void;
@@ -45,6 +47,8 @@ export default function TaskCell({
   isCutTask,
   copiedTask,
   isMobile,
+  compactView,
+  cellHeight,
   handleTaskDragStart,
   handleTaskDragEnd,
   handleTaskClick,
@@ -82,10 +86,10 @@ export default function TaskCell({
           : 'bg-error text-error-content'
       } ${draggedTask?.id === task.id ? 'opacity-50' : ''} ${isResizing ? 'ring-2 ring-base-content/30' : ''} ${selectedTask?.id === task.id ? 'ring-4 ring-accent' : ''} ${isCutTask && copiedTask?.id === task.id ? 'opacity-50 ring-2 ring-dashed ring-accent' : ''}`}
       style={{
-        top: `${(visualRowIndex - task.rowIndex) * 60 + 6}px`,
+        top: `${(visualRowIndex - task.rowIndex) * cellHeight + 6}px`,
         left: '4px',
         right: '4px',
-        height: `${(visualRowSpan * 60) - 12}px`
+        height: `${(visualRowSpan * cellHeight) - 12}px`
       }}
     >
       {/* Top resize handle */}
@@ -112,8 +116,8 @@ export default function TaskCell({
               : task.projectCommonName || task.projectName || task.taskType
             }
           </div>
-          {/* Description line: Show custom description only if it's different from task type */}
-          {task.taskDescription && task.taskDescription !== task.taskType ? (
+          {/* Description line: Show custom description only if it's different from task type and not in compact view */}
+          {!compactView && task.taskDescription && task.taskDescription !== task.taskType ? (
             <div className={`opacity-90 w-full overflow-hidden ${visualRowSpan === 1 ? 'truncate' : ''}`}
               style={visualRowSpan > 1 ? {
                 display: '-webkit-box',

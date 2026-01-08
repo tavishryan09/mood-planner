@@ -20,6 +20,8 @@ interface UserSettingsModalProps {
   users: UserDisplay[];
   showInstructions: boolean;
   onUpdateShowInstructions: (value: boolean) => Promise<void>;
+  compactView: boolean;
+  onUpdateCompactView: (value: boolean) => void;
   outlookConnected: boolean;
   onSyncToOutlook: () => void;
   isSyncing: boolean;
@@ -32,6 +34,8 @@ export default function UserSettingsModal({
   users,
   showInstructions,
   onUpdateShowInstructions,
+  compactView,
+  onUpdateCompactView,
   outlookConnected,
   onSyncToOutlook,
   isSyncing
@@ -117,6 +121,22 @@ export default function UserSettingsModal({
               className="toggle toggle-primary"
               checked={showInstructions}
               onChange={(e) => onUpdateShowInstructions(e.target.checked)}
+            />
+          </label>
+        </div>
+
+        {/* Compact View Toggle */}
+        <div className="flex items-center justify-between p-3 rounded-lg border border-base-300 bg-base-100 mb-4">
+          <div>
+            <div className="font-medium">Compact View</div>
+            <div className="text-xs opacity-60">Show only project names and reduce cell height</div>
+          </div>
+          <label className="cursor-pointer">
+            <input
+              type="checkbox"
+              className="toggle toggle-primary"
+              checked={compactView}
+              onChange={(e) => onUpdateCompactView(e.target.checked)}
             />
           </label>
         </div>

@@ -88,6 +88,7 @@ export default function Planning() {
     milestoneTasks,
     outlookConnected,
     showInstructions,
+    compactView,
     loading: isLoading,
     setUsers,
     setProjects,
@@ -96,6 +97,7 @@ export default function Planning() {
     setMilestoneTasks,
     setOutlookConnected,
     setShowInstructions,
+    setCompactView,
     refetchAll,
     refetchTasks,
     refetchMilestones
@@ -269,6 +271,30 @@ export default function Planning() {
       setShowInstructions(!value);
     }
   };
+
+  const updateCompactView = async (value: boolean) => {
+    try {
+      setCompactView(value);
+      const response = await fetch('/api/planning-preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ compactView: value })
+      });
+      if (!response.ok) {
+        console.error('Failed to update compact view preference');
+        // Revert on error
+        setCompactView(!value);
+      }
+    } catch (error) {
+      console.error('Error updating compact view preference:', error);
+      // Revert on error
+      setCompactView(!value);
+    }
+  };
+
+  // Calculate cell height based on compact view setting
+  const cellHeight = compactView ? 40 : 60;
+  const milestoneCellHeight = compactView ? 40 : 60;
 
   // Track window size for responsive calendar height
   useEffect(() => {
@@ -1046,6 +1072,7 @@ export default function Planning() {
                     handleMilestoneEdit={handleMilestoneEdit}
                     handleMilestoneDragStart={handleMilestoneDragStart}
                     handleMilestoneDragEnd={handleMilestoneDragEnd}
+                    milestoneCellHeight={milestoneCellHeight}
                   />
                   <tbody>
                   {/* Deadlines/Milestones Section - Now in thead */}
@@ -1272,8 +1299,8 @@ export default function Planning() {
                                 minWidth: '140px',
                                 maxWidth: '140px',
                                 width: '140px',
-                                minHeight: '60px',
-                                height: '60px'
+                                minHeight: `${cellHeight}px`,
+                                height: `${cellHeight}px`
                               }}
                             >
                               {isTaskStartCell && task ? (
@@ -1287,6 +1314,8 @@ export default function Planning() {
                                   isCutTask={isCutTask}
                                   copiedTask={copiedTask}
                                   isMobile={isMobile}
+                                  compactView={compactView}
+                                  cellHeight={cellHeight}
                                   handleTaskDragStart={handleTaskDragStart}
                                   handleTaskDragEnd={handleTaskDragEnd}
                                   handleTaskClick={handleTaskClick}
@@ -1341,6 +1370,8 @@ export default function Planning() {
         users={users}
         showInstructions={showInstructions}
         onUpdateShowInstructions={updateShowInstructions}
+        compactView={compactView}
+        onUpdateCompactView={updateCompactView}
         outlookConnected={outlookConnected}
         onSyncToOutlook={handleSyncToOutlook}
         isSyncing={isSyncing}

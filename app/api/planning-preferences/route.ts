@@ -44,7 +44,8 @@ export async function GET(request: Request) {
     // Get planning preferences for the current user, or return defaults if not found
     const preferences = await sql`
       SELECT
-        show_instructions as "showInstructions"
+        show_instructions as "showInstructions",
+        compact_view as "compactView"
       FROM planning_preferences
       WHERE user_id = ${currentUser.id}
     `;
@@ -52,7 +53,8 @@ export async function GET(request: Request) {
     if (preferences.length === 0) {
       // Return default preferences
       return NextResponse.json({
-        showInstructions: true
+        showInstructions: true,
+        compactView: false
       });
     }
 
@@ -78,24 +80,40 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { showInstructions } = body;
+    const { showInstructions, compactView } = body;
 
-    if (showInstructions === undefined) {
+    // Build the update dynamically based on what's provided
+    const updates: string[] = [];
+    const values: any[] = [currentUser.id];
+
+    if (showInstructions !== undefined) {
+      updates.push('show_instructions');
+      values.push(showInstructions);
+    }
+
+    if (compactView !== undefined) {
+      updates.push('compact_view');
+      values.push(compactView);
+    }
+
+    if (updates.length === 0) {
       return NextResponse.json(
-        { error: 'showInstructions is required' },
+        { error: 'No preferences provided' },
         { status: 400 }
       );
     }
 
-    // Upsert the planning preferences
-    await sql`
-      INSERT INTO planning_preferences (user_id, show_instructions)
-      VALUES (${currentUser.id}, ${showInstructions})
+    // Build the query dynamically
+    let query = `
+      INSERT INTO planning_preferences (user_id, ${updates.join(', ')})
+      VALUES ($1, ${updates.map((_, i) => `$${i + 2}`).join(', ')})
       ON CONFLICT (user_id)
       DO UPDATE SET
-        show_instructions = ${showInstructions},
+        ${updates.map((col, i) => `${col} = $${i + 2}`).join(', ')},
         updated_at = CURRENT_TIMESTAMP
     `;
+
+    await sql.unsafe(query, values);
 
     return NextResponse.json({ success: true });
   } catch (error) {

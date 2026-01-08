@@ -45,12 +45,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50;
 
-    const isAccountant = currentUser.role === 'Accountant';
+    const canViewAllReports = currentUser.role === 'Accountant' || currentUser.role === 'Admin';
 
     let reports;
 
-    if (isAccountant) {
-      // Accountants can see all expense reports
+    if (canViewAllReports) {
+      // Accountants and Admins can see all expense reports
       reports = await sql`
         SELECT
           er.id,

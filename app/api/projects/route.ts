@@ -49,6 +49,8 @@ export async function GET() {
         p.client_id as "clientId",
         p.common_name as "commonName",
         p.project_value as "projectValue",
+        p.currently_billed as "currentlyBilled",
+        p.adjustment_date as "adjustmentDate",
         p.billing_rate as "billingRate",
         p.use_team_rates as "useTeamRates",
         p.archived,

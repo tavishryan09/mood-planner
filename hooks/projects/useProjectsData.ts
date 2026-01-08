@@ -8,6 +8,9 @@ interface Project {
   clientName?: string;
   commonName?: string;
   projectValue?: number;
+  currentlyBilled?: number;
+  adjustmentDate?: string;
+  adjustedValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
   archived?: boolean;
@@ -39,6 +42,9 @@ interface VisibleColumns {
   commonName: boolean;
   status: boolean;
   projectValue: boolean;
+  currentlyBilled: boolean;
+  adjustmentDate: boolean;
+  adjustedValue: boolean;
   estimatedBillable: boolean;
   billablePercent: boolean;
   totalHours: boolean;
@@ -82,6 +88,9 @@ export function useProjectsData(): UseProjectsDataReturn {
     commonName: true,
     status: true,
     projectValue: true,
+    currentlyBilled: true,
+    adjustmentDate: true,
+    adjustedValue: true,
     estimatedBillable: true,
     billablePercent: true,
     totalHours: true,
@@ -98,6 +107,9 @@ export function useProjectsData(): UseProjectsDataReturn {
     commonName: true,
     status: true,
     projectValue: true,
+    currentlyBilled: true,
+    adjustmentDate: true,
+    adjustedValue: true,
     estimatedBillable: true,
     billablePercent: true,
     totalHours: true,
@@ -146,6 +158,11 @@ export function useProjectsData(): UseProjectsDataReturn {
             console.error(`Error fetching hours for project ${project.id}:`, error);
           }
 
+          // Calculate adjusted value
+          const adjustedValue = project.currentlyBilled && project.projectValue
+            ? project.projectValue - project.currentlyBilled
+            : undefined;
+
           return {
             ...project,
             estimatedBillable,
@@ -153,6 +170,7 @@ export function useProjectsData(): UseProjectsDataReturn {
             hoursThisWeek,
             hoursThisMonth,
             hoursThisQuarter,
+            adjustedValue,
           };
         })
       );

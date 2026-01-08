@@ -8,6 +8,9 @@ interface Project {
   clientName?: string;
   commonName?: string;
   projectValue?: number;
+  currentlyBilled?: number;
+  adjustmentDate?: string;
+  adjustedValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
   archived?: boolean;
@@ -27,6 +30,9 @@ interface VisibleColumns {
   commonName: boolean;
   status: boolean;
   projectValue: boolean;
+  currentlyBilled: boolean;
+  adjustmentDate: boolean;
+  adjustedValue: boolean;
   estimatedBillable: boolean;
   billablePercent: boolean;
   totalHours: boolean;
@@ -210,6 +216,39 @@ export default function ProjectsTable({
                 </button>
               </th>
             )}
+            {visibleColumns.currentlyBilled && (
+              <th>
+                <button
+                  className="flex items-center gap-1 hover:text-primary"
+                  onClick={() => onSort('currentlyBilled')}
+                >
+                  Currently Billed
+                  <SortIcon field="currentlyBilled" />
+                </button>
+              </th>
+            )}
+            {visibleColumns.adjustmentDate && (
+              <th>
+                <button
+                  className="flex items-center gap-1 hover:text-primary"
+                  onClick={() => onSort('adjustmentDate')}
+                >
+                  Adjustment Date
+                  <SortIcon field="adjustmentDate" />
+                </button>
+              </th>
+            )}
+            {visibleColumns.adjustedValue && (
+              <th>
+                <button
+                  className="flex items-center gap-1 hover:text-primary"
+                  onClick={() => onSort('adjustedValue')}
+                >
+                  Adjusted Value
+                  <SortIcon field="adjustedValue" />
+                </button>
+              </th>
+            )}
             {visibleColumns.estimatedBillable && (
               <th>
                 <button
@@ -378,6 +417,59 @@ export default function ProjectsTable({
                   ) : (
                     project.projectValue ? formatCurrency(project.projectValue) : '—'
                   )}
+                </td>
+              )}
+              {visibleColumns.currentlyBilled && (
+                <td
+                  className="cursor-pointer"
+                  onDoubleClick={() => onCellEdit(project, 'currentlyBilled')}
+                >
+                  {editingCell?.id === project.id && editingCell?.field === 'currentlyBilled' ? (
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="input input-sm input-bordered w-full"
+                      value={editValue}
+                      onChange={(e) => onEditValueChange(e.target.value)}
+                      onBlur={() => onCellSave(project.id, 'currentlyBilled')}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') onCellSave(project.id, 'currentlyBilled');
+                        if (e.key === 'Escape') onCellCancel();
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    project.currentlyBilled ? formatCurrency(project.currentlyBilled) : '—'
+                  )}
+                </td>
+              )}
+              {visibleColumns.adjustmentDate && (
+                <td
+                  className="cursor-pointer"
+                  onDoubleClick={() => onCellEdit(project, 'adjustmentDate')}
+                >
+                  {editingCell?.id === project.id && editingCell?.field === 'adjustmentDate' ? (
+                    <input
+                      type="date"
+                      className="input input-sm input-bordered w-full"
+                      value={editValue}
+                      onChange={(e) => onEditValueChange(e.target.value)}
+                      onBlur={() => onCellSave(project.id, 'adjustmentDate')}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') onCellSave(project.id, 'adjustmentDate');
+                        if (e.key === 'Escape') onCellCancel();
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    project.adjustmentDate ? new Date(project.adjustmentDate).toLocaleDateString() : '—'
+                  )}
+                </td>
+              )}
+              {visibleColumns.adjustedValue && (
+                <td className="font-semibold">
+                  {project.adjustedValue ? formatCurrency(project.adjustedValue) : '—'}
                 </td>
               )}
               {visibleColumns.estimatedBillable && (

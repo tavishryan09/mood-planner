@@ -20,6 +20,9 @@ interface Project {
   clientName?: string;
   commonName?: string;
   projectValue?: number;
+  currentlyBilled?: number;
+  adjustmentDate?: string;
+  adjustedValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
   archived?: boolean;

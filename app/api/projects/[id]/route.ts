@@ -128,7 +128,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { projectNumber, projectName, clientId, commonName, projectValue, billingRate, useTeamRates, deadline, internalDeadline, deadlineTitle, deadlineDescription, internalDeadlineTitle, internalDeadlineDescription, archived } = body;
+    const { projectNumber, projectName, clientId, commonName, projectValue, currentlyBilled, adjustmentDate, billingRate, useTeamRates, deadline, internalDeadline, deadlineTitle, deadlineDescription, internalDeadlineTitle, internalDeadlineDescription, archived } = body;
 
     // Get the old deadline values before updating
     const oldProject = await sql`
@@ -145,6 +145,8 @@ export async function PUT(
         client_id = ${clientId || null},
         common_name = ${commonName || null},
         project_value = ${projectValue || null},
+        currently_billed = ${currentlyBilled || null},
+        adjustment_date = ${adjustmentDate || null},
         billing_rate = ${billingRate || null},
         use_team_rates = ${useTeamRates || false},
         deadline = ${deadline || null},
@@ -158,6 +160,8 @@ export async function PUT(
         client_id as "clientId",
         common_name as "commonName",
         project_value as "projectValue",
+        currently_billed as "currentlyBilled",
+        adjustment_date as "adjustmentDate",
         billing_rate as "billingRate",
         use_team_rates as "useTeamRates",
         deadline,

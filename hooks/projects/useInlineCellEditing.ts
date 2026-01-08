@@ -8,6 +8,9 @@ interface Project {
   clientName?: string;
   commonName?: string;
   projectValue?: number;
+  currentlyBilled?: number;
+  adjustmentDate?: string;
+  adjustedValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
   archived?: boolean;
@@ -39,6 +42,8 @@ export function useInlineCellEditing(
     else if (field === 'projectNumber') value = project.projectNumber || '';
     else if (field === 'commonName') value = project.commonName || '';
     else if (field === 'projectValue') value = project.projectValue?.toString() || '';
+    else if (field === 'currentlyBilled') value = project.currentlyBilled?.toString() || '';
+    else if (field === 'adjustmentDate') value = project.adjustmentDate || '';
     setEditValue(value);
   };
 
@@ -55,8 +60,10 @@ export function useInlineCellEditing(
       let value: string | number | null = editValue;
 
       // Convert value based on field type
-      if (field === 'projectValue') {
+      if (field === 'projectValue' || field === 'currentlyBilled') {
         value = editValue ? parseFloat(editValue) : null;
+      } else if (field === 'adjustmentDate') {
+        value = editValue || null;
       } else if (!editValue.trim()) {
         value = null;
       }
@@ -66,7 +73,9 @@ export function useInlineCellEditing(
         projectName: field === 'projectName' ? value : project.projectName,
         clientId: project.clientId || null,
         commonName: field === 'commonName' ? value : (project.commonName || null),
-        projectValue: field === 'projectValue' ? value : (project.projectValue || null)
+        projectValue: field === 'projectValue' ? value : (project.projectValue || null),
+        currentlyBilled: field === 'currentlyBilled' ? value : (project.currentlyBilled || null),
+        adjustmentDate: field === 'adjustmentDate' ? value : (project.adjustmentDate || null)
       };
 
       const response = await fetch(`/api/projects/${projectId}`, {

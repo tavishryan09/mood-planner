@@ -48,7 +48,8 @@
       "Bash(node --env-file=.env.local node_modules/.bin/tsx:*)",
       "Bash(chmod:*)",
       "Bash(node:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(tsx scripts/add-compact-view.ts:*)"
     ]
   }
 }

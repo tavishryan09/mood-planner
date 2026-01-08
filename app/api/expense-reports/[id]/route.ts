@@ -217,3 +217,98 @@ export async function PUT(
     );
   }
 }
+
+// DELETE - Delete an expense report
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
+
+    const { id } = await params;
+    const reportId = parseInt(id);
+
+    if (isNaN(reportId)) {
+      return NextResponse.json(
+        { error: 'Invalid report ID' },
+        { status: 400 }
+      );
+    }
+
+    const isAccountant = currentUser.role === 'Accountant' || currentUser.role === 'Admin';
+
+    // Fetch the report to check ownership
+    const report = await sql`
+      SELECT id, user_id as "userId", status
+      FROM expense_reports
+      WHERE id = ${reportId}
+    `;
+
+    if (report.length === 0) {
+      return NextResponse.json(
+        { error: 'Report not found' },
+        { status: 404 }
+      );
+    }
+
+    // Only allow deletion if:
+    // 1. User owns the report and it's not yet approved/paid, OR
+    // 2. User is an accountant/admin
+    const canDelete = isAccountant ||
+      (report[0].userId === currentUser.id &&
+       report[0].status !== 'Approved' &&
+       report[0].status !== 'Paid');
+
+    if (!canDelete) {
+      return NextResponse.json(
+        { error: 'Cannot delete approved or paid reports unless you are an accountant' },
+        { status: 403 }
+      );
+    }
+
+    // Get all expense IDs in this report
+    const expenseItems = await sql`
+      SELECT expense_id as "expenseId"
+      FROM expense_report_items
+      WHERE expense_report_id = ${reportId}
+    `;
+
+    // Delete report items
+    await sql`
+      DELETE FROM expense_report_items
+      WHERE expense_report_id = ${reportId}
+    `;
+
+    // Delete the report
+    await sql`
+      DELETE FROM expense_reports
+      WHERE id = ${reportId}
+    `;
+
+    // Set expenses back to Unsubmitted status
+    if (expenseItems.length > 0) {
+      const expenseIds = expenseItems.map((item: any) => item.expenseId);
+      await sql`
+        UPDATE expenses
+        SET status = 'Unsubmitted'
+        WHERE id = ANY(${expenseIds})
+      `;
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting expense report:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete expense report' },
+      { status: 500 }
+    );
+  }
+}

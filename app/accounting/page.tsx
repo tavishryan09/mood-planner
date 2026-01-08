@@ -140,6 +140,37 @@ export default function Billing() {
     }
   };
 
+  const handleDeleteReport = async (reportId: number, reportName: string) => {
+    const confirmed = confirm(`Are you sure you want to delete the expense report "${reportName}"? This will set all expenses back to Unsubmitted status. This action cannot be undone.`);
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/expense-reports/${reportId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Remove the report from the list
+        setExpenseReports(prevReports => prevReports.filter(r => r.id !== reportId));
+
+        // Refresh expenses to show updated statuses
+        const expensesRes = await fetch('/api/expenses?limit=10');
+        if (expensesRes.ok) {
+          const expensesData = await expensesRes.json();
+          setExpenses(expensesData);
+        }
+
+        alert(`Expense report "${reportName}" deleted successfully!`);
+      } else {
+        const error = await response.json();
+        alert(`Failed to delete report: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting expense report:', error);
+      alert('Failed to delete expense report');
+    }
+  };
+
   // Accounting data
   const { projects, expenses, setExpenses, expenseReports, setExpenseReports, loading } = useAccountingData();
 
@@ -301,16 +332,27 @@ export default function Billing() {
                                 </span>
                               </td>
                               <td>
-                                <button
-                                  className="btn btn-ghost btn-xs gap-1"
-                                  onClick={() => handleDownloadReport(report.id, report.reportName)}
-                                  title="Download PDF"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                  </svg>
-                                  PDF
-                                </button>
+                                <div className="flex gap-1">
+                                  <button
+                                    className="btn btn-ghost btn-xs gap-1"
+                                    onClick={() => handleDownloadReport(report.id, report.reportName)}
+                                    title="Download PDF"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    PDF
+                                  </button>
+                                  <button
+                                    className="btn btn-ghost btn-xs gap-1 text-error hover:bg-error/10"
+                                    onClick={() => handleDeleteReport(report.id, report.reportName)}
+                                    title="Delete Report"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}

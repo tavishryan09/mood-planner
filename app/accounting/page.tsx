@@ -12,7 +12,6 @@ export default function Billing() {
   const { user } = useAuth();
   const isAccountant = user?.role === 'Accountant';
   const canEditStatus = user?.role === 'Accountant' || user?.role === 'Admin';
-  const canViewAllReports = user?.role === 'Accountant' || user?.role === 'Admin';
 
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -259,7 +258,7 @@ export default function Billing() {
                         <thead>
                           <tr>
                             <th>Report Name</th>
-                            {canViewAllReports && <th>Submitted By</th>}
+                            {isAccountant && <th>Submitted By</th>}
                             <th>Submission Date</th>
                             <th>Status</th>
                             <th className="text-right">Total Amount</th>
@@ -276,7 +275,7 @@ export default function Billing() {
                                   <div className="text-xs text-base-content/60">{report.notes}</div>
                                 )}
                               </td>
-                              {canViewAllReports && (
+                              {isAccountant && (
                                 <td>
                                   <div className="text-sm">{report.userName || 'Unknown'}</div>
                                 </td>

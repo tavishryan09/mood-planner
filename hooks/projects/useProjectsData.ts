@@ -57,7 +57,7 @@ interface VisibleColumns {
 interface UseProjectsDataReturn {
   // Data state
   projects: Project[];
-  setProjects: (projects: Project[]) => void;
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   clients: Client[];
   setClients: (clients: Client[]) => void;
   users: User[];

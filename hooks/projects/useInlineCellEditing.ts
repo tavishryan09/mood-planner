@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Dispatch, SetStateAction } from 'react';
 
 interface Project {
   id: number;
@@ -30,7 +30,7 @@ interface EditingCell {
 
 export function useInlineCellEditing(
   projects: Project[],
-  onUpdate: () => Promise<void>
+  setProjects: Dispatch<SetStateAction<Project[]>>
 ) {
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [editValue, setEditValue] = useState<string>('');
@@ -75,7 +75,10 @@ export function useInlineCellEditing(
         commonName: field === 'commonName' ? value : (project.commonName || null),
         projectValue: field === 'projectValue' ? value : (project.projectValue || null),
         currentlyBilled: field === 'currentlyBilled' ? value : (project.currentlyBilled || null),
-        adjustmentDate: field === 'adjustmentDate' ? value : (project.adjustmentDate || null)
+        adjustmentDate: field === 'adjustmentDate' ? value : (project.adjustmentDate || null),
+        billingRate: project.billingRate || null,
+        useTeamRates: project.useTeamRates || false,
+        archived: project.archived || false
       };
 
       const response = await fetch(`/api/projects/${projectId}`, {
@@ -88,7 +91,51 @@ export function useInlineCellEditing(
 
       if (!response.ok) throw new Error('Failed to update project');
 
-      await onUpdate();
+      // Check if adjustment date changed - if so, we need to refetch estimated billable
+      const adjustmentDateChanged = field === 'adjustmentDate' && project.adjustmentDate !== value;
+
+      // Update local state immediately to avoid page refresh
+      const updatedProjects = projects.map(p => {
+        if (p.id === projectId) {
+          const updatedProject = {
+            ...p,
+            [field]: value
+          };
+
+          // Recalculate adjusted value if project value or currently billed changed
+          if (field === 'projectValue' || field === 'currentlyBilled') {
+            const projectValue = field === 'projectValue' ? (value as number | null) : p.projectValue;
+            const currentlyBilled = field === 'currentlyBilled' ? (value as number | null) : p.currentlyBilled;
+
+            updatedProject.adjustedValue = projectValue && currentlyBilled
+              ? projectValue - currentlyBilled
+              : undefined;
+          }
+
+          return updatedProject;
+        }
+        return p;
+      });
+
+      setProjects(updatedProjects);
+
+      // If adjustment date changed, refetch estimated billable in the background
+      if (adjustmentDateChanged) {
+        try {
+          const billableResponse = await fetch(`/api/projects/${projectId}/estimated-billable`);
+          if (billableResponse.ok) {
+            const billableData = await billableResponse.json();
+            setProjects((prev: Project[]): Project[] => prev.map((p): Project =>
+              p.id === projectId
+                ? { ...p, estimatedBillable: billableData.estimatedBillable }
+                : p
+            ));
+          }
+        } catch (error) {
+          console.error('Error refetching estimated billable:', error);
+        }
+      }
+
       setEditingCell(null);
       setEditValue('');
     } catch (error) {

@@ -99,12 +99,7 @@ export default function Projects() {
     fetchClients
   });
 
-  // Filter projects based on archived status
-  const filteredProjects = visibleColumns.showArchived
-    ? projects
-    : projects.filter(p => !p.archived);
-
-  // Inline cell editing
+  // Inline cell editing (needs full projects array, not filtered)
   const {
     editingCell,
     editValue,
@@ -112,7 +107,12 @@ export default function Projects() {
     cancelCellEdit,
     saveCellEdit,
     setEditValue
-  } = useInlineCellEditing(filteredProjects, fetchProjects);
+  } = useInlineCellEditing(projects, setProjects);
+
+  // Filter projects based on archived status
+  const filteredProjects = visibleColumns.showArchived
+    ? projects
+    : projects.filter(p => !p.archived);
 
   // Sorting
   const {

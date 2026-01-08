@@ -140,17 +140,17 @@ export async function PUT(
     const result = await sql`
       UPDATE projects
       SET
-        project_number = ${projectNumber || null},
+        project_number = ${projectNumber ?? null},
         project_name = ${projectName},
-        client_id = ${clientId || null},
-        common_name = ${commonName || null},
-        project_value = ${projectValue || null},
-        currently_billed = ${currentlyBilled || null},
-        adjustment_date = ${adjustmentDate || null},
-        billing_rate = ${billingRate || null},
-        use_team_rates = ${useTeamRates || false},
-        deadline = ${deadline || null},
-        internal_deadline = ${internalDeadline || null},
+        client_id = ${clientId ?? null},
+        common_name = ${commonName ?? null},
+        project_value = ${projectValue ?? null},
+        currently_billed = ${currentlyBilled ?? null},
+        adjustment_date = ${adjustmentDate ?? null},
+        billing_rate = ${billingRate ?? null},
+        use_team_rates = ${useTeamRates ?? false},
+        deadline = ${deadline ?? null},
+        internal_deadline = ${internalDeadline ?? null},
         archived = ${archived !== undefined ? archived : false}
       WHERE id = ${id}
       RETURNING

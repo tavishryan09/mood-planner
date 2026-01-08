@@ -110,13 +110,13 @@ export async function POST(request: Request) {
         use_team_rates
       )
       VALUES (
-        ${projectNumber || null},
+        ${projectNumber ?? null},
         ${projectName},
-        ${clientId || null},
-        ${commonName || null},
-        ${projectValue || null},
-        ${billingRate || null},
-        ${useTeamRates || false}
+        ${clientId ?? null},
+        ${commonName ?? null},
+        ${projectValue ?? null},
+        ${billingRate ?? null},
+        ${useTeamRates ?? false}
       )
       RETURNING
         id,

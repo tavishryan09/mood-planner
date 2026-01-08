@@ -69,16 +69,16 @@ export function useInlineCellEditing(
       }
 
       const payload = {
-        projectNumber: field === 'projectNumber' ? value : (project.projectNumber || null),
+        projectNumber: field === 'projectNumber' ? value : (project.projectNumber ?? null),
         projectName: field === 'projectName' ? value : project.projectName,
-        clientId: project.clientId || null,
-        commonName: field === 'commonName' ? value : (project.commonName || null),
-        projectValue: field === 'projectValue' ? value : (project.projectValue || null),
-        currentlyBilled: field === 'currentlyBilled' ? value : (project.currentlyBilled || null),
-        adjustmentDate: field === 'adjustmentDate' ? value : (project.adjustmentDate || null),
-        billingRate: project.billingRate || null,
-        useTeamRates: project.useTeamRates || false,
-        archived: project.archived || false
+        clientId: project.clientId ?? null,
+        commonName: field === 'commonName' ? value : (project.commonName ?? null),
+        projectValue: field === 'projectValue' ? value : (project.projectValue ?? null),
+        currentlyBilled: field === 'currentlyBilled' ? value : (project.currentlyBilled ?? null),
+        adjustmentDate: field === 'adjustmentDate' ? value : (project.adjustmentDate ?? null),
+        billingRate: project.billingRate ?? null,
+        useTeamRates: project.useTeamRates ?? false,
+        archived: project.archived ?? false
       };
 
       const response = await fetch(`/api/projects/${projectId}`, {

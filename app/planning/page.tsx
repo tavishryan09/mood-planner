@@ -205,10 +205,6 @@ export default function Planning() {
     handleMilestoneCellDrop,
     resizingTask,
     handleResizeStart,
-    draggedUser,
-    handleDragStart,
-    handleDragOver,
-    handleDragEnd,
     handleTaskClick,
     handleMilestoneClick,
     getTaskForCell,
@@ -1222,20 +1218,14 @@ export default function Planning() {
                         {rowIndex === 0 ? (
                           <th
                             rowSpan={rowCount}
-                            draggable
-                            onDragStart={() => handleDragStart(user.id)}
-                            onDragOver={(e) => handleDragOver(e, user.id)}
-                            onDragEnd={handleDragEnd}
-                            className={`bg-base-100 font-medium text-sm text-center align-middle cursor-move sticky left-0 z-20 relative border-t-4 border-base-300 ${
-                              draggedUser === user.id ? 'opacity-50' : ''
-                            }`}
+                            className="bg-base-100 font-medium text-sm text-center align-middle sticky left-0 z-20 relative border-t-4 border-base-300 group"
                             style={{ minWidth: '120px', width: '120px' }}
                           >
                             <div className="flex flex-col items-center justify-center h-full">
                               <div>{firstName}</div>
                               <button
                                 onClick={() => setUserRowCounts(prev => ({ ...prev, [user.id]: (prev[user.id] || 4) + 1 }))}
-                                className="absolute bottom-2 btn btn-xs btn-circle btn-ghost opacity-50 hover:opacity-100"
+                                className="absolute bottom-2 btn btn-xs btn-circle btn-ghost opacity-0 group-hover:opacity-100 transition-opacity"
                                 title="Add row"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">

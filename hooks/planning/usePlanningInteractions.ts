@@ -85,12 +85,6 @@ interface UsePlanningInteractionsReturn {
   resizingTask: { task: PlanningTask; edge: 'top' | 'bottom'; startY: number; startRowIndex: number; startRowSpan: number } | null;
   handleResizeStart: (e: React.MouseEvent | React.TouchEvent, task: PlanningTask, edge: 'top' | 'bottom') => void;
 
-  // User drag (reordering)
-  draggedUser: number | null;
-  handleDragStart: (userId: number) => void;
-  handleDragOver: (e: React.DragEvent, targetUserId: number) => void;
-  handleDragEnd: () => void;
-
   // Click handlers
   handleTaskClick: (e: React.MouseEvent, task: PlanningTask) => void;
   handleMilestoneClick: (e: React.MouseEvent, milestone: MilestoneTask) => void;
@@ -136,7 +130,6 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
   const [dragOverCell, setDragOverCell] = useState<{ userId: number; date: Date; rowIndex: number } | null>(null);
   const [draggedMilestone, setDraggedMilestone] = useState<MilestoneTask | null>(null);
   const [dragOverMilestoneCell, setDragOverMilestoneCell] = useState<{ date: Date; rowIndex: number } | null>(null);
-  const [draggedUser, setDraggedUser] = useState<number | null>(null);
 
   // Resize state
   const [resizingTask, setResizingTask] = useState<{ task: PlanningTask; edge: 'top' | 'bottom'; startY: number; startRowIndex: number; startRowSpan: number } | null>(null);
@@ -528,37 +521,6 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
     };
   }, [selectedTask, selectedMilestone, copiedTask, selectedCell, showTaskModal, showMilestoneModal]);
 
-  // User drag handlers (for reordering)
-  const handleDragStart = (userId: number) => {
-    setDraggedUser(userId);
-  };
-
-  const handleDragOver = (e: React.DragEvent, targetUserId: number) => {
-    e.preventDefault();
-    if (draggedUser === null || draggedUser === targetUserId) return;
-
-    const draggedIndex = users.findIndex(u => u.id === draggedUser);
-    const targetIndex = users.findIndex(u => u.id === targetUserId);
-
-    if (draggedIndex === -1 || targetIndex === -1) return;
-
-    const newUsers = [...users];
-    const [removed] = newUsers.splice(draggedIndex, 1);
-    newUsers.splice(targetIndex, 0, removed);
-
-    const reorderedUsers = newUsers.map((user, index) => ({
-      ...user,
-      order: index
-    }));
-
-    setUsers(reorderedUsers);
-    saveUserSettings(reorderedUsers);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedUser(null);
-  };
-
   return {
     // Task drag and drop
     draggedTask,
@@ -579,12 +541,6 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
     // Task resize
     resizingTask,
     handleResizeStart,
-
-    // User drag (reordering)
-    draggedUser,
-    handleDragStart,
-    handleDragOver,
-    handleDragEnd,
 
     // Click handlers
     handleTaskClick,

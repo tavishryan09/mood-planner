@@ -87,7 +87,7 @@ export default function CalendarHeader({
           {rowIndex === 0 ? (
             <th
               rowSpan={milestoneRowCount}
-              className="bg-base-200 font-semibold text-sm text-center align-middle sticky left-0 z-50 relative"
+              className="bg-base-200 font-semibold text-sm text-center align-middle sticky left-0 z-50 relative group"
               style={{ minWidth: '120px', width: '120px' }}
             >
               <div className="flex flex-col items-center justify-center h-full">
@@ -98,7 +98,7 @@ export default function CalendarHeader({
                 </div>
                 <button
                   onClick={() => setMilestoneRowCount(prev => prev + 1)}
-                  className="absolute bottom-2 btn btn-xs btn-circle btn-ghost opacity-50 hover:opacity-100"
+                  className="absolute bottom-2 btn btn-xs btn-circle btn-ghost opacity-0 group-hover:opacity-100 transition-opacity"
                   title="Add row"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">

@@ -104,10 +104,9 @@ export default function UserSettingsModal({
         >
           <CloseIcon />
         </button>
-        <h3 className="font-bold text-lg mb-4">Manage Team Members</h3>
-        <p className="text-sm opacity-70 mb-4">
-          Drag team members to reorder them. Toggle visibility to show/hide team members in the planning table.
-        </p>
+
+        {/* Visibility Settings Section */}
+        <h3 className="font-bold text-lg mb-4">Visibility Settings</h3>
 
         {/* Show Instructions Toggle */}
         <div className="flex items-center justify-between p-3 rounded-lg border border-base-300 bg-base-100 mb-4">
@@ -169,6 +168,12 @@ export default function UserSettingsModal({
             </button>
           </div>
         )}
+
+        {/* Manage Team Members Section */}
+        <h3 className="font-bold text-lg mb-4 mt-6">Manage Team Members</h3>
+        <p className="text-sm opacity-70 mb-4">
+          Drag team members to reorder them. Toggle visibility to show/hide team members in the planning table.
+        </p>
 
         <div className="space-y-2">
           {tempUsers

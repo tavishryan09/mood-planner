@@ -514,16 +514,19 @@ export default function ProjectsTable({
               {visibleColumns.billablePercent && (
                 <td>
                   {(() => {
-                    const baseValue = project.adjustedValue ?? project.projectValue;
-                    return baseValue && project.estimatedBillable ? (
+                    const currentlyBilled = Number(project.currentlyBilled || 0);
+                    const estimatedBillable = Number(project.estimatedBillable || 0);
+                    const totalBilled = currentlyBilled + estimatedBillable;
+                    const percentage = project.projectValue ? (totalBilled / Number(project.projectValue)) * 100 : 0;
+                    return project.projectValue && totalBilled > 0 ? (
                       <div className="flex items-center gap-2">
                         <progress
                           className="progress progress-primary w-20"
-                          value={Math.min((project.estimatedBillable / baseValue) * 100, 100)}
+                          value={Math.min(percentage, 100)}
                           max="100"
                         ></progress>
                         <span className="text-xs font-medium">
-                          {Math.round((project.estimatedBillable / baseValue) * 100)}%
+                          {Math.round(percentage)}%
                         </span>
                       </div>
                     ) : (

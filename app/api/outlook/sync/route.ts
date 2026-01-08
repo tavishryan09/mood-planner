@@ -266,6 +266,8 @@ export async function POST(request: Request) {
                 isAllDay: true,
                 calendarId,
                 categories,
+                showAs: 'free',
+                isReminderOn: false,
               });
             } catch (updateError: any) {
               // If event not found, create a new one
@@ -285,6 +287,8 @@ export async function POST(request: Request) {
                   isAllDay: true,
                   calendarId,
                   categories,
+                  showAs: 'free',
+                  isReminderOn: false,
                 });
                 eventId = event.id;
 
@@ -311,6 +315,8 @@ export async function POST(request: Request) {
               isAllDay: true,
               calendarId,
               categories,
+              showAs: 'free',
+              isReminderOn: false,
             });
             eventId = event.id;
 
@@ -341,6 +347,8 @@ export async function POST(request: Request) {
                 isAllDay: true,
                 calendarId,
                 categories,
+                showAs: 'free',
+                isReminderOn: false,
               });
             } catch (updateError: any) {
               // If event not found, create a new one
@@ -360,6 +368,8 @@ export async function POST(request: Request) {
                   isAllDay: true,
                   calendarId,
                   categories,
+                  showAs: 'free',
+                  isReminderOn: false,
                 });
                 eventId = event.id;
 
@@ -384,6 +394,8 @@ export async function POST(request: Request) {
               isAllDay: true,
               calendarId,
               categories,
+              showAs: 'free',
+              isReminderOn: false,
             });
             eventId = event.id;
 

@@ -1030,15 +1030,31 @@ export default function Planning() {
                     getDayName={getDayName}
                     isToday={isToday}
                     isWeekend={isWeekend}
+                    milestoneRowCount={milestoneRowCount}
+                    setMilestoneRowCount={setMilestoneRowCount}
+                    getMilestoneForCell={getMilestoneForCell}
+                    handleMilestoneCellDoubleClick={handleMilestoneCellDoubleClick}
+                    handleMilestoneCellDragOver={handleMilestoneCellDragOver}
+                    handleMilestoneCellDrop={handleMilestoneCellDrop}
+                    setSelectedMilestoneCell={setSelectedMilestoneCell}
+                    setSelectedTask={setSelectedTask}
+                    setSelectedMilestone={setSelectedMilestone}
+                    setSelectedCell={setSelectedCell}
+                    draggedMilestone={draggedMilestone}
+                    dragOverMilestoneCell={dragOverMilestoneCell}
+                    handleMilestoneClick={handleMilestoneClick}
+                    handleMilestoneEdit={handleMilestoneEdit}
+                    handleMilestoneDragStart={handleMilestoneDragStart}
+                    handleMilestoneDragEnd={handleMilestoneDragEnd}
                   />
                   <tbody>
-                  {/* Deadlines/Milestones Section */}
-                  {Array.from({ length: milestoneRowCount }).map((_, rowIndex) => (
-                    <tr key={`milestone-${rowIndex}`} className="border-b-2 border-base-300 bg-base-200 sticky z-10" style={{ top: `${56 + (rowIndex * 48)}px` }}>
+                  {/* Deadlines/Milestones Section - Now in thead */}
+                  {false && Array.from({ length: milestoneRowCount }).map((_, rowIndex) => (
+                    <tr key={`milestone-${rowIndex}`} className="border-b-2 border-base-300 bg-base-200 sticky z-20" style={{ top: `${64 + (rowIndex * 48)}px` }}>
                       {rowIndex === 0 ? (
                         <th
                           rowSpan={milestoneRowCount}
-                          className="bg-base-200 font-semibold text-sm text-center align-middle sticky left-0 z-20 relative"
+                          className="bg-base-200 font-semibold text-sm text-center align-middle sticky left-0 z-30 relative"
                           style={{ minWidth: '120px', width: '120px' }}
                         >
                           <div className="flex flex-col items-center justify-center h-full">
@@ -1166,7 +1182,7 @@ export default function Planning() {
                   ))}
 
                   {/* Team Members Section */}
-                  {getVisibleUsers().flatMap((user) => {
+                  {getVisibleUsers().flatMap((user, userIdx) => {
                     const firstName = user.name.split(' ')[0];
                     const rowCount = userRowCounts[user.id] || 4;
                     return Array.from({ length: rowCount }).map((_, rowIndex) => (
@@ -1178,7 +1194,7 @@ export default function Planning() {
                             onDragStart={() => handleDragStart(user.id)}
                             onDragOver={(e) => handleDragOver(e, user.id)}
                             onDragEnd={handleDragEnd}
-                            className={`bg-base-100 font-medium text-sm text-center align-middle cursor-move sticky left-0 z-20 relative ${
+                            className={`bg-base-100 font-medium text-sm text-center align-middle cursor-move sticky left-0 z-20 relative border-t-4 border-base-300 ${
                               draggedUser === user.id ? 'opacity-50' : ''
                             }`}
                             style={{ minWidth: '120px', width: '120px' }}
@@ -1239,7 +1255,7 @@ export default function Planning() {
                               onDoubleClick={() => !task && handleCellDoubleClick(user.id, day, rowIndex)}
                               onDragOver={(e) => handleCellDragOver(e, user.id, day, rowIndex)}
                               onDrop={(e) => handleCellDrop(e, user.id, day, rowIndex)}
-                              className={`hover:bg-base-200 transition-colors cursor-pointer p-1 relative ${
+                              className={`hover:bg-base-200 transition-colors cursor-pointer p-1 relative border-b-0 ${
                                 isToday(day)
                                   ? 'bg-primary/10'
                                   : isWeekend(day)
@@ -1249,7 +1265,9 @@ export default function Planning() {
                                 draggedTask && !task ? 'bg-primary/10' : ''
                               } ${draggedTask ? 'z-20' : ''} ${
                                 isPreviewCell ? (isPreviewValid ? 'bg-success/30 border-2 border-success' : 'bg-error/30 border-2 border-error') : ''
-                              } ${isCellSelected && !task ? 'ring-2 ring-accent ring-inset' : ''}`}
+                              } ${isCellSelected && !task ? 'ring-2 ring-accent ring-inset' : ''} ${
+                                rowIndex === 0 ? 'border-t-4 border-base-300' : ''
+                              }`}
                               style={{
                                 minWidth: '140px',
                                 maxWidth: '140px',

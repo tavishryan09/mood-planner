@@ -473,7 +473,31 @@ export default function ProjectsTable({
                       />
                     </div>
                   ) : (
-                    project.adjustmentDate ? new Date(project.adjustmentDate).toLocaleDateString() : '—'
+                    project.adjustmentDate ? (
+                      <div className="flex items-center gap-2 group">
+                        <span>
+                          {(() => {
+                            // Format YYYY-MM-DD as readable date without timezone conversion
+                            const dateStr = project.adjustmentDate.split('T')[0]; // Handle timestamps
+                            const [year, month, day] = dateStr.split('-');
+                            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            return `${monthNames[parseInt(month) - 1]} ${parseInt(day)}, ${year}`;
+                          })()}
+                        </span>
+                        <button
+                          className="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCellSave(project.id, 'adjustmentDate', '');
+                          }}
+                          title="Clear date"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : '—'
                   )}
                 </td>
               )}

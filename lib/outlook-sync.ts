@@ -111,12 +111,17 @@ export async function syncTaskToOutlook(task: {
   internalTaskTypeName?: string;
 }) {
   try {
+    console.log(`[syncTaskToOutlook] Starting sync for task ${task.id}, userId: ${task.userId}`);
     const accessToken = await getValidAccessToken(task.userId);
 
     if (!accessToken) {
+      console.log(`[syncTaskToOutlook] No access token for user ${task.userId} - skipping sync`);
       // User hasn't connected Outlook, skip sync
       return null;
     }
+
+    console.log(`[syncTaskToOutlook] Got access token for user ${task.userId}`);
+
 
     // Get or create the Mood Planner calendar
     const calendarId = await getMoodPlannerCalendar(accessToken);
@@ -153,6 +158,7 @@ export async function syncTaskToOutlook(task: {
 
     if (task.outlookEventId) {
       // Update existing event
+      console.log(`[syncTaskToOutlook] Updating existing event ${task.outlookEventId} for task ${task.id}`);
       await updateCalendarEvent(accessToken, task.outlookEventId, {
         subject,
         start: eventStart.toISOString(),
@@ -164,9 +170,11 @@ export async function syncTaskToOutlook(task: {
         showAs: 'free',
         isReminderOn: false,
       });
+      console.log(`[syncTaskToOutlook] Successfully updated event ${task.outlookEventId}`);
       return task.outlookEventId;
     } else {
       // Create new event
+      console.log(`[syncTaskToOutlook] Creating new event for task ${task.id} with subject: ${subject}`);
       const event = await createCalendarEvent(accessToken, {
         subject,
         start: eventStart.toISOString(),
@@ -179,6 +187,7 @@ export async function syncTaskToOutlook(task: {
         isReminderOn: false,
       });
 
+      console.log(`[syncTaskToOutlook] Created event ${event.id}, updating database`);
       // Store the event ID in the database
       await sql`
         UPDATE planning_tasks
@@ -186,6 +195,7 @@ export async function syncTaskToOutlook(task: {
         WHERE id = ${task.id}
       `;
 
+      console.log(`[syncTaskToOutlook] Successfully synced task ${task.id} to Outlook`);
       return event.id;
     }
   } catch (error) {

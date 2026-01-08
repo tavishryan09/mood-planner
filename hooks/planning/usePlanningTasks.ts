@@ -404,6 +404,7 @@ export function usePlanningTasks({ tasks, refetchTasks }: UsePlanningTasksProps)
           taskDescription: copiedTask.taskDescription,
           taskType: copiedTask.taskType,
           taskDate: date.toISOString().split('T')[0],
+          rowSpan: copiedTask.rowSpan,
           internalTaskTypeId: copiedTask.internalTaskTypeId
         })
       });

@@ -188,6 +188,9 @@ export async function POST(request: Request) {
 
     const report = reportResult[0];
 
+    // Add userName to the report object
+    report.userName = currentUser.name;
+
     // Add expenses to the report
     for (const expenseId of expenseIds) {
       await sql`

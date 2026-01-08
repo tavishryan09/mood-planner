@@ -244,7 +244,7 @@ export default function ProjectsTable({
                   className="flex items-center gap-1 hover:text-primary"
                   onClick={() => onSort('adjustedValue')}
                 >
-                  Adjusted Value
+                  Remaining Value
                   <SortIcon field="adjustedValue" />
                 </button>
               </th>
@@ -479,20 +479,23 @@ export default function ProjectsTable({
               )}
               {visibleColumns.billablePercent && (
                 <td>
-                  {project.projectValue && project.estimatedBillable ? (
-                    <div className="flex items-center gap-2">
-                      <progress
-                        className="progress progress-primary w-20"
-                        value={Math.min((project.estimatedBillable / project.projectValue) * 100, 100)}
-                        max="100"
-                      ></progress>
-                      <span className="text-xs font-medium">
-                        {Math.round((project.estimatedBillable / project.projectValue) * 100)}%
-                      </span>
-                    </div>
-                  ) : (
-                    '—'
-                  )}
+                  {(() => {
+                    const baseValue = project.adjustedValue ?? project.projectValue;
+                    return baseValue && project.estimatedBillable ? (
+                      <div className="flex items-center gap-2">
+                        <progress
+                          className="progress progress-primary w-20"
+                          value={Math.min((project.estimatedBillable / baseValue) * 100, 100)}
+                          max="100"
+                        ></progress>
+                        <span className="text-xs font-medium">
+                          {Math.round((project.estimatedBillable / baseValue) * 100)}%
+                        </span>
+                      </div>
+                    ) : (
+                      '—'
+                    );
+                  })()}
                 </td>
               )}
               {visibleColumns.totalHours && (

@@ -161,6 +161,8 @@ export async function syncTaskToOutlook(task: {
         isAllDay: true,
         calendarId,
         categories,
+        showAs: 'free',
+        isReminderOn: false,
       });
       return task.outlookEventId;
     } else {
@@ -173,6 +175,8 @@ export async function syncTaskToOutlook(task: {
         isAllDay: true,
         calendarId,
         categories,
+        showAs: 'free',
+        isReminderOn: false,
       });
 
       // Store the event ID in the database
@@ -314,6 +318,8 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
               isAllDay: true,
               calendarId,
               categories,
+              showAs: 'free',
+              isReminderOn: false,
             });
             console.log(`[syncMilestoneToAllTeamMembers] Successfully updated event ${existingEventId} for user ${user.id}`);
             return { userId: user.id, eventId: existingEventId };
@@ -329,6 +335,8 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
                 isAllDay: true,
                 calendarId,
                 categories,
+                showAs: 'free',
+                isReminderOn: false,
               });
               console.log(`[syncMilestoneToAllTeamMembers] Created new event ${event.id} for user ${user.id}`);
               return { userId: user.id, eventId: event.id };
@@ -347,6 +355,8 @@ export async function syncMilestoneToAllTeamMembers(milestone: {
             isAllDay: true,
             calendarId,
             categories,
+            showAs: 'free',
+            isReminderOn: false,
           });
           console.log(`[syncMilestoneToAllTeamMembers] Created new event ${event.id} for user ${user.id}`);
           return { userId: user.id, eventId: event.id };

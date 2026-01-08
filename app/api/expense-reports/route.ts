@@ -68,7 +68,7 @@ export async function GET(request: Request) {
         FROM expense_reports er
         LEFT JOIN users u ON er.user_id = u.id
         LEFT JOIN expense_report_items eri ON er.id = eri.expense_report_id
-        GROUP BY er.id, er.user_id, er.report_name, er.submission_date, er.status, er.total_amount, er.notes, er.created_at, u.name
+        GROUP BY er.id, u.name
         ORDER BY er.submission_date DESC, er.created_at DESC
         LIMIT ${limit}
       `;

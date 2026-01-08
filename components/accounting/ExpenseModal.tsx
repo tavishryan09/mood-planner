@@ -31,6 +31,7 @@ interface ExpenseModalProps {
   newCategory: string;
   receiptPreview: string | null;
   receiptFile: File | null;
+  canEditStatus?: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   onDelete: () => void;
@@ -51,6 +52,7 @@ export default function ExpenseModal({
   newCategory,
   receiptPreview,
   receiptFile,
+  canEditStatus = false,
   onClose,
   onSubmit,
   onDelete,
@@ -134,7 +136,7 @@ export default function ExpenseModal({
 
             <div>
               <label className="label">
-                <span className="label-text">Description</span>
+                <span className="label-text">Description (Optional)</span>
               </label>
               <input
                 type="text"
@@ -142,7 +144,6 @@ export default function ExpenseModal({
                 placeholder="Brief description of the expense"
                 value={formData.description}
                 onChange={(e) => onFormDataChange({ ...formData, description: e.target.value })}
-                required
               />
             </div>
 
@@ -179,26 +180,28 @@ export default function ExpenseModal({
               </select>
             </div>
 
-            <div>
-              <label className="label">
-                <span className="label-text">Status</span>
-              </label>
-              <select
-                className="select select-bordered w-full"
-                value={formData.status}
-                onChange={(e) => onFormDataChange({ ...formData, status: e.target.value })}
-                required
-              >
-                <option value="Unsubmitted">Unsubmitted</option>
-                <option value="Submitted">Submitted</option>
-                <option value="In Review">In Review</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Pending Payment">Pending Payment</option>
-                <option value="Posted">Posted</option>
-                <option value="Paid">Paid</option>
-              </select>
-            </div>
+            {canEditStatus && (
+              <div>
+                <label className="label">
+                  <span className="label-text">Status</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={formData.status}
+                  onChange={(e) => onFormDataChange({ ...formData, status: e.target.value })}
+                  required
+                >
+                  <option value="Unsubmitted">Unsubmitted</option>
+                  <option value="Submitted">Submitted</option>
+                  <option value="In Review">In Review</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
+                  <option value="Pending Payment">Pending Payment</option>
+                  <option value="Posted">Posted</option>
+                  <option value="Paid">Paid</option>
+                </select>
+              </div>
+            )}
 
             <div>
               <label className="label">

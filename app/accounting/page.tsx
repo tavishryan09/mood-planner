@@ -11,6 +11,7 @@ import { useExpenseManagement } from '@/hooks/accounting/useExpenseManagement';
 export default function Billing() {
   const { user } = useAuth();
   const isAccountant = user?.role === 'Accountant';
+  const canEditStatus = user?.role === 'Accountant' || user?.role === 'Admin';
 
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -476,6 +477,7 @@ export default function Billing() {
         newCategory={newCategory}
         receiptPreview={receiptPreview}
         receiptFile={receiptFile}
+        canEditStatus={canEditStatus}
         onClose={closeModal}
         onSubmit={handleSubmitExpense}
         onDelete={handleDeleteExpense}

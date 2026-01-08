@@ -47,7 +47,7 @@ export async function GET(
             LEFT JOIN project_team_rates ptr ON ptr.project_id = ${id} AND ptr.user_id = pt.user_id
             WHERE pt.project_id = ${id}
               AND pt.task_type IN ('Project Task', 'Out of Office')
-              AND pt.start_date > ${adjustmentDate}
+              AND pt.task_date > ${adjustmentDate}
           `
         : await sql`
             SELECT
@@ -78,7 +78,7 @@ export async function GET(
             FROM planning_tasks
             WHERE project_id = ${id}
               AND task_type IN ('Project Task', 'Out of Office')
-              AND start_date > ${adjustmentDate}
+              AND task_date > ${adjustmentDate}
           `
         : await sql`
             SELECT

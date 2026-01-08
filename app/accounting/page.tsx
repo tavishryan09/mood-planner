@@ -432,7 +432,7 @@ export default function Billing() {
                             {formatCurrency(expense.amount)}
                           </td>
                           <td>
-                            {expense.receiptFilename && (
+                            {(expense.receiptFilename || expense.receiptImage) && (
                               <button
                                 className="btn btn-ghost btn-xs"
                                 onClick={() => handleViewReceipt(expense.id, expense.description)}

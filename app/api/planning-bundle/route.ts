@@ -261,6 +261,7 @@ async function fetchOutlookStatus(userId: number) {
 
 async function fetchPlanningPreferences(userId: number) {
   try {
+    console.log('[fetchPlanningPreferences] Querying for userId:', userId);
     const result = await sql`
       SELECT
         show_instructions as "showInstructions",
@@ -269,10 +270,14 @@ async function fetchPlanningPreferences(userId: number) {
       WHERE user_id = ${userId}
     `;
 
+    console.log('[fetchPlanningPreferences] Query result:', result);
+
     if (result.length === 0) {
+      console.log('[fetchPlanningPreferences] No preferences found, returning defaults');
       return { showInstructions: true, compactView: false };
     }
 
+    console.log('[fetchPlanningPreferences] Returning:', result[0]);
     return result[0];
   } catch (error) {
     console.error('Error fetching planning preferences:', error);

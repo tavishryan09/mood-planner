@@ -82,38 +82,50 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { showInstructions, compactView } = body;
 
-    // Build the update dynamically based on what's provided
-    const updates: string[] = [];
-    const values: any[] = [currentUser.id];
+    console.log('[PUT planning-preferences] userId:', currentUser.id, 'body:', body);
 
-    if (showInstructions !== undefined) {
-      updates.push('show_instructions');
-      values.push(showInstructions);
-    }
-
-    if (compactView !== undefined) {
-      updates.push('compact_view');
-      values.push(compactView);
-    }
-
-    if (updates.length === 0) {
-      return NextResponse.json(
-        { error: 'No preferences provided' },
-        { status: 400 }
-      );
-    }
-
-    // Build the query dynamically
-    let query = `
-      INSERT INTO planning_preferences (user_id, ${updates.join(', ')})
-      VALUES ($1, ${updates.map((_, i) => `$${i + 2}`).join(', ')})
-      ON CONFLICT (user_id)
-      DO UPDATE SET
-        ${updates.map((col, i) => `${col} = $${i + 2}`).join(', ')},
-        updated_at = CURRENT_TIMESTAMP
+    // Check if preferences exist
+    const existing = await sql`
+      SELECT id FROM planning_preferences WHERE user_id = ${currentUser.id}
     `;
 
-    await sql.unsafe(query, values);
+    if (existing.length > 0) {
+      // Update existing preferences using template literals
+      if (showInstructions !== undefined && compactView !== undefined) {
+        await sql`
+          UPDATE planning_preferences
+          SET show_instructions = ${showInstructions}, compact_view = ${compactView}, updated_at = CURRENT_TIMESTAMP
+          WHERE user_id = ${currentUser.id}
+        `;
+      } else if (showInstructions !== undefined) {
+        await sql`
+          UPDATE planning_preferences
+          SET show_instructions = ${showInstructions}, updated_at = CURRENT_TIMESTAMP
+          WHERE user_id = ${currentUser.id}
+        `;
+      } else if (compactView !== undefined) {
+        await sql`
+          UPDATE planning_preferences
+          SET compact_view = ${compactView}, updated_at = CURRENT_TIMESTAMP
+          WHERE user_id = ${currentUser.id}
+        `;
+      } else {
+        return NextResponse.json(
+          { error: 'No preferences provided' },
+          { status: 400 }
+        );
+      }
+      console.log('[PUT planning-preferences] UPDATE executed');
+    } else {
+      // Insert new preferences
+      await sql`
+        INSERT INTO planning_preferences (user_id, show_instructions, compact_view)
+        VALUES (${currentUser.id}, ${showInstructions ?? true}, ${compactView ?? false})
+      `;
+      console.log('[PUT planning-preferences] INSERT new record');
+    }
+
+    console.log('[PUT planning-preferences] Update successful');
 
     return NextResponse.json({ success: true });
   } catch (error) {

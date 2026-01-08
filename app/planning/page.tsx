@@ -273,17 +273,22 @@ export default function Planning() {
   };
 
   const updateCompactView = async (value: boolean) => {
+    console.log('[updateCompactView] Called with value:', value);
     try {
       setCompactView(value);
+      console.log('[updateCompactView] Sending PUT request...');
       const response = await fetch('/api/planning-preferences', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ compactView: value })
       });
+      console.log('[updateCompactView] Response status:', response.status);
       if (!response.ok) {
         console.error('Failed to update compact view preference');
         // Revert on error
         setCompactView(!value);
+      } else {
+        console.log('[updateCompactView] Successfully updated to:', value);
       }
     } catch (error) {
       console.error('Error updating compact view preference:', error);

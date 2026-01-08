@@ -1034,7 +1034,7 @@ export default function Planning() {
                   <tbody>
                   {/* Deadlines/Milestones Section */}
                   {Array.from({ length: milestoneRowCount }).map((_, rowIndex) => (
-                    <tr key={`milestone-${rowIndex}`} className="border-b-2 border-base-300 bg-base-200 sticky z-10" style={{ top: `${rowIndex * 48}px` }}>
+                    <tr key={`milestone-${rowIndex}`} className="border-b-2 border-base-300 bg-base-200 sticky z-10" style={{ top: `${56 + (rowIndex * 48)}px` }}>
                       {rowIndex === 0 ? (
                         <th
                           rowSpan={milestoneRowCount}

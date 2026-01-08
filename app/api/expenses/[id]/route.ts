@@ -74,12 +74,12 @@ export async function PUT(
       );
     }
 
-    // Verify the expense exists and belongs to the current user (or user is Accountant)
-    const isAccountant = currentUser.role === 'Accountant';
+    // Verify the expense exists and belongs to the current user (or user is Accountant/Admin)
+    const isAccountant = currentUser.role === 'Accountant' || currentUser.role === 'Admin';
     let existingExpense;
 
     if (isAccountant) {
-      // Accountants can edit any expense
+      // Accountants and Admins can edit any expense
       existingExpense = await sql`
         SELECT id, status FROM expenses
         WHERE id = ${expenseId}
@@ -174,12 +174,12 @@ export async function DELETE(
       );
     }
 
-    // Verify the expense exists and delete it (Accountants can delete any expense)
-    const isAccountant = currentUser.role === 'Accountant';
+    // Verify the expense exists and delete it (Accountants and Admins can delete any expense)
+    const isAccountant = currentUser.role === 'Accountant' || currentUser.role === 'Admin';
     let result;
 
     if (isAccountant) {
-      // Accountants can delete any expense
+      // Accountants and Admins can delete any expense
       result = await sql`
         DELETE FROM expenses
         WHERE id = ${expenseId}

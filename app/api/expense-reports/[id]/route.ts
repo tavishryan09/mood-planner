@@ -55,7 +55,7 @@ export async function GET(
       );
     }
 
-    const isAccountant = currentUser.role === 'Accountant';
+    const isAccountant = currentUser.role === 'Accountant' || currentUser.role === 'Admin';
 
     // Fetch the report
     let report;
@@ -159,12 +159,12 @@ export async function PUT(
     const body = await request.json();
     const { status, notes } = body;
 
-    const isAccountant = currentUser.role === 'Accountant';
+    const isAccountant = currentUser.role === 'Accountant' || currentUser.role === 'Admin';
 
-    // Only accountants can update expense reports
+    // Only accountants and admins can update expense reports
     if (!isAccountant) {
       return NextResponse.json(
-        { error: 'Only accountants can update expense reports' },
+        { error: 'Only accountants and admins can update expense reports' },
         { status: 403 }
       );
     }

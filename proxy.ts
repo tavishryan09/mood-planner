@@ -41,6 +41,7 @@ export default function proxy(request: NextRequest) {
   if (payload.role === 'Accountant') {
     const isAccountingPage = pathname === '/accounting' || pathname.startsWith('/accounting/');
     const isAccountingApi = pathname.startsWith('/api/expenses') ||
+                           pathname.startsWith('/api/expense-reports') ||
                            pathname.startsWith('/api/projects') ||
                            pathname.startsWith('/api/my-projects') ||
                            pathname.startsWith('/api/clients') ||

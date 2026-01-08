@@ -142,7 +142,7 @@ export default function ExpenseModal({
                 type="text"
                 className="input input-bordered w-full"
                 placeholder="Brief description of the expense"
-                value={formData.description}
+                value={formData.description || ''}
                 onChange={(e) => onFormDataChange({ ...formData, description: e.target.value })}
               />
             </div>

@@ -10,7 +10,7 @@ import { useExpenseManagement } from '@/hooks/accounting/useExpenseManagement';
 
 export default function Billing() {
   const { user } = useAuth();
-  const isAccountant = user?.role === 'Accountant';
+  const isAccountant = user?.role === 'Accountant' || user?.role === 'Admin';
   const canEditStatus = user?.role === 'Accountant' || user?.role === 'Admin';
 
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);

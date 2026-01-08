@@ -57,7 +57,7 @@ export async function GET(
       );
     }
 
-    const isAccountant = currentUser.role === 'Accountant';
+    const isAccountant = currentUser.role === 'Accountant' || currentUser.role === 'Admin';
 
     // Fetch the report
     let report;

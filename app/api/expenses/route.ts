@@ -48,8 +48,8 @@ export async function GET(request: Request) {
 
     let expenses;
 
-    // Accountants can see all expenses, others can only see their own
-    const isAccountant = currentUser.role === 'Accountant';
+    // Accountants and Admins can see all expenses, others can only see their own
+    const isAccountant = currentUser.role === 'Accountant' || currentUser.role === 'Admin';
 
     if (projectId) {
       // Get expenses for a specific project
@@ -190,9 +190,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Only accountants can set status to anything other than Unsubmitted
+    // Only accountants and admins can set status to anything other than Unsubmitted
     // Regular users can only create expenses with Unsubmitted status
-    const isAccountant = currentUser.role === 'Accountant';
+    const isAccountant = currentUser.role === 'Accountant' || currentUser.role === 'Admin';
     const finalStatus = isAccountant ? (status || 'Unsubmitted') : 'Unsubmitted';
 
     // Insert the new expense

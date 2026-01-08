@@ -55,8 +55,8 @@ export async function GET(
       );
     }
 
-    // Accountants can view any receipt, others can only view their own
-    const isAccountant = currentUser.role === 'Accountant';
+    // Accountants and Admins can view any receipt, others can only view their own
+    const isAccountant = currentUser.role === 'Accountant' || currentUser.role === 'Admin';
     let result;
 
     if (isAccountant) {

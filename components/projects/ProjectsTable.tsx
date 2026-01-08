@@ -58,7 +58,7 @@ interface ProjectsTableProps {
   onSort: (field: keyof Project) => void;
   onEdit: (projectId: number) => void;
   onCellEdit: (project: Project, field: string) => void;
-  onCellSave: (projectId: number, field: string) => void;
+  onCellSave: (projectId: number, field: string, overrideValue?: string) => void;
   onCellCancel: () => void;
   onEditValueChange: (value: string) => void;
   getSortedProjects: () => Project[];
@@ -465,9 +465,9 @@ export default function ProjectsTable({
                         value={editValue}
                         onChange={(date) => {
                           onEditValueChange(date);
-                          // Auto-save when a date is selected
+                          // Auto-save when a date is selected, passing the date directly
                           setTimeout(() => {
-                            onCellSave(project.id, 'adjustmentDate');
+                            onCellSave(project.id, 'adjustmentDate', date);
                           }, 100);
                         }}
                       />

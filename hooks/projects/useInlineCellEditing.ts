@@ -43,7 +43,16 @@ export function useInlineCellEditing(
     else if (field === 'commonName') value = project.commonName || '';
     else if (field === 'projectValue') value = project.projectValue?.toString() || '';
     else if (field === 'currentlyBilled') value = project.currentlyBilled?.toString() || '';
-    else if (field === 'adjustmentDate') value = project.adjustmentDate || '';
+    else if (field === 'adjustmentDate') {
+      // Normalize date to YYYY-MM-DD format for the DatePicker
+      if (project.adjustmentDate) {
+        const dateStr = project.adjustmentDate;
+        // If it includes a timestamp, extract just the date part
+        value = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+      } else {
+        value = '';
+      }
+    }
     setEditValue(value);
   };
 
@@ -52,19 +61,21 @@ export function useInlineCellEditing(
     setEditValue('');
   };
 
-  const saveCellEdit = async (projectId: number, field: string) => {
+  const saveCellEdit = async (projectId: number, field: string, overrideValue?: string) => {
     const project = projects.find(p => p.id === projectId);
     if (!project) return;
 
     try {
-      let value: string | number | null = editValue;
+      // Use override value if provided, otherwise use editValue from state
+      const currentValue = overrideValue !== undefined ? overrideValue : editValue;
+      let value: string | number | null = currentValue;
 
       // Convert value based on field type
       if (field === 'projectValue' || field === 'currentlyBilled') {
-        value = editValue ? parseFloat(editValue) : null;
+        value = currentValue ? parseFloat(currentValue) : null;
       } else if (field === 'adjustmentDate') {
-        value = editValue || null;
-      } else if (!editValue.trim()) {
+        value = currentValue || null;
+      } else if (!currentValue.trim()) {
         value = null;
       }
 

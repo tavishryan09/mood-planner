@@ -128,7 +128,7 @@ export default function CalendarHeader({
                 }}
                 onDragOver={(e) => handleMilestoneCellDragOver(e, day, rowIndex)}
                 onDrop={(e) => handleMilestoneCellDrop(e, day, rowIndex)}
-                className={`p-0 hover:bg-base-200 transition-colors cursor-pointer relative border-b-0 ${
+                className={`p-0 hover:bg-base-200 transition-colors cursor-pointer relative border-b-0 bg-base-200 ${
                   isToday(day)
                     ? 'bg-primary/10'
                     : isWeekend(day)

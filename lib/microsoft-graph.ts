@@ -63,6 +63,8 @@ export async function createCalendarEvent(accessToken: string, event: {
   isAllDay?: boolean;
   calendarId?: string;
   categories?: string[];
+  showAs?: string;
+  isReminderOn?: boolean;
 }) {
   const client = getGraphClient(accessToken);
 
@@ -77,6 +79,16 @@ export async function createCalendarEvent(accessToken: string, event: {
   // Add categories if provided
   if (event.categories && event.categories.length > 0) {
     calendarEvent.categories = event.categories;
+  }
+
+  // Add showAs if provided
+  if (event.showAs) {
+    calendarEvent.showAs = event.showAs;
+  }
+
+  // Add isReminderOn if provided
+  if (event.isReminderOn !== undefined) {
+    calendarEvent.isReminderOn = event.isReminderOn;
   }
 
   if (event.isAllDay) {
@@ -129,6 +141,8 @@ export async function updateCalendarEvent(accessToken: string, eventId: string, 
   isAllDay?: boolean;
   calendarId?: string;
   categories?: string[];
+  showAs?: string;
+  isReminderOn?: boolean;
 }) {
   const client = getGraphClient(accessToken);
 
@@ -143,6 +157,16 @@ export async function updateCalendarEvent(accessToken: string, eventId: string, 
   // Add categories if provided
   if (event.categories && event.categories.length > 0) {
     calendarEvent.categories = event.categories;
+  }
+
+  // Add showAs if provided
+  if (event.showAs) {
+    calendarEvent.showAs = event.showAs;
+  }
+
+  // Add isReminderOn if provided
+  if (event.isReminderOn !== undefined) {
+    calendarEvent.isReminderOn = event.isReminderOn;
   }
 
   if (event.isAllDay) {

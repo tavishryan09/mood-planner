@@ -18,7 +18,7 @@ interface CalendarHeaderProps {
   setSelectedCell: (cell: any) => void;
   draggedMilestone: any;
   dragOverMilestoneCell: { date: Date; rowIndex: number } | null;
-  handleMilestoneClick: (milestone: any) => void;
+  handleMilestoneClick: (e: React.MouseEvent, milestone: any) => void;
   handleMilestoneEdit: (milestone: any) => void;
   handleMilestoneDragStart: (e: React.DragEvent, milestone: any) => void;
   handleMilestoneDragEnd: () => void;

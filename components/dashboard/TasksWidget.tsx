@@ -29,7 +29,11 @@ export default function TasksWidget({
   onToggleComplete
 }: TasksWidgetProps) {
   const formatShortDate = (dateString: string) => {
-    const date = new Date(dateString);
+    // Extract YYYY-MM-DD from ISO string to avoid timezone conversion
+    const datePart = dateString.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
+    // Create date using local timezone (month is 0-indexed)
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',

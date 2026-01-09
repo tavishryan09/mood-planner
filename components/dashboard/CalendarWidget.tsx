@@ -154,23 +154,21 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ tasks, milestones }) =>
           <div className="flex gap-2">
             <button
               onClick={goToPreviousMonth}
-              className="btn btn-ghost btn-sm"
+              className="btn btn-sm btn-circle btn-ghost"
               aria-label="Previous month"
             >
-              ←
-            </button>
-            <button
-              onClick={goToToday}
-              className="btn btn-ghost btn-sm"
-            >
-              Today
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
             </button>
             <button
               onClick={goToNextMonth}
-              className="btn btn-ghost btn-sm"
+              className="btn btn-sm btn-circle btn-ghost"
               aria-label="Next month"
             >
-              →
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-4">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
             </button>
           </div>
         </div>

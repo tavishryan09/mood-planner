@@ -73,13 +73,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ tasks, milestones }) =>
 
     // Helper to normalize date strings to YYYY-MM-DD format
     const normalizeDateString = (dateStr: string): string => {
-      // If it's already in YYYY-MM-DD format, return as is
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-        return dateStr;
-      }
-      // Otherwise parse and format to YYYY-MM-DD
-      const date = new Date(dateStr);
-      return formatDateLocal(date);
+      // Extract YYYY-MM-DD from ISO string (e.g., "2026-01-09T08:00:00.000Z" -> "2026-01-09")
+      // This avoids timezone conversion issues since we only care about dates, not times
+      return dateStr.split('T')[0];
     };
 
     tasks.forEach(task => {

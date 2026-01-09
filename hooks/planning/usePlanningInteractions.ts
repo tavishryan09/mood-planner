@@ -52,6 +52,8 @@ interface UsePlanningInteractionsProps {
   setSelectedMilestone: (milestone: MilestoneTask | null) => void;
   setSelectedCell: (cell: { userId: number; date: Date; rowIndex: number } | null) => void;
   setUsers: (users: UserDisplay[]) => void;
+  setTasks: (tasks: PlanningTask[]) => void;
+  setMilestoneTasks: (milestones: MilestoneTask[]) => void;
   handleCopyTask: () => void;
   handleCutTask: () => void;
   handlePasteTask: (userId: number, date: Date, rowIndex: number) => Promise<void>;
@@ -113,6 +115,8 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
     setSelectedMilestone,
     setSelectedCell,
     setUsers,
+    setTasks,
+    setMilestoneTasks,
     handleCopyTask,
     handleCutTask,
     handlePasteTask,
@@ -224,6 +228,7 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
     // Check if dropping on the same cell
     if (draggedTask.userId === userId && taskDateStr === dateStr && draggedTask.rowIndex === rowIndex) {
       setDraggedTask(null);
+      setDragOverCell(null);
       return;
     }
 
@@ -231,23 +236,38 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
     if (isCellOccupied(userId, date, rowIndex, draggedTask.rowSpan, draggedTask.id)) {
       alert('Cannot move task here - cells are occupied');
       setDraggedTask(null);
+      setDragOverCell(null);
       return;
     }
 
-    // Update the task
+    // Store task reference and clear drag state immediately
+    const taskToMove = draggedTask;
+    setDraggedTask(null);
+    setDragOverCell(null);
+
+    // Optimistic update: immediately update the task in local state
+    const updatedTask = {
+      ...taskToMove,
+      userId,
+      taskDate: dateStr,
+      rowIndex
+    };
+    setTasks(tasks.map(t => t.id === taskToMove.id ? updatedTask : t));
+
+    // Update the task on server
     try {
-      const response = await fetch(`/api/planning-tasks/${draggedTask.id}`, {
+      const response = await fetch(`/api/planning-tasks/${taskToMove.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: userId,
-          projectId: draggedTask.projectId,
-          taskDescription: draggedTask.taskDescription,
-          taskType: draggedTask.taskType,
+          projectId: taskToMove.projectId,
+          taskDescription: taskToMove.taskDescription,
+          taskType: taskToMove.taskType,
           taskDate: dateStr,
           rowIndex: rowIndex,
-          rowSpan: draggedTask.rowSpan,
-          internalTaskTypeId: draggedTask.internalTaskTypeId
+          rowSpan: taskToMove.rowSpan,
+          internalTaskTypeId: taskToMove.internalTaskTypeId
         })
       });
 
@@ -256,14 +276,15 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
       } else {
         const error = await response.json();
         alert(`Error moving task: ${error.error || 'Unknown error'}`);
+        // Revert optimistic update on error
+        await refetchTasks();
       }
     } catch (error) {
       console.error('Error moving task:', error);
       alert('An unexpected error occurred. Please try again.');
+      // Revert optimistic update on error
+      await refetchTasks();
     }
-
-    setDraggedTask(null);
-    setDragOverCell(null);
   };
 
   // Milestone drag and drop handlers
@@ -297,6 +318,7 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
     // Check if dropping on the same cell
     if (milestoneDateStr === dateStr && draggedMilestone.rowIndex === rowIndex) {
       setDraggedMilestone(null);
+      setDragOverMilestoneCell(null);
       return;
     }
 
@@ -305,18 +327,32 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
     if (existingMilestone && existingMilestone.id !== draggedMilestone.id) {
       alert('Cannot move milestone here - cell is occupied');
       setDraggedMilestone(null);
+      setDragOverMilestoneCell(null);
       return;
     }
 
-    // Update the milestone
+    // Store milestone reference and clear drag state immediately
+    const milestoneToMove = draggedMilestone;
+    setDraggedMilestone(null);
+    setDragOverMilestoneCell(null);
+
+    // Optimistic update: immediately update the milestone in local state
+    const updatedMilestone = {
+      ...milestoneToMove,
+      taskDate: dateStr,
+      rowIndex
+    };
+    setMilestoneTasks(milestoneTasks.map(m => m.id === milestoneToMove.id ? updatedMilestone : m));
+
+    // Update the milestone on server
     try {
-      const response = await fetch(`/api/milestone-tasks/${draggedMilestone.id}`, {
+      const response = await fetch(`/api/milestone-tasks/${milestoneToMove.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectId: draggedMilestone.projectId,
-          taskDescription: draggedMilestone.taskDescription,
-          taskType: draggedMilestone.taskType,
+          projectId: milestoneToMove.projectId,
+          taskDescription: milestoneToMove.taskDescription,
+          taskType: milestoneToMove.taskType,
           taskDate: dateStr,
           rowIndex: rowIndex
         })
@@ -327,14 +363,15 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
       } else {
         const error = await response.json();
         alert(`Error moving milestone: ${error.error || 'Unknown error'}`);
+        // Revert optimistic update on error
+        await refetchMilestones();
       }
     } catch (error) {
       console.error('Error moving milestone:', error);
       alert('An unexpected error occurred. Please try again.');
+      // Revert optimistic update on error
+      await refetchMilestones();
     }
-
-    setDraggedMilestone(null);
-    setDragOverMilestoneCell(null);
   };
 
   // Click handlers
@@ -433,6 +470,18 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
         return;
       }
 
+      // Clear resize state immediately for responsive UI
+      setResizingTask(null);
+
+      // Optimistic update: immediately update the task in local state
+      const updatedTask = {
+        ...task,
+        rowIndex: newRowIndex,
+        rowSpan: newRowSpan
+      };
+      setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
+
+      // Update the task on server
       try {
         const response = await fetch(`/api/planning-tasks/${task.id}`, {
           method: 'PUT',
@@ -453,13 +502,15 @@ export function usePlanningInteractions(props: UsePlanningInteractionsProps): Us
         } else {
           const error = await response.json();
           alert(`Error updating task: ${error.error || 'Unknown error'}`);
+          // Revert optimistic update on error
+          await refetchTasks();
         }
       } catch (error) {
         console.error('Error updating task:', error);
         alert('An unexpected error occurred. Please try again.');
+        // Revert optimistic update on error
+        await refetchTasks();
       }
-
-      setResizingTask(null);
     };
 
     document.addEventListener('mousemove', handleMove);

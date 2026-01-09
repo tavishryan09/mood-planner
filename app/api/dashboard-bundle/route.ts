@@ -192,6 +192,15 @@ async function fetchMilestones(userId: number, userRole: string, startDate: stri
 
 async function fetchDashboardWidgetSettings(userId: number) {
   try {
+    // Default widget configuration
+    const defaultWidgets = [
+      { id: 'projects', name: 'My Current Projects', width: '1/3', order: 0, visible: true },
+      { id: 'tasks', name: 'My Upcoming Tasks', width: '1/3', order: 1, visible: true },
+      { id: 'milestones', name: 'Upcoming Deadlines/Milestones', width: '1/3', order: 2, visible: true },
+      { id: 'calendar', name: 'Calendar', width: '1/2', order: 3, visible: false },
+      { id: 'team-tasks', name: 'Tasks by Team Member', width: 'full', order: 4, visible: true }
+    ];
+
     // Fetch widget settings
     const widgetResult = await sql`
       SELECT
@@ -200,7 +209,7 @@ async function fetchDashboardWidgetSettings(userId: number) {
         width,
         display_order as "order",
         show_all_projects as "showAllProjects",
-        true as "visible"
+        visible
       FROM dashboard_widget_settings
       WHERE user_id = ${userId}
       ORDER BY display_order ASC
@@ -211,20 +220,29 @@ async function fetchDashboardWidgetSettings(userId: number) {
     const showAllProjects = projectsWidget?.showAllProjects || false;
 
     if (widgetResult.length === 0) {
-      // Default widget configuration
+      // No saved settings, return defaults
       return {
-        widgets: [
-          { id: 'projects', name: 'My Current Projects', width: '1/3', order: 0, visible: true },
-          { id: 'tasks', name: 'My Upcoming Tasks', width: '1/3', order: 1, visible: true },
-          { id: 'milestones', name: 'Upcoming Deadlines/Milestones', width: '1/3', order: 2, visible: true },
-          { id: 'team-tasks', name: 'Tasks by Team Member', width: 'full', order: 3, visible: true }
-        ],
+        widgets: defaultWidgets,
         showAllProjects
       };
     }
 
+    // Merge saved settings with defaults to include any new widgets
+    const savedWidgetIds = new Set(widgetResult.map((w: any) => w.id));
+    const mergedWidgets = [...widgetResult];
+
+    // Add any missing default widgets
+    for (const defaultWidget of defaultWidgets) {
+      if (!savedWidgetIds.has(defaultWidget.id)) {
+        mergedWidgets.push(defaultWidget);
+      }
+    }
+
+    // Sort by order
+    mergedWidgets.sort((a, b) => a.order - b.order);
+
     return {
-      widgets: widgetResult,
+      widgets: mergedWidgets,
       showAllProjects
     };
   } catch (error) {
@@ -234,7 +252,8 @@ async function fetchDashboardWidgetSettings(userId: number) {
         { id: 'projects', name: 'My Current Projects', width: '1/3', order: 0, visible: true },
         { id: 'tasks', name: 'My Upcoming Tasks', width: '1/3', order: 1, visible: true },
         { id: 'milestones', name: 'Upcoming Deadlines/Milestones', width: '1/3', order: 2, visible: true },
-        { id: 'team-tasks', name: 'Tasks by Team Member', width: 'full', order: 3, visible: true }
+        { id: 'calendar', name: 'Calendar', width: '1/2', order: 3, visible: false },
+        { id: 'team-tasks', name: 'Tasks by Team Member', width: 'full', order: 4, visible: true }
       ],
       showAllProjects: false
     };

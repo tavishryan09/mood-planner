@@ -227,6 +227,8 @@ export default function Planning() {
     setSelectedMilestone,
     setSelectedCell,
     setUsers,
+    setTasks,
+    setMilestoneTasks,
     handleCopyTask,
     handleCutTask,
     handlePasteTask,

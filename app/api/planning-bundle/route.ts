@@ -143,34 +143,15 @@ async function fetchUserDisplaySettings(userId: number) {
 }
 
 async function fetchProjects(currentUser: { id: number; role: string }) {
-  // Managers and Admins see all projects (excluding archived)
-  if (currentUser.role === 'Admin' || currentUser.role === 'Manager') {
-    const result = await sql`
-      SELECT id, project_number as "projectNumber", project_name as "projectName", common_name as "commonName", archived
-      FROM projects
-      WHERE archived IS NOT TRUE
-      ORDER BY project_number
-    `;
-    console.log('[fetchProjects] Manager/Admin - returning all', result.length, 'projects');
-    return result;
-  } else {
-    // Designers see only projects they're assigned to (excluding archived)
-    const result = await sql`
-      SELECT DISTINCT
-        p.id,
-        p.project_number as "projectNumber",
-        p.project_name as "projectName",
-        p.common_name as "commonName",
-        p.archived
-      FROM projects p
-      INNER JOIN project_team_members ptm ON ptm.project_id = p.id
-      WHERE ptm.user_id = ${currentUser.id}
-        AND p.archived IS NOT TRUE
-      ORDER BY p.project_number
-    `;
-    console.log('[fetchProjects] Designer - returning', result.length, 'assigned projects');
-    return result;
-  }
+  // All users see all non-archived projects
+  const result = await sql`
+    SELECT id, project_number as "projectNumber", project_name as "projectName", common_name as "commonName", archived
+    FROM projects
+    WHERE archived IS NOT TRUE
+    ORDER BY project_number
+  `;
+  console.log('[fetchProjects]', currentUser.role, '- returning all', result.length, 'projects');
+  return result;
 }
 
 async function fetchInternalTaskTypes() {

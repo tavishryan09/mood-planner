@@ -8,6 +8,7 @@ import ProjectsWidget from '@/components/dashboard/ProjectsWidget';
 import TasksWidget from '@/components/dashboard/TasksWidget';
 import MilestonesWidget from '@/components/dashboard/MilestonesWidget';
 import TeamTasksWidget from '@/components/dashboard/TeamTasksWidget';
+import CalendarWidget from '@/components/dashboard/CalendarWidget';
 import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
 import { useWidgetManagement } from '@/hooks/dashboard/useWidgetManagement';
 import { useUserDisplaySettings } from '@/hooks/dashboard/useUserDisplaySettings';
@@ -95,7 +96,8 @@ export default function Home() {
     { id: 'projects', name: 'My Current Projects', width: '1/3', order: 0, visible: true },
     { id: 'tasks', name: 'My Upcoming Tasks', width: '1/3', order: 1, visible: true },
     { id: 'milestones', name: 'Upcoming Deadlines/Milestones', width: '1/3', order: 2, visible: true },
-    { id: 'team-tasks', name: 'Tasks by Team Member', width: 'full', order: 3, visible: true }
+    { id: 'calendar', name: 'Calendar', width: '1/2', order: 3, visible: false },
+    { id: 'team-tasks', name: 'Tasks by Team Member', width: 'full', order: 4, visible: true }
   ]);
 
   // Dashboard data
@@ -200,6 +202,13 @@ export default function Home() {
                     <MilestonesWidget
                       milestones={upcomingMilestones}
                       loading={milestonesLoading}
+                    />
+                  )}
+
+                  {widget.id === 'calendar' && (
+                    <CalendarWidget
+                      tasks={upcomingTasks}
+                      milestones={upcomingMilestones}
                     />
                   )}
 

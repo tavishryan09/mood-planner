@@ -108,17 +108,9 @@ export async function GET(request: Request) {
     // Create response with redirect
     const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_connected=true`);
 
-    // Delete the old cookie first to avoid conflicts
-    response.cookies.delete('auth_token');
-
-    // Set the fresh auth token cookie to ensure the user stays logged in as themselves
-    response.cookies.set('auth_token', newToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    });
+    // Set the fresh auth token cookie using the session helper
+    const { createSession } = await import('@/lib/session');
+    await createSession(newToken, response);
 
     return response;
   } catch (error) {

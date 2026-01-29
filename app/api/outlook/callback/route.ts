@@ -115,7 +115,7 @@ export async function GET(request: Request) {
     response.cookies.set('auth_token', newToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     });

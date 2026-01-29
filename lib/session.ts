@@ -12,7 +12,7 @@ export async function createSession(token: string, res: NextResponse): Promise<v
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: true,
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: COOKIE_MAX_AGE,
     path: '/',
   });
@@ -52,7 +52,7 @@ export async function destroySession(res: NextResponse): Promise<void> {
   res.cookies.set(COOKIE_NAME, '', {
     httpOnly: true,
     secure: true,
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: 0,
     path: '/',
   });

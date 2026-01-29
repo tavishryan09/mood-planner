@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUserInfo } from '@/lib/microsoft-graph';
 import { cookies } from 'next/headers';
+import { verifyToken, generateToken } from '@/lib/auth';
+import { createSession } from '@/lib/session';
 
 export async function GET(request: Request) {
   try {
@@ -31,7 +33,6 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=unauthenticated`);
     }
 
-    const { verifyToken } = await import('@/lib/auth');
     const payload = verifyToken(token);
 
     // Verify token is valid and matches the OAuth state userId
@@ -102,14 +103,12 @@ export async function GET(request: Request) {
     const user = users[0];
 
     // Generate a fresh auth token for this user
-    const { generateToken } = await import('@/lib/auth');
     const newToken = generateToken({ userId: user.id, email: user.email, role: user.role });
 
     // Create response with redirect
     const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook_connected=true`);
 
     // Set the fresh auth token cookie using the session helper
-    const { createSession } = await import('@/lib/session');
     await createSession(newToken, response);
 
     return response;

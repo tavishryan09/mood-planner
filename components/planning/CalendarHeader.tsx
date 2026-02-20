@@ -184,9 +184,20 @@ export default function CalendarHeader({
                         e.stopPropagation();
                         handleMilestoneEdit(milestone);
                       }}
-                      className={`${bgColor} ${textColor} text-xs cursor-move h-full w-full flex items-center justify-center text-center hover:opacity-90 transition-opacity`}
+                      className={`${bgColor} ${textColor} text-xs cursor-move h-full w-full flex items-center px-2 py-1 hover:opacity-90 transition-opacity`}
                     >
-                      {milestone.projectCommonName || milestone.taskDescription || milestone.taskType}
+                      <div className="flex flex-col gap-0.5 overflow-hidden w-full">
+                        <div className="flex-1 overflow-hidden">
+                          <div className="font-semibold w-full truncate">
+                            {milestone.projectCommonName || milestone.taskType}
+                          </div>
+                          {milestone.taskDescription && (
+                            <div className="opacity-90 w-full truncate">
+                              {milestone.taskDescription}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   );
                 })()}

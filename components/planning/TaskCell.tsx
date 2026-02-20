@@ -116,8 +116,8 @@ export default function TaskCell({
               : task.projectCommonName || task.projectName || task.taskType
             }
           </div>
-          {/* Description line: Show custom description only if it's different from task type and not in compact view */}
-          {!compactView && task.taskDescription && task.taskDescription !== task.taskType ? (
+          {/* Description line: Show custom description only if it's different from task type and either not in compact view or task spans more than 2 cells */}
+          {(!compactView || visualRowSpan > 2) && task.taskDescription && task.taskDescription !== task.taskType ? (
             <div className={`opacity-90 w-full overflow-hidden ${visualRowSpan === 1 ? 'truncate' : ''}`}
               style={visualRowSpan > 1 ? {
                 display: '-webkit-box',

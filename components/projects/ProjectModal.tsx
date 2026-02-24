@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CloseIcon } from '@/components/shared/Icons';
 
 interface Client {
@@ -66,6 +66,14 @@ export default function ProjectModal({
 }: ProjectModalProps) {
   const [showNewClientInput, setShowNewClientInput] = useState(false);
   const [newClientName, setNewClientName] = useState('');
+  const [commonNameManuallyEdited, setCommonNameManuallyEdited] = useState(false);
+
+  // Reset the manual edit flag when creating a new project
+  useEffect(() => {
+    if (show && !editingProject) {
+      setCommonNameManuallyEdited(false);
+    }
+  }, [show, editingProject]);
 
   if (!show) return null;
 
@@ -151,7 +159,15 @@ export default function ProjectModal({
           <input
             type="text"
             value={formData.projectName}
-            onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
+            onChange={(e) => {
+              const newProjectName = e.target.value;
+              // Auto-sync common name with project name unless user has manually edited it
+              if (!commonNameManuallyEdited) {
+                setFormData({ ...formData, projectName: newProjectName, commonName: newProjectName });
+              } else {
+                setFormData({ ...formData, projectName: newProjectName });
+              }
+            }}
             required
           />
         </label>
@@ -229,7 +245,10 @@ export default function ProjectModal({
           <input
             type="text"
             value={formData.commonName}
-            onChange={(e) => setFormData({ ...formData, commonName: e.target.value })}
+            onChange={(e) => {
+              setCommonNameManuallyEdited(true);
+              setFormData({ ...formData, commonName: e.target.value });
+            }}
             placeholder="e.g., Website Redesign"
           />
         </label>

@@ -5,12 +5,13 @@ import ProjectModal from '@/components/projects/ProjectModal';
 import ColumnVisibilityModal from '@/components/projects/ColumnVisibilityModal';
 import ImportModal from '@/components/projects/ImportModal';
 import ProjectsTable from '@/components/projects/ProjectsTable';
+import NotesModal from '@/components/projects/NotesModal';
 import { useProjectsData } from '@/hooks/projects/useProjectsData';
 import { useProjectManagement } from '@/hooks/projects/useProjectManagement';
 import { useInlineCellEditing } from '@/hooks/projects/useInlineCellEditing';
 import { useProjectsSorting } from '@/hooks/projects/useProjectsSorting';
 import { useProjectsImportExport } from '@/hooks/projects/useProjectsImportExport';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface Project {
   id: number;
@@ -25,6 +26,7 @@ interface Project {
   adjustedValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
+  notes?: string;
   archived?: boolean;
   estimatedBillable?: number;
   totalHours?: number;
@@ -139,6 +141,66 @@ export default function Projects() {
   // Modal state
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [notesProject, setNotesProject] = useState<Project | null>(null);
+
+  // User-specific estimated hours
+  const [userEstimatedHours, setUserEstimatedHours] = useState<Record<number, number>>({});
+  const [editingEstHours, setEditingEstHours] = useState<number | null>(null);
+  const [estHoursValue, setEstHoursValue] = useState('');
+
+  const fetchEstimatedHours = useCallback(async () => {
+    try {
+      const response = await fetch('/api/user-estimated-hours');
+      if (response.ok) {
+        const data = await response.json();
+        const hoursMap: Record<number, number> = {};
+        data.forEach((item: { projectId: number; estimatedHours: number }) => {
+          hoursMap[item.projectId] = Number(item.estimatedHours);
+        });
+        setUserEstimatedHours(hoursMap);
+      }
+    } catch (error) {
+      console.error('Error fetching estimated hours:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEstimatedHours();
+  }, [fetchEstimatedHours]);
+
+  const handleEstHoursEdit = (projectId: number, currentValue: number) => {
+    setEditingEstHours(projectId);
+    setEstHoursValue(currentValue ? currentValue.toString() : '');
+  };
+
+  const handleEstHoursSave = async (projectId: number) => {
+    const hours = estHoursValue ? parseFloat(estHoursValue) : 0;
+    try {
+      await fetch('/api/user-estimated-hours', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, estimatedHours: hours }),
+      });
+      setUserEstimatedHours(prev => {
+        const updated = { ...prev };
+        if (hours === 0) {
+          delete updated[projectId];
+        } else {
+          updated[projectId] = hours;
+        }
+        return updated;
+      });
+    } catch (error) {
+      console.error('Error saving estimated hours:', error);
+    }
+    setEditingEstHours(null);
+    setEstHoursValue('');
+  };
+
+  const handleEstHoursCancel = () => {
+    setEditingEstHours(null);
+    setEstHoursValue('');
+  };
 
   const formatCurrency = (value?: number) => {
     if (!value) return '';
@@ -221,6 +283,14 @@ export default function Projects() {
               onCellCancel={cancelCellEdit}
               onEditValueChange={setEditValue}
               getSortedProjects={getSortedProjects}
+              onNotesClick={(project) => setNotesProject(project)}
+              userEstimatedHours={userEstimatedHours}
+              editingEstHours={editingEstHours}
+              estHoursValue={estHoursValue}
+              onEstHoursEdit={handleEstHoursEdit}
+              onEstHoursSave={handleEstHoursSave}
+              onEstHoursCancel={handleEstHoursCancel}
+              onEstHoursValueChange={setEstHoursValue}
             />
 
             {!loading && projects.length > 0 && (
@@ -343,6 +413,26 @@ export default function Projects() {
         tempVisibleColumns={tempVisibleColumns}
         setTempVisibleColumns={setTempVisibleColumns}
         onSave={() => setVisibleColumns(tempVisibleColumns)}
+      />
+
+      <NotesModal
+        show={notesProject !== null}
+        onClose={() => setNotesProject(null)}
+        projectName={notesProject?.projectName || ''}
+        notes={notesProject?.notes || ''}
+        onSave={async (newNotes) => {
+          if (!notesProject) return;
+          const response = await fetch(`/api/projects/${notesProject.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: newNotes }),
+          });
+          if (!response.ok) throw new Error('Failed to save notes');
+          setProjects(projects.map(p =>
+            p.id === notesProject.id ? { ...p, notes: newNotes } : p
+          ));
+          setNotesProject({ ...notesProject, notes: newNotes });
+        }}
       />
 
       <ImportModal

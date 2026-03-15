@@ -59,6 +59,7 @@ export async function GET(
         p.use_team_rates as "useTeamRates",
         p.deadline,
         p.internal_deadline as "internalDeadline",
+        p.notes,
         p.archived,
         p.created_at as "createdAt",
         p.updated_at as "updatedAt"
@@ -121,17 +122,42 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { projectNumber, projectName, clientId, commonName, projectValue, currentlyBilled, adjustmentDate, billingRate, useTeamRates, deadline, internalDeadline, deadlineTitle, deadlineDescription, internalDeadlineTitle, internalDeadlineDescription, archived } = body;
+    const { projectNumber, projectName, clientId, commonName, projectValue, currentlyBilled, adjustmentDate, billingRate, useTeamRates, deadline, internalDeadline, deadlineTitle, deadlineDescription, internalDeadlineTitle, internalDeadlineDescription, archived, notes } = body;
 
     console.log(`[PUT /api/projects/${id}] User: ${currentUser.name} (${currentUser.role})`);
 
-    // Only Admins and Managers can update projects
-    if (currentUser.role !== 'Admin' && currentUser.role !== 'Manager') {
+    // Allow any team member to update just the notes field
+    const isNotesOnly = Object.keys(body).length === 1 && 'notes' in body;
+
+    // Only Admins and Managers can update projects (except notes)
+    if (!isNotesOnly && currentUser.role !== 'Admin' && currentUser.role !== 'Manager') {
       console.error(`[PUT /api/projects/${id}] Insufficient permissions for role: ${currentUser.role}`);
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
       );
+    }
+
+    // If only updating notes, do a simpler update
+    if (isNotesOnly) {
+      const result = await sql`
+        UPDATE projects
+        SET notes = ${notes ?? null}
+        WHERE id = ${id}
+        RETURNING
+          id,
+          notes,
+          updated_at as "updatedAt"
+      `;
+
+      if (result.length === 0) {
+        return NextResponse.json(
+          { error: 'Project not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json(result[0]);
     }
 
     // Get the old deadline values before updating
@@ -155,7 +181,8 @@ export async function PUT(
         use_team_rates = ${useTeamRates ?? false},
         deadline = ${deadline ?? null},
         internal_deadline = ${internalDeadline ?? null},
-        archived = ${archived !== undefined ? archived : false}
+        archived = ${archived !== undefined ? archived : false},
+        notes = ${notes !== undefined ? notes : null}
       WHERE id = ${id}
       RETURNING
         id,
@@ -170,6 +197,7 @@ export async function PUT(
         use_team_rates as "useTeamRates",
         deadline,
         internal_deadline as "internalDeadline",
+        notes,
         archived,
         created_at as "createdAt",
         updated_at as "updatedAt"

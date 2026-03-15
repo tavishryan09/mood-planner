@@ -5,6 +5,8 @@ import { CloseIcon } from '@/components/shared/Icons';
 interface VisibleColumns {
   projectNumber: boolean;
   projectName: boolean;
+  notes: boolean;
+  estimatedUserHours: boolean;
   clientName: boolean;
   commonName: boolean;
   status: boolean;
@@ -91,6 +93,40 @@ export default function ColumnVisibilityModal({
               checked={tempVisibleColumns.projectName}
               onChange={(e) => setTempVisibleColumns({ ...tempVisibleColumns, projectName: e.target.checked })}
               disabled
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5 opacity-60">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              <span className="text-sm">Notes</span>
+            </div>
+            <input
+              type="checkbox"
+              className="toggle toggle-primary"
+              checked={tempVisibleColumns.notes}
+              onChange={(e) => setTempVisibleColumns({ ...tempVisibleColumns, notes: e.target.checked })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5 opacity-60">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span className="text-sm">Est. Hours</span>
+            </div>
+            <input
+              type="checkbox"
+              className="toggle toggle-primary"
+              checked={tempVisibleColumns.estimatedUserHours}
+              onChange={(e) => setTempVisibleColumns({ ...tempVisibleColumns, estimatedUserHours: e.target.checked })}
             />
           </div>
 

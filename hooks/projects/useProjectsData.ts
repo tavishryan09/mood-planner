@@ -13,6 +13,7 @@ interface Project {
   adjustedValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
+  notes?: string;
   archived?: boolean;
   estimatedBillable?: number;
   totalHours?: number;
@@ -38,6 +39,8 @@ interface User {
 interface VisibleColumns {
   projectNumber: boolean;
   projectName: boolean;
+  notes: boolean;
+  estimatedUserHours: boolean;
   clientName: boolean;
   commonName: boolean;
   status: boolean;
@@ -84,6 +87,8 @@ export function useProjectsData(): UseProjectsDataReturn {
   const [visibleColumns, setVisibleColumns] = useState<VisibleColumns>({
     projectNumber: true,
     projectName: true,
+    notes: true,
+    estimatedUserHours: true,
     clientName: true,
     commonName: true,
     status: true,
@@ -103,6 +108,8 @@ export function useProjectsData(): UseProjectsDataReturn {
   const [tempVisibleColumns, setTempVisibleColumns] = useState<VisibleColumns>({
     projectNumber: true,
     projectName: true,
+    notes: true,
+    estimatedUserHours: true,
     clientName: true,
     commonName: true,
     status: true,
@@ -212,8 +219,29 @@ export function useProjectsData(): UseProjectsDataReturn {
         const response = await fetch('/api/projects-column-preferences');
         if (response.ok) {
           const data = await response.json();
-          setVisibleColumns(data.columnSettings);
-          setTempVisibleColumns(data.columnSettings);
+          const defaults: VisibleColumns = {
+            projectNumber: true,
+            projectName: true,
+            notes: true,
+            estimatedUserHours: true,
+            clientName: true,
+            commonName: true,
+            status: true,
+            projectValue: true,
+            currentlyBilled: true,
+            adjustmentDate: true,
+            adjustedValue: true,
+            estimatedBillable: true,
+            billablePercent: true,
+            totalHours: true,
+            hoursThisWeek: true,
+            hoursThisMonth: true,
+            hoursThisQuarter: true,
+            showArchived: false
+          };
+          const merged = { ...defaults, ...data.columnSettings };
+          setVisibleColumns(merged);
+          setTempVisibleColumns(merged);
         }
       } catch (error) {
         console.error('Error loading column visibility preferences:', error);

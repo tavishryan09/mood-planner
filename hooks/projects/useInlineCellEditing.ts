@@ -13,6 +13,7 @@ interface Project {
   adjustedValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
+  notes?: string;
   archived?: boolean;
   estimatedBillable?: number;
   totalHours?: number;

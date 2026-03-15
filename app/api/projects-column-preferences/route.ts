@@ -54,6 +54,8 @@ export async function GET() {
         columnSettings: {
           projectNumber: true,
           projectName: true,
+          notes: true,
+          estimatedUserHours: true,
           clientName: true,
           commonName: true,
           projectValue: true,

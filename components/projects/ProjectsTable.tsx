@@ -15,6 +15,7 @@ interface Project {
   adjustedValue?: number;
   billingRate?: number;
   useTeamRates?: boolean;
+  notes?: string;
   archived?: boolean;
   estimatedBillable?: number;
   totalHours?: number;
@@ -28,6 +29,8 @@ interface Project {
 interface VisibleColumns {
   projectNumber: boolean;
   projectName: boolean;
+  notes: boolean;
+  estimatedUserHours: boolean;
   clientName: boolean;
   commonName: boolean;
   status: boolean;
@@ -62,6 +65,14 @@ interface ProjectsTableProps {
   onCellCancel: () => void;
   onEditValueChange: (value: string) => void;
   getSortedProjects: () => Project[];
+  onNotesClick: (project: Project) => void;
+  userEstimatedHours: Record<number, number>;
+  editingEstHours: number | null;
+  estHoursValue: string;
+  onEstHoursEdit: (projectId: number, currentValue: number) => void;
+  onEstHoursSave: (projectId: number) => void;
+  onEstHoursCancel: () => void;
+  onEstHoursValueChange: (value: string) => void;
 }
 
 export default function ProjectsTable({
@@ -77,7 +88,15 @@ export default function ProjectsTable({
   onCellSave,
   onCellCancel,
   onEditValueChange,
-  getSortedProjects
+  getSortedProjects,
+  onNotesClick,
+  userEstimatedHours,
+  editingEstHours,
+  estHoursValue,
+  onEstHoursEdit,
+  onEstHoursSave,
+  onEstHoursCancel,
+  onEstHoursValueChange
 }: ProjectsTableProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -120,6 +139,8 @@ export default function ProjectsTable({
             <tr>
               <th>Project #</th>
               <th>Project Name</th>
+              <th>Notes</th>
+              <th>Est. Hours</th>
               <th>Client</th>
               <th>Common Name</th>
               <th>Project Value</th>
@@ -133,6 +154,8 @@ export default function ProjectsTable({
               <tr key={i}>
                 <td><div className="skeleton h-4 w-16"></div></td>
                 <td><div className="skeleton h-4 w-48"></div></td>
+                <td><div className="skeleton h-4 w-24"></div></td>
+                <td><div className="skeleton h-4 w-16"></div></td>
                 <td><div className="skeleton h-4 w-32"></div></td>
                 <td><div className="skeleton h-4 w-24"></div></td>
                 <td><div className="skeleton h-4 w-20"></div></td>
@@ -181,6 +204,12 @@ export default function ProjectsTable({
                   <SortIcon field="projectName" />
                 </button>
               </th>
+            )}
+            {visibleColumns.notes && (
+              <th>Notes</th>
+            )}
+            {visibleColumns.estimatedUserHours && (
+              <th>Est. Hours</th>
             )}
             {visibleColumns.clientName && (
               <th>
@@ -358,6 +387,47 @@ export default function ProjectsTable({
                     />
                   ) : (
                     project.projectName
+                  )}
+                </td>
+              )}
+              {visibleColumns.notes && (
+                <td
+                  className="cursor-pointer max-w-[200px]"
+                  onClick={() => onNotesClick(project)}
+                >
+                  {project.notes ? (
+                    <span className="truncate block text-sm" title={project.notes}>
+                      {project.notes.length > 50 ? project.notes.substring(0, 50) + '...' : project.notes}
+                    </span>
+                  ) : (
+                    <span className="text-base-content/30 text-sm">Add notes...</span>
+                  )}
+                </td>
+              )}
+              {visibleColumns.estimatedUserHours && (
+                <td
+                  className="cursor-pointer"
+                  onDoubleClick={() => onEstHoursEdit(project.id, userEstimatedHours[project.id] || 0)}
+                >
+                  {editingEstHours === project.id ? (
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0"
+                      className="input input-sm input-bordered w-20"
+                      value={estHoursValue}
+                      onChange={(e) => onEstHoursValueChange(e.target.value)}
+                      onBlur={() => onEstHoursSave(project.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') onEstHoursSave(project.id);
+                        if (e.key === 'Escape') onEstHoursCancel();
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    userEstimatedHours[project.id]
+                      ? `${userEstimatedHours[project.id]}h`
+                      : <span className="text-base-content/30">&mdash;</span>
                   )}
                 </td>
               )}
@@ -581,6 +651,60 @@ export default function ProjectsTable({
               </td>
             </tr>
           ))}
+          {(() => {
+            const sorted = getSortedProjects();
+            const totals = {
+              estHours: sorted.reduce((s, p) => s + (userEstimatedHours[p.id] || 0), 0),
+              value: sorted.reduce((s, p) => s + Number(p.projectValue || 0), 0),
+              billed: sorted.reduce((s, p) => s + Number(p.currentlyBilled || 0), 0),
+              remaining: sorted.reduce((s, p) => s + Number(p.adjustedValue || 0), 0),
+              estBillable: sorted.reduce((s, p) => s + Number(p.estimatedBillable || 0), 0),
+              totalHours: sorted.reduce((s, p) => s + Number(p.totalHours || 0), 0),
+              week: sorted.reduce((s, p) => s + Number(p.hoursThisWeek || 0), 0),
+              month: sorted.reduce((s, p) => s + Number(p.hoursThisMonth || 0), 0),
+              quarter: sorted.reduce((s, p) => s + Number(p.hoursThisQuarter || 0), 0),
+            };
+            return (
+              <tr className="font-bold border-t-2 border-base-300">
+                {visibleColumns.projectNumber && <td>Totals</td>}
+                {visibleColumns.projectName && <td></td>}
+                {visibleColumns.notes && <td></td>}
+                {visibleColumns.estimatedUserHours && (
+                  <td>{totals.estHours > 0 ? `${totals.estHours}h` : ''}</td>
+                )}
+                {visibleColumns.clientName && <td></td>}
+                {visibleColumns.commonName && <td></td>}
+                {visibleColumns.status && <td></td>}
+                {visibleColumns.projectValue && (
+                  <td>{totals.value > 0 ? formatCurrency(totals.value) : ''}</td>
+                )}
+                {visibleColumns.currentlyBilled && (
+                  <td>{totals.billed > 0 ? formatCurrency(totals.billed) : ''}</td>
+                )}
+                {visibleColumns.adjustmentDate && <td></td>}
+                {visibleColumns.adjustedValue && (
+                  <td>{totals.remaining > 0 ? formatCurrency(totals.remaining) : ''}</td>
+                )}
+                {visibleColumns.estimatedBillable && (
+                  <td>{totals.estBillable > 0 ? formatCurrency(totals.estBillable) : ''}</td>
+                )}
+                {visibleColumns.billablePercent && <td></td>}
+                {visibleColumns.totalHours && (
+                  <td>{totals.totalHours > 0 ? `${totals.totalHours.toFixed(1)}h` : ''}</td>
+                )}
+                {visibleColumns.hoursThisWeek && (
+                  <td>{totals.week > 0 ? `${totals.week.toFixed(1)}h` : ''}</td>
+                )}
+                {visibleColumns.hoursThisMonth && (
+                  <td>{totals.month > 0 ? `${totals.month.toFixed(1)}h` : ''}</td>
+                )}
+                {visibleColumns.hoursThisQuarter && (
+                  <td>{totals.quarter > 0 ? `${totals.quarter.toFixed(1)}h` : ''}</td>
+                )}
+                <td></td>
+              </tr>
+            );
+          })()}
         </tbody>
       </table>
     </div>

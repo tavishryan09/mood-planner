@@ -53,6 +53,7 @@ export async function GET() {
         p.adjustment_date as "adjustmentDate",
         p.billing_rate as "billingRate",
         p.use_team_rates as "useTeamRates",
+        p.notes,
         p.archived,
         p.created_at as "createdAt",
         p.updated_at as "updatedAt",

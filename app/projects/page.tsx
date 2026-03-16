@@ -168,6 +168,15 @@ export default function Projects() {
     fetchEstimatedHours();
   }, [fetchEstimatedHours]);
 
+  const handleResetEstHours = async () => {
+    try {
+      await fetch('/api/user-estimated-hours', { method: 'DELETE' });
+      setUserEstimatedHours({});
+    } catch (error) {
+      console.error('Error resetting estimated hours:', error);
+    }
+  };
+
   const handleEstHoursEdit = (projectId: number, currentValue: number) => {
     setEditingEstHours(projectId);
     setEstHoursValue(currentValue ? currentValue.toString() : '');
@@ -291,6 +300,7 @@ export default function Projects() {
               onEstHoursSave={handleEstHoursSave}
               onEstHoursCancel={handleEstHoursCancel}
               onEstHoursValueChange={setEstHoursValue}
+              onResetEstHours={handleResetEstHours}
             />
 
             {!loading && projects.length > 0 && (

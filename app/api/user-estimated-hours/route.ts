@@ -99,3 +99,26 @@ export async function POST(request: Request) {
     );
   }
 }
+
+// DELETE - Clear all estimated hours for current user
+export async function DELETE() {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    await sql`
+      DELETE FROM user_estimated_hours
+      WHERE user_id = ${currentUser.id}
+    `;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error clearing estimated hours:', error);
+    return NextResponse.json(
+      { error: 'Failed to clear estimated hours' },
+      { status: 500 }
+    );
+  }
+}

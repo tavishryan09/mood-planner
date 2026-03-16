@@ -73,6 +73,7 @@ interface ProjectsTableProps {
   onEstHoursSave: (projectId: number) => void;
   onEstHoursCancel: () => void;
   onEstHoursValueChange: (value: string) => void;
+  onResetEstHours: () => void;
 }
 
 export default function ProjectsTable({
@@ -96,7 +97,8 @@ export default function ProjectsTable({
   onEstHoursEdit,
   onEstHoursSave,
   onEstHoursCancel,
-  onEstHoursValueChange
+  onEstHoursValueChange,
+  onResetEstHours
 }: ProjectsTableProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -209,7 +211,20 @@ export default function ProjectsTable({
               <th>Notes</th>
             )}
             {visibleColumns.estimatedUserHours && (
-              <th>Est. Hours</th>
+              <th>
+                <span>Est. Hours</span>
+                <button
+                  className="btn btn-ghost btn-xs text-base-content/50 hover:text-error ml-1"
+                  onClick={onResetEstHours}
+                  title="Reset all estimated hours"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="size-3">
+                    <path d="M3 6h18"></path>
+                    <path d="M8 6V4h8v2"></path>
+                    <path d="M5 6v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6"></path>
+                  </svg>
+                </button>
+              </th>
             )}
             {visibleColumns.clientName && (
               <th>
@@ -392,12 +407,12 @@ export default function ProjectsTable({
               )}
               {visibleColumns.notes && (
                 <td
-                  className="cursor-pointer max-w-[200px]"
+                  className="cursor-pointer min-w-[300px] max-w-[400px]"
                   onClick={() => onNotesClick(project)}
                 >
                   {project.notes ? (
-                    <span className="truncate block text-sm" title={project.notes}>
-                      {project.notes.length > 50 ? project.notes.substring(0, 50) + '...' : project.notes}
+                    <span className="line-clamp-2 text-sm" title={project.notes}>
+                      {project.notes}
                     </span>
                   ) : (
                     <span className="text-base-content/30 text-sm">Add notes...</span>

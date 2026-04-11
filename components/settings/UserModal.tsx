@@ -6,6 +6,7 @@ interface UserFormData {
   password: string;
   role: 'Admin' | 'Manager' | 'Designer' | 'Accountant';
   billingRate: number;
+  canManageUsers: boolean;
 }
 
 interface UserModalProps {
@@ -152,6 +153,24 @@ export default function UserModal({
                   onChange={(e) => onFormDataChange({ ...formData, billingRate: parseFloat(e.target.value) || 0 })}
                   placeholder="0.00"
                 />
+              </div>
+            )}
+
+            {/* User management access - only show for non-Admin roles */}
+            {formData.role !== 'Admin' && (
+              <div className="form-control w-full mb-5">
+                <label className="label cursor-pointer justify-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-primary"
+                    checked={formData.canManageUsers}
+                    onChange={(e) => onFormDataChange({ ...formData, canManageUsers: e.target.checked })}
+                  />
+                  <div>
+                    <span className="label-text font-medium">User Management Access</span>
+                    <p className="text-xs text-base-content/60 mt-0.5">Allow this user to add, edit, and remove users</p>
+                  </div>
+                </label>
               </div>
             )}
           </>

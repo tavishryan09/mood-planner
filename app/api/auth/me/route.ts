@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     // Query user from database
     const users = await sql`
-      SELECT id, name, email, role, sidebar_open, created_at, updated_at
+      SELECT id, name, email, role, sidebar_open, can_manage_users, created_at, updated_at
       FROM users
       WHERE id = ${session.userId}
     `;
@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
         email: user.email,
         role: user.role,
         sidebarOpen: user.sidebar_open || false,
+        canManageUsers: user.can_manage_users || false,
         createdAt: user.created_at,
         updatedAt: user.updated_at,
       },

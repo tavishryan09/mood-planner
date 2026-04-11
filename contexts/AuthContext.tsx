@@ -9,6 +9,7 @@ interface User {
   email: string;
   role: 'Admin' | 'Manager' | 'Designer' | 'Accountant';
   sidebarOpen?: boolean;
+  canManageUsers?: boolean;
 }
 
 interface AuthContextType {

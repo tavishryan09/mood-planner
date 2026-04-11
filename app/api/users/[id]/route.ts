@@ -39,18 +39,36 @@ export async function PUT(
     const currentUser = await getCurrentUser();
 
     if (!currentUser || (currentUser.role !== 'Admin' && currentUser.role !== 'Manager')) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 403 }
-      );
+      // Also check can_manage_users permission
+      if (!currentUser) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 403 }
+        );
+      }
+      const permCheck = await sql`
+        SELECT can_manage_users FROM users WHERE id = ${currentUser.id}
+      `;
+      if (!permCheck[0]?.can_manage_users) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 403 }
+        );
+      }
     }
 
     const { id } = await context.params;
     const body = await request.json();
-    const { name, email, password, role, billingRate } = body;
+    const { name, email, password, role, billingRate, canManageUsers } = body;
 
-    // Check if this is a Manager trying to update billing rate only
-    const isManagerBillingRateUpdate = currentUser.role === 'Manager' && billingRate !== undefined && !name && !email && !password && !role;
+    // Check if current user has full manage access
+    const currentUserPerms = await sql`
+      SELECT can_manage_users FROM users WHERE id = ${currentUser.id}
+    `;
+    const hasFullManageAccess = currentUser.role === 'Admin' || currentUserPerms[0]?.can_manage_users;
+
+    // Check if this is a Manager (without manage access) trying to update billing rate only
+    const isManagerBillingRateUpdate = !hasFullManageAccess && currentUser.role === 'Manager' && billingRate !== undefined && !name && !email && !password && !role;
 
     if (isManagerBillingRateUpdate) {
       // Manager is updating billing rate only - verify target user is Manager or Designer
@@ -83,14 +101,15 @@ export async function PUT(
           email,
           role,
           created_at as "createdAt",
-          billing_rate as "billingRate"
+          billing_rate as "billingRate",
+          can_manage_users as "canManageUsers"
       `;
 
       return NextResponse.json(result[0]);
     }
 
-    // Admin full update
-    if (currentUser.role !== 'Admin') {
+    // Full update - requires Admin or can_manage_users permission
+    if (!hasFullManageAccess) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }
@@ -143,7 +162,8 @@ export async function PUT(
           email = ${email},
           password_hash = ${passwordHash},
           role = ${role},
-          billing_rate = ${billingRate || 0}
+          billing_rate = ${billingRate || 0},
+          can_manage_users = ${canManageUsers || false}
         WHERE id = ${id}
         RETURNING
           id,
@@ -151,7 +171,8 @@ export async function PUT(
           email,
           role,
           created_at as "createdAt",
-          billing_rate as "billingRate"
+          billing_rate as "billingRate",
+          can_manage_users as "canManageUsers"
       `;
     } else {
       // Update without changing password
@@ -161,7 +182,8 @@ export async function PUT(
           name = ${name},
           email = ${email},
           role = ${role},
-          billing_rate = ${billingRate || 0}
+          billing_rate = ${billingRate || 0},
+          can_manage_users = ${canManageUsers || false}
         WHERE id = ${id}
         RETURNING
           id,
@@ -169,7 +191,8 @@ export async function PUT(
           email,
           role,
           created_at as "createdAt",
-          billing_rate as "billingRate"
+          billing_rate as "billingRate",
+          can_manage_users as "canManageUsers"
       `;
     }
 
@@ -197,7 +220,20 @@ export async function DELETE(
   try {
     const currentUser = await getCurrentUser();
 
-    if (!currentUser || currentUser.role !== 'Admin') {
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
+
+    // Check if user is Admin or has can_manage_users permission
+    const deletePermCheck = await sql`
+      SELECT can_manage_users FROM users WHERE id = ${currentUser.id}
+    `;
+    const canDelete = currentUser.role === 'Admin' || deletePermCheck[0]?.can_manage_users;
+
+    if (!canDelete) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }

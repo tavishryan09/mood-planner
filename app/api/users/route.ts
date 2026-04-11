@@ -44,8 +44,14 @@ export async function GET() {
 
     let users;
 
-    if (currentUser.role === 'Admin') {
-      // Admins can see all users
+    // Check if user has user management access
+    const currentUserFull = await sql`
+      SELECT can_manage_users FROM users WHERE id = ${currentUser.id}
+    `;
+    const canManageUsers = currentUserFull[0]?.can_manage_users || false;
+
+    if (currentUser.role === 'Admin' || canManageUsers) {
+      // Admins and users with manage access can see all users
       users = await sql`
         SELECT
           id,
@@ -53,7 +59,8 @@ export async function GET() {
           email,
           role,
           created_at as "createdAt",
-          billing_rate as "billingRate"
+          billing_rate as "billingRate",
+          can_manage_users as "canManageUsers"
         FROM users
         ORDER BY created_at DESC
       `;
@@ -66,7 +73,8 @@ export async function GET() {
           email,
           role,
           created_at as "createdAt",
-          billing_rate as "billingRate"
+          billing_rate as "billingRate",
+          can_manage_users as "canManageUsers"
         FROM users
         WHERE role NOT IN ('Admin', 'Accountant')
         ORDER BY created_at DESC
@@ -87,7 +95,20 @@ export async function POST(request: Request) {
   try {
     const currentUser = await getCurrentUser();
 
-    if (!currentUser || currentUser.role !== 'Admin') {
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
+
+    // Check if user is Admin or has can_manage_users permission
+    const currentUserPerms = await sql`
+      SELECT can_manage_users FROM users WHERE id = ${currentUser.id}
+    `;
+    const hasManageAccess = currentUser.role === 'Admin' || currentUserPerms[0]?.can_manage_users;
+
+    if (!hasManageAccess) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }
@@ -95,7 +116,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, email, password, role, billingRate } = body;
+    const { name, email, password, role, billingRate, canManageUsers } = body;
 
     if (!name || !email || !password || !role) {
       return NextResponse.json(
@@ -140,14 +161,16 @@ export async function POST(request: Request) {
         email,
         password_hash,
         role,
-        billing_rate
+        billing_rate,
+        can_manage_users
       )
       VALUES (
         ${name},
         ${email},
         ${passwordHash},
         ${role},
-        ${billingRate || 0}
+        ${billingRate || 0},
+        ${canManageUsers || false}
       )
       RETURNING
         id,
@@ -155,7 +178,8 @@ export async function POST(request: Request) {
         email,
         role,
         created_at as "createdAt",
-        billing_rate as "billingRate"
+        billing_rate as "billingRate",
+        can_manage_users as "canManageUsers"
     `;
 
     return NextResponse.json(result[0], { status: 201 });

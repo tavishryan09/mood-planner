@@ -7,6 +7,7 @@ interface User {
   role: 'Admin' | 'Manager' | 'Designer' | 'Accountant';
   createdAt: string;
   billingRate: number;
+  canManageUsers: boolean;
 }
 
 interface UserFormData {
@@ -15,6 +16,7 @@ interface UserFormData {
   password: string;
   role: 'Admin' | 'Manager' | 'Designer' | 'Accountant';
   billingRate: number;
+  canManageUsers: boolean;
 }
 
 interface UseUserManagementProps {
@@ -31,7 +33,8 @@ export function useUserManagement({ users, setUsers, isManager = false }: UseUse
     email: '',
     password: '',
     role: 'Designer',
-    billingRate: 0
+    billingRate: 0,
+    canManageUsers: false
   });
 
   const handleAddNew = () => {
@@ -40,7 +43,8 @@ export function useUserManagement({ users, setUsers, isManager = false }: UseUse
       email: '',
       password: '',
       role: 'Designer',
-      billingRate: 0
+      billingRate: 0,
+      canManageUsers: false
     });
     setEditingUser(null);
     setShowModal(true);
@@ -54,7 +58,8 @@ export function useUserManagement({ users, setUsers, isManager = false }: UseUse
         email: userToEdit.email,
         password: '',
         role: userToEdit.role,
-        billingRate: userToEdit.billingRate || 0
+        billingRate: userToEdit.billingRate || 0,
+        canManageUsers: userToEdit.canManageUsers || false
       });
       setEditingUser(userId);
       setShowModal(true);

@@ -14,6 +14,7 @@ interface User {
   role: 'Admin' | 'Manager' | 'Designer' | 'Accountant';
   createdAt: string;
   billingRate: number;
+  canManageUsers: boolean;
 }
 
 function SettingsContent() {
@@ -55,7 +56,7 @@ function SettingsContent() {
     handleSave,
     handleDelete,
     closeModal
-  } = useUserManagement({ users, setUsers, isManager: user?.role === 'Manager' });
+  } = useUserManagement({ users, setUsers, isManager: user?.role === 'Manager' && !user?.canManageUsers });
 
   // Outlook integration
   const {
@@ -66,8 +67,10 @@ function SettingsContent() {
     handleDisconnectOutlook
   } = useOutlookIntegration();
 
+  const hasUserManageAccess = user?.role === 'Admin' || user?.canManageUsers;
+
   useEffect(() => {
-    if (user?.role === 'Admin' || user?.role === 'Manager') {
+    if (hasUserManageAccess || user?.role === 'Manager') {
       fetchUsers();
     }
   }, [user]);
@@ -542,8 +545,8 @@ function SettingsContent() {
           </div>
         </div>
 
-        {/* User Management (Admin only) */}
-        {user?.role === 'Admin' && (
+        {/* User Management (Admin or users with manage access) */}
+        {hasUserManageAccess && (
           <div className="card bg-base-100">
             <div className="card-body">
               <div className="flex justify-between items-center mb-4">
@@ -627,8 +630,8 @@ function SettingsContent() {
           </div>
         )}
 
-        {/* Team Billing Rates (Manager only) */}
-        {user?.role === 'Manager' && (
+        {/* Team Billing Rates (Manager without full manage access) */}
+        {user?.role === 'Manager' && !user?.canManageUsers && (
           <div className="card bg-base-100">
             <div className="card-body">
               <div className="mb-4">
@@ -698,7 +701,7 @@ function SettingsContent() {
         onSave={handleSave}
         onDelete={handleDelete}
         onFormDataChange={setFormData}
-        isManager={user?.role === 'Manager'}
+        isManager={user?.role === 'Manager' && !user?.canManageUsers}
       />
 
       {/* Password Reset Link Modal */}
